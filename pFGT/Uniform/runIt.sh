@@ -13,7 +13,7 @@ export epsilon=1.0e-6
 export numPtsPerProc=1000000
 export numPtsStr=1M
 
-export delta=0.0625
+export delta=0.015625
 
 export numProcStr=1
 
