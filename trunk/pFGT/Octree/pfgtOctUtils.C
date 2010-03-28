@@ -64,7 +64,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   const unsigned int numLocalOcts = linOct.size();
 
-  double hOctFac = 1.0/static_cast<double>(1u << maxDepth);
+  const double hOctFac = 1.0/static_cast<double>(1u << maxDepth);
 
   for(unsigned int i = 0; i < numLocalOcts; i++) {
     unsigned int lev = linOct[i].getLevel();
@@ -92,7 +92,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   PetscLogEventBegin(s2wEvent, 0, 0, 0, 0);
 
-  //Loop over local octants and execute S2W in each octant
+  //Loop over local expand octants and execute S2W in each octant
 
   const double lambda = static_cast<double>(L)/(static_cast<double>(P)*sqrt(delta));
 
@@ -102,8 +102,37 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   std::vector<std::vector<std::vector<double> > > tmp2R;
   std::vector<std::vector<std::vector<double> > > tmp2C;
 
-  // double ptGridOff = 0.1*hCurrOct;
-  // double ptGridH = 0.8*hCurrOct/(static_cast<double>(ptGridSizeWithinBox) - 1.0);
+  for(unsigned int i = 0; i < numLocalExpandOcts; i++) {
+    unsigned int lev = expandTree[i].getLevel();
+    double hCurrOct = hOctFac*static_cast<double>(1u << (maxDepth - lev));
+
+    double ptGridOff = 0.1*hCurrOct;
+    double ptGridH = 0.8*hCurrOct/(static_cast<double>(ptGridSizeWithinBox) - 1.0);
+
+    //Anchor of the octant
+    unsigned int anchX = expandTree[i].getX();
+    unsigned int anchY = expandTree[i].getY();
+    unsigned int anchZ = expandTree[i].getZ();
+
+    double aOx =  hOctFac*(static_cast<double>(anchX));
+    double aOy =  hOctFac*(static_cast<double>(anchY));
+    double aOz =  hOctFac*(static_cast<double>(anchZ));
+
+    //Anchor of the FGT box
+    double aFx = hRg*floor(aOx/hRg);
+    double aFy = hRg*floor(aOy/hRg);
+    double aFz = hRg*floor(aOz/hRg);
+
+    //Center of the FGT box
+    double halfH = (0.5*hRg);
+    double cx =  aFx + halfH;
+    double cy =  aFy + halfH;
+    double cz =  aFz + halfH;
+
+    //Tensor-Product Acceleration 
+
+
+  }//end for i
 
   PetscLogEventEnd(s2wEvent, 0, 0, 0, 0);
 
