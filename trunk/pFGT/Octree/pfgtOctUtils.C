@@ -15,11 +15,7 @@ extern PetscLogEvent l2tEvent;
 
 #define __PI__ 3.14159265
 
-#define EXPAND true
-
-#define DIRECT false
-
-PetscErrorCode pfgt(const std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
+PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     double delta, double fMag, unsigned int numPtsPerProc, 
     int P, int L, int K, int writeOut)
 {
@@ -62,31 +58,37 @@ PetscErrorCode pfgt(const std::vector<ot::TreeNode> & linOct, unsigned int maxDe
   PetscInt xs, ys, zs, nx, ny, nz;
   DAGetCorners(da, &xs, &ys, &zs, &nx, &ny, &nz);
 
+  //Split octree into 2 sets
+  std::vector<ot::TreeNode> expandTree;
+  std::vector<ot::TreeNode> directTree;
 
-  //Mark octants
-  std::vector<bool> octFlags(linOct.size());
+  const unsigned int numLocalOcts = linOct.size();
 
   double hOctFac = 1.0/static_cast<double>(1u << maxDepth);
 
-  for(unsigned int i = 0; i < octFlags.size(); i++) {
+  for(unsigned int i = 0; i < numLocalOcts; i++) {
     unsigned int lev = linOct[i].getLevel();
     double hCurrOct = hOctFac*static_cast<double>(1u << (maxDepth - lev));
 
     if(hCurrOct <= hRg) {
-      octFlags[i] = EXPAND;
+      expandTree.push_back(linOct[i]);
     } else {
-      octFlags[i] = DIRECT;
+      directTree.push_back(linOct[i]);
     }
   }//end for i
+  linOct.clear();
+
+  const unsigned int numLocalExpandOcts = expandTree.size();
+  const unsigned int numLocalDirectOcts = directTree.size();
 
   //Tensor-Product grid on each octant
 
   //Maximum value
-  unsigned int numPtsPerBox = numPtsPerProc/(linOct.size());
+  unsigned int numPtsPerBox = numPtsPerProc/numLocalOcts;
 
   //Tensor-Product Grid
   const unsigned int ptGridSizeWithinBox = static_cast<unsigned int>(floor(pow( numPtsPerBox, (1.0/3.0) )));
-  long long trueLocalNumPts = ptGridSizeWithinBox*ptGridSizeWithinBox*ptGridSizeWithinBox*(linOct.size());
+  long long trueLocalNumPts = ptGridSizeWithinBox*ptGridSizeWithinBox*ptGridSizeWithinBox*numLocalOcts;
 
   PetscLogEventBegin(s2wEvent, 0, 0, 0, 0);
 
@@ -116,19 +118,34 @@ PetscErrorCode pfgt(const std::vector<ot::TreeNode> & linOct, unsigned int maxDe
   const double C0 = ( pow((0.5/sqrt(__PI__)), 3.0)*
       pow((static_cast<double>(L)/static_cast<double>(P)), 3.0) );
 
-  std::vector<std::vector<double> > results(linOct.size());
+  std::vector<std::vector<double> > expandResults(numLocalExpandOcts);
+  std::vector<std::vector<double> > directResults(numLocalDirectOcts);
 
   PetscLogEventEnd(l2tEvent, 0, 0, 0, 0);
 
   if(writeOut) {
     char fname[256];
-    sprintf(fname, "OctOutType2_%d_%d.txt", rank, npes);
+    sprintf(fname, "OctExpandOutType2_%d_%d.txt", rank, npes);
     FILE* fp = fopen(fname, "w");
-    fprintf(fp, "%d\n", (results.size()));
-    for(unsigned int i = 0; i < results.size(); i++) {
-      fprintf(fp, "%d\n", results[i].size());
-      for(unsigned int j = 0; j < results[i].size(); j++) {
-        fprintf(fp, "%lf \n", results[i][j]);
+    fprintf(fp, "%d\n", (expandResults.size()));
+    for(unsigned int i = 0; i < expandResults.size(); i++) {
+      fprintf(fp, "%d\n", expandResults[i].size());
+      for(unsigned int j = 0; j < expandResults[i].size(); j++) {
+        fprintf(fp, "%lf \n", expandResults[i][j]);
+      }//end for j
+    }//end for i
+    fclose(fp);
+  }
+
+  if(writeOut) {
+    char fname[256];
+    sprintf(fname, "OctDirectOutType2_%d_%d.txt", rank, npes);
+    FILE* fp = fopen(fname, "w");
+    fprintf(fp, "%d\n", (directResults.size()));
+    for(unsigned int i = 0; i < directResults.size(); i++) {
+      fprintf(fp, "%d\n", directResults[i].size());
+      for(unsigned int j = 0; j < directResults[i].size(); j++) {
+        fprintf(fp, "%lf \n", directResults[i][j]);
       }//end for j
     }//end for i
     fclose(fp);
