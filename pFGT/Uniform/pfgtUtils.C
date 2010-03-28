@@ -835,15 +835,20 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
 
 void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int zs, int nx, int ny, int nz, int Ne, double h, const int StencilWidth, const int P, const double lambda) {
   //Loop over local boxes and their Interaction lists and do a direct translation
+
   for(PetscInt zi = 0; zi < nz; zi++) {
     for(PetscInt yi = 0; yi < ny; yi++) {
       for(PetscInt xi = 0; xi < nx; xi++) {
+        int xx = xi +xs;
+        int yy = yi +ys;
+        int zz = zi +zs;
 
         //Center of the box B
+        /*
         double cBx =  h*(0.5 + static_cast<double>(xi + xs));
         double cBy =  h*(0.5 + static_cast<double>(yi + ys));
         double cBz =  h*(0.5 + static_cast<double>(zi + zs));
-
+        */
         //Bounds for Ilist of box B
         int Ixs = xi + xs - StencilWidth;
         int Ixe = xi + xs + StencilWidth;
@@ -891,17 +896,17 @@ void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int
             for(int xj = Ixs; xj <= Ixe; xj++) {
 
               //Center of the box C
+              /*
               double cCx =  h*(0.5 + static_cast<double>(xj));
               double cCy =  h*(0.5 + static_cast<double>(yj));
               double cCz =  h*(0.5 + static_cast<double>(zj));
+              */
 
               for(int k3 = -P, di = 0; k3 < P; k3++) {
                 for(int k2 = -P; k2 < P; k2++) {
                   for(int k1 = -P; k1 < P; k1++, di++) {
 
-                    double theta = lambda*( (static_cast<double>(k1)*(cBx - cCx)) +
-                        (static_cast<double>(k2)*(cBy - cCy)) +
-                        (static_cast<double>(k3)*(cBz - cCz)) );
+                    double theta = lambda*h*( static_cast<double>(k1*(xj - xx) + k2*(yj - yy) + k3*(zj - zz) ) );
 
                     WgArr[zi + zs][yi + ys][xi + xs][2*di] += (WlArr[zj][yj][xj][2*di]*cos(theta));
                     WgArr[zi + zs][yi + ys][xi + xs][(2*di) + 1] += (WlArr[zj][yj][xj][(2*di) + 1]*sin(theta));
@@ -926,11 +931,9 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               const int P, const double lambda) {
   
   // compute the first layer directly ...  
-  printf("Calling direct\n");
   directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, 1, Ne, h, K, P, lambda); // XY Plane
   directW2L(WlArr, WgArr, xs, ys+1, zs, 1, ny-1, nz, Ne, h, K, P, lambda); // YZ Plane
   directW2L(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, lambda); // ZX Plane 
-  printf("done Calling direct\n");
 
   // return;
 
@@ -944,7 +947,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
       for(int k1 = -P; k1 < P; k1++, di++) {
         // i,j,k
         theta = lambda*h* ( (static_cast<double>(k1 + k2 + k3) ) );
-        fac[14*di + 0] = cos(theta);
+        fac[14*di]     = cos(theta);
         fac[14*di + 1] = sin(theta);
 
         theta = lambda*h* ( (static_cast<double>(k1) ) );
@@ -973,7 +976,6 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
       }
     }
   }
-  printf("done computing fac\n");
 
   int i,j,k;
   // have the first layer, now propagate ...
@@ -1291,6 +1293,116 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
 
   } // layer ...
 
+  delete [] fac;
 }
 
+void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr, 
+    int xs, int ys, int zs, 
+    int nx, int ny, int nz, 
+    int Ne, double h, 
+    const int K, const int P, const double lambda) {
+  
+  int i,j,k;
+  double theta;
+  // 0. compute directly for first box ... xs, ys, zs
+  directW2L(WlArr, WgArr, xs, ys, zs, 1, 1, 1, Ne, h, K, P, lambda); 
+
+  // 1. Precompute the factors ...
+  double *fac = new double [3*2*8*P*P*P]; // 3* (2P)^3 complex terms ... one for X,Y and Z shifts, 
+  for(int k3 = -P, di = 0; k3 < P; k3++) {
+    for(int k2 = -P; k2 < P; k2++) {
+      for(int k1 = -P; k1 < P; k1++, di++) {
+        theta = lambda*h* ( (static_cast<double>(k1) ) );
+        fac[6*di]     = cos(theta);
+        fac[6*di + 1] = sin(theta);
+
+        theta = lambda*h* ( (static_cast<double>(k2) ) );
+        fac[6*di + 2] = cos(theta);
+        fac[6*di + 3] = sin(theta);
+
+        theta = lambda*h* ( (static_cast<double>(k3) ) );
+        fac[6*di + 4] = cos(theta);
+        fac[6*di + 5] = sin(theta);
+      }
+    }
+  }
+
+  
+  // 2. Now incrementaly for the XY plane ...
+  k = zs;
+  for (j=ys; j<ys+ny; j++) {
+    for (i=xs; i<xs+nx; i++) {
+      if (i == xs) { // special treatment ...
+        if (j == ys)
+          continue;
+        // Propagate from -Y neighbour instead ...
+        for(int k3 = -P, di = 0; k3 < P; k3++) {
+          for(int k2 = -P; k2 < P; k2++) {
+            for(int k1 = -P; k1 < P; k1++, di++) {
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k][j-1][i][2*di], WgArr[k][j-1][i-1][2*di+1],  fac[6*di+2], fac[6*di+3] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k][j-1][i][2*di], WgArr[k][j-1][i-1][2*di+1],  fac[6*di+2], fac[6*di+3] );
+            }
+          }
+        }
+
+      }
+      // Get from -X neighbour ... 
+      for(int k3 = -P, di = 0; k3 < P; k3++) {
+        for(int k2 = -P; k2 < P; k2++) {
+          for(int k1 = -P; k1 < P; k1++, di++) {
+            WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[6*di], fac[6*di+1] );
+            WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[6*di], fac[6*di+1] );
+          }
+        }
+      }
+      // add layer ...
+
+      // subtract layer ...
+
+    } // i
+  } // j
+
+  // 3. Now for YZ
+  i = xs;
+  for (k=zs+1; k<zs+nz; k++) {
+    for (j=ys; j<ys+ny; j++) {
+      // Get from -Z neighbour ... 
+      for(int k3 = -P, di = 0; k3 < P; k3++) {
+        for(int k2 = -P; k2 < P; k2++) {
+          for(int k1 = -P; k1 < P; k1++, di++) {
+            WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j][i][2*di], WgArr[k-1][j][i][2*di+1],  fac[6*di+4], fac[6*di+5] );
+            WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j][i][2*di], WgArr[k-1][j][i][2*di+1],  fac[6*di+4], fac[6*di+5] );
+          }
+        }
+      }
+      // add layer ...
+
+      // subtract layer ...
+
+    } // i
+  } // j
+  
+  // 4. And finally the ZX plane
+  j = xs;
+  for (k=zs+1; k<zs+nz; k++) {
+    for (i=xs+1; i<xs+nx; i++) {
+      // Get from -X neighbour ... 
+      for(int k3 = -P, di = 0; k3 < P; k3++) {
+        for(int k2 = -P; k2 < P; k2++) {
+          for(int k1 = -P; k1 < P; k1++, di++) {
+            WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[6*di], fac[6*di+1] );
+            WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[6*di], fac[6*di+1] );
+          }
+        }
+      }
+      // add layer ...
+
+      // subtract layer ...
+
+    } // i
+  } // j
+
+  // clean up 
+  delete [] fac;
+}
 

@@ -13,5 +13,7 @@ void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int
 
 void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int zs, int nx, int ny, int nz, int Ne, double h, const int StencilWidth, const int PforType2, const double lambda);
 
+void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int zs, int nx, int ny, int nz, int Ne, double h, const int StencilWidth, const int PforType2, const double lambda);
+
 #endif
 
