@@ -49,7 +49,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   const unsigned int Ndofs = 16*P*P*P;
 
   if(!rank) {
-    std::cout<<"Ndofs = "<<Ndofs<<std::endl;
+    std::cout<<"Ndofs = "<< Ndofs <<std::endl;
   }
 
   if(!rank) {
@@ -63,6 +63,34 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   PetscInt xs, ys, zs, nx, ny, nz;
   DAGetCorners(da, &xs, &ys, &zs, &nx, &ny, &nz);
+
+  //Do Not Free lx, ly, lz. They are managed by DA
+  const PetscInt* lx = NULL;
+  const PetscInt* ly = NULL;
+  const PetscInt* lz = NULL;
+  PetscInt npx, npy, npz;
+
+  //Information about DA partition
+  DAGetOwnershipRanges(da, &lx, &ly, &lz);
+  DAGetInfo(da, PETSC_NULL, PETSC_NULL, PETSC_NULL, PETSC_NULL, &npx, &npy, &npz,	
+      PETSC_NULL, PETSC_NULL, PETSC_NULL, PETSC_NULL);
+
+  std::vector<unsigned int> scanLx(npx);
+  std::vector<unsigned int> scanLy(npy);
+  std::vector<unsigned int> scanLz(npz);
+
+  scanLx[0] = 0.0;
+  scanLy[0] = 0.0;
+  scanLz[0] = 0.0;
+  for(int i = 1; i < npx; i++) {
+    scanLx[i] = scanLx[i - 1] + lx[i - 1];
+  }
+  for(int i = 1; i < npy; i++) {
+    scanLy[i] = scanLy[i - 1] + ly[i - 1];
+  }
+  for(int i = 1; i < npz; i++) {
+    scanLz[i] = scanLz[i - 1] + lz[i - 1];
+  }
 
   //Split octree into 2 sets
   std::vector<ot::TreeNode> expandTree;
@@ -279,7 +307,25 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     }//end for j
   }//end for i
 
+  std::vector<int> part(Wfgt.size());
+  for(unsigned int i = 0; i < Wfgt.size(); i++) {
+    unsigned int fgtId = uniqueOct2fgtIdmap[i];
+    unsigned int fgtzid = (fgtId/(Ne*Ne));
+    unsigned int fgtyid = ((fgtId%(Ne*Ne))/Ne);
+    unsigned int fgtxid = ((fgtId%(Ne*Ne))%Ne);
+
+    unsigned int xRes, yRes, zRes;
+    seq::maxLowerBound<unsigned int>(scanLx, fgtxid, xRes, 0, 0);
+    seq::maxLowerBound<unsigned int>(scanLy, fgtyid, yRes, 0, 0);
+    seq::maxLowerBound<unsigned int>(scanLz, fgtzid, zRes, 0, 0);
+
+    part[i] = (((zRes*npy) + yRes)*npx) + xRes;
+  }//end for i
+
   PetscLogEventEnd(s2wCommEvent, 0, 0, 0, 0);
+
+  const double C0 = ( pow((0.5/sqrt(__PI__)), 3.0)*
+      pow((static_cast<double>(L)/static_cast<double>(P)), 3.0) );
 
   //W2D
   PetscLogEventBegin(w2dEvent, 0, 0, 0, 0);
@@ -310,9 +356,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   //L2T
   PetscLogEventBegin(l2tEvent, 0, 0, 0, 0);
-
-  const double C0 = ( pow((0.5/sqrt(__PI__)), 3.0)*
-      pow((static_cast<double>(L)/static_cast<double>(P)), 3.0) );
 
   std::vector<std::vector<double> > expandResults(numLocalExpandOcts);
 
