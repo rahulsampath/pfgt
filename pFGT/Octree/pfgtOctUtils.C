@@ -318,6 +318,8 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   PetscLogEventEnd(l2tEvent, 0, 0, 0, 0);
 
+  DADestroy(da);
+
   if(writeOut) {
     char fname[256];
     sprintf(fname, "OctExpandOutType2_%d_%d.txt", rank, npes);
