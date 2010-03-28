@@ -44,7 +44,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     std::cout<<"Ne = "<< Ne <<std::endl;
   }
 
-  //2p complex coefficients for each dimension.  
+  //2P complex coefficients for each dimension.  
   const unsigned int Ndofs = 16*P*P*P;
 
   if(!rank) {
@@ -110,6 +110,9 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   std::vector<std::vector<double> > Woct(numLocalExpandOcts);
 
+  std::vector<unsigned int> oct2fgtPtmap(3*numLocalExpandOcts);
+  std::vector<unsigned int> oct2fgtIdmap(numLocalExpandOcts);
+
   for(unsigned int i = 0; i < numLocalExpandOcts; i++) {
     unsigned int lev = expandTree[i].getLevel();
     double hCurrOct = hOctFac*static_cast<double>(1u << (maxDepth - lev));
@@ -127,9 +130,19 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     double aOz =  hOctFac*(static_cast<double>(anchZ));
 
     //Anchor of the FGT box
-    double aFx = hRg*floor(aOx/hRg);
-    double aFy = hRg*floor(aOy/hRg);
-    double aFz = hRg*floor(aOz/hRg);
+    unsigned int fgtxid = static_cast<unsigned int>(floor(aOx/hRg));
+    unsigned int fgtyid = static_cast<unsigned int>(floor(aOy/hRg));
+    unsigned int fgtzid = static_cast<unsigned int>(floor(aOz/hRg));
+
+    oct2fgtIdmap.push_back( ( (fgtzid*Ne*Ne) + (fgtyid*Ne) + fgtxid ) );
+
+    oct2fgtPtmap.push_back(fgtxid);
+    oct2fgtPtmap.push_back(fgtyid);
+    oct2fgtPtmap.push_back(fgtzid);
+
+    double aFx = hRg*static_cast<double>(fgtxid);
+    double aFy = hRg*static_cast<double>(fgtyid);
+    double aFz = hRg*static_cast<double>(fgtzid);
 
     //Center of the FGT box
     double halfH = (0.5*hRg);
