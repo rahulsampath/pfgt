@@ -2,6 +2,7 @@
 #include "mpi.h"
 #include "petscda.h"
 #include "pfgtOctUtils.h"
+#include "seqUtils.h"
 #include <cmath>
 #include <cstdlib>
 #include <cassert>
@@ -256,6 +257,10 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   //S2W-Comm
   PetscLogEventBegin(s2wCommEvent, 0, 0, 0, 0);
+
+  std::vector<unsigned int> uniqueOct2fgtIdmap = oct2fgtIdmap;
+
+  seq::makeVectorUnique<unsigned int>(uniqueOct2fgtIdmap, false);
 
   PetscLogEventEnd(s2wCommEvent, 0, 0, 0, 0);
 
