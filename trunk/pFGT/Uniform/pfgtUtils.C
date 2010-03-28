@@ -18,6 +18,9 @@ extern PetscLogEvent l2tEvent;
 
 #define __GRID_ID__(xi, yi, zi) ( ((zi)*NgridX*NgridY) + ((yi)*NgridX) + (xi) )
 
+#define __COMP_MUL_RE(a, ai, b, bi) ( a*b - ai*bi )
+#define __COMP_MUL_IM(a, ai, b, bi) ( a*bi + ai*b )
+
 #define __LOCAL_COMPUTATION_BLOCK__ { \
   for(unsigned int k = 0; k < localGridLists[otherGridId].size(); k++) { \
     unsigned int otherListId = localGridLists[otherGridId][k]; \
@@ -415,7 +418,7 @@ PetscErrorCode pfgtType1(double delta, int K, double fMag, unsigned int numPtsPe
     char fname[256];
     sprintf(fname, "inpType1_%d_%d.txt", rank, npes);
     FILE* fp = fopen(fname, "w");
-    fprintf(fp, "%d\n", numLocalPts);
+    fprintf(fp, "%lld\n", numLocalPts);
     for(unsigned int i = 0; i < numLocalPts; i++) {
       fprintf(fp, "%lf %lf %lf %lf\n", ptsAndSources[4*i], ptsAndSources[(4*i) + 1], 
           ptsAndSources[(4*i) + 2], ptsAndSources[(4*i) + 3]);
@@ -427,7 +430,7 @@ PetscErrorCode pfgtType1(double delta, int K, double fMag, unsigned int numPtsPe
     char fname[256];
     sprintf(fname, "outType1_%d_%d.txt", rank, npes);
     FILE* fp = fopen(fname, "w");
-    fprintf(fp, "%d\n", numLocalPts);
+    fprintf(fp, "%lld\n", numLocalPts);
     for(unsigned int i = 0; i < numLocalPts; i++) {
       fprintf(fp, "%lf \n", localResults[i]);
     }//end for i
@@ -599,7 +602,7 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
         //Stage-3
 
         for(int k3 = -P, di = 0; k3 < P; k3++) {
-          int shiftK3 = (k3 + P);
+          // int shiftK3 = (k3 + P);
 
           for(int k2 = -P; k2 < P; k2++) {
             int shiftK2 = (k2 + P);
@@ -650,9 +653,9 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
   VecZeroEntries(Wglobal);
   DAVecGetArrayDOF(da, Wglobal, &WgArr);
 
-  directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, lambda);
+  // directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, lambda);
+  sweepW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, lambda);
   
-  // directW2L();
 
   DAVecRestoreArrayDOF(da, Wlocal, &WlArr);
 
@@ -704,7 +707,7 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
               double cSum = 0.0;
 
               for(int j1 = -P; j1 < P; j1++, di++) {
-                int shiftJ1 = (j1 + P);
+                // int shiftJ1 = (j1 + P);
 
                 double px = ax + ptGridOff + (ptGridH*(static_cast<double>(k1)));
 
@@ -830,9 +833,7 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
   PetscFunctionReturn(0);
 }
 
-void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, 
-    int xs, int ys, int zs, int nx, int ny, int nz, int Ne,
-    double h, const int StencilWidth, const int PforType2, const double lambda) {
+void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int zs, int nx, int ny, int nz, int Ne, double h, const int StencilWidth, const int P, const double lambda) {
   //Loop over local boxes and their Interaction lists and do a direct translation
   for(PetscInt zi = 0; zi < nz; zi++) {
     for(PetscInt yi = 0; yi < ny; yi++) {
@@ -874,6 +875,16 @@ void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
           Ize = (Ne - 1);
         }
 
+#ifdef __DEBUG__
+        assert(Ixs >= gxs);
+        assert(Iys >= gys);
+        assert(Izs >= gzs);
+
+        assert(Ixe < (gxs + gnx));
+        assert(Iye < (gys + gny));
+        assert(Ize < (gzs + gnz));
+#endif
+
         //Loop over Ilist of box B
         for(int zj = Izs; zj <= Ize; zj++) {
           for(int yj = Iys; yj <= Iye; yj++) {
@@ -884,14 +895,9 @@ void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               double cCy =  h*(0.5 + static_cast<double>(yj));
               double cCz =  h*(0.5 + static_cast<double>(zj));
 
-              for(int k3 = -PforType2, di = 0; k3 < PforType2; k3++) {
-                int shiftK3 = (k3 + PforType2);
-
-                for(int k2 = -PforType2; k2 < PforType2; k2++) {
-                  int shiftK2 = (k2 + PforType2);
-
-                  for(int k1 = -PforType2; k1 < PforType2; k1++, di++) {
-                    int shiftK1 = (k1 + PforType2);
+              for(int k3 = -P, di = 0; k3 < P; k3++) {
+                for(int k2 = -P; k2 < P; k2++) {
+                  for(int k1 = -P; k1 < P; k1++, di++) {
 
                     double theta = lambda*( (static_cast<double>(k1)*(cBx - cCx)) +
                         (static_cast<double>(k2)*(cBy - cCy)) +
@@ -917,14 +923,57 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               int xs, int ys, int zs, 
               int nx, int ny, int nz, 
               int Ne, double h, const int StencilWidth, 
-              const int PforType2, const double lambda) {
+              const int P, const double lambda) {
   
   // compute the first layer directly ...  
-  directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, 1, Ne, h, StencilWidth, PforType2, lambda); // XY Plane
-  directW2L(WlArr, WgArr, xs, ys+1, zs, 1, ny-1, nz, Ne, h, StencilWidth, PforType2, lambda); // YZ Plane
-  directW2L(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, StencilWidth, PforType2, lambda); // ZX Plane 
+  printf("Calling direct\n");
+  directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, 1, Ne, h, StencilWidth, P, lambda); // XY Plane
+  directW2L(WlArr, WgArr, xs, ys+1, zs, 1, ny-1, nz, Ne, h, StencilWidth, P, lambda); // YZ Plane
+  directW2L(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, StencilWidth, P, lambda); // ZX Plane 
+  printf("done Calling direct\n");
 
   int num_layers = std::min(std::min(nx, ny), nz);
+
+  double *fac = new double [7*2*8*P*P*P]; // 7* (2P)^3 complex terms ...
+  // double theta = lambda*h*static_cast<-P>;
+  // double dtheta = lambda*h;
+
+  double theta;
+  for(int k3 = -P, di = 0; k3 < P; k3++) {
+    for(int k2 = -P; k2 < P; k2++) {
+      for(int k1 = -P; k1 < P; k1++, di++) {
+        // i,j,k
+        theta = lambda*h* ( (static_cast<double>(k1 + k2 + k3) ) );
+        fac[14*di + 0] = cos(theta);
+        fac[14*di + 1] = sin(theta);
+
+        theta = lambda*h* ( (static_cast<double>(k1) ) );
+        fac[14*di + 2] = cos(theta);
+        fac[14*di + 3] = sin(theta);
+
+        theta = lambda*h* ( (static_cast<double>(k2) ) );
+        fac[14*di + 4] = cos(theta);
+        fac[14*di + 5] = sin(theta);
+
+        theta = lambda*h* ( (static_cast<double>(k3) ) );
+        fac[14*di + 6] = cos(theta);
+        fac[14*di + 7] = sin(theta);
+
+        theta = lambda*h* ( (static_cast<double>(k2 + k3) ) );
+        fac[14*di + 8] = cos(theta);
+        fac[14*di + 9] = sin(theta);
+
+        theta = lambda*h* ( (static_cast<double>(k1 + k3) ) );
+        fac[14*di + 10] = cos(theta);
+        fac[14*di + 11] = sin(theta);
+
+        theta = lambda*h* ( (static_cast<double>(k1 + k2) ) );
+        fac[14*di + 12] = cos(theta);
+        fac[14*di + 13] = sin(theta);
+      }
+    }
+  }
+  printf("done computing fac\n");
 
   int i,j,k;
   // have the first layer, now propagate ...
@@ -940,12 +989,62 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
         // and the other 6 boxes between them should have already been
         // computed.
         
+        //Center of the box B
+        double cBx =  h*(0.5 + static_cast<double>(i));
+        double cBy =  h*(0.5 + static_cast<double>(j));
+        double cBz =  h*(0.5 + static_cast<double>(k));
+
+        for(int k3 = -P, di = 0; k3 < P; k3++) {
+          for(int k2 = -P; k2 < P; k2++) {
+            for(int k1 = -P; k1 < P; k1++, di++) {
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j-1][i-1][2*di], WgArr[k-1][j-1][i-1][2*di+1],  fac[14*di], fac[14*di+1] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j-1][i-1][2*di], WgArr[k-1][j-1][i-1][2*di+1],  fac[14*di], fac[14*di+1] );
+
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[14*di+2], fac[14*di+3] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[14*di+2], fac[14*di+3] );
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k][j-1][i][2*di], WgArr[k][j-1][i][2*di+1],  fac[14*di+4], fac[14*di+5] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k][j-1][i][2*di], WgArr[k][j-1][i][2*di+1],  fac[14*di+4], fac[14*di+5] );
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j][i][2*di], WgArr[k-1][j][i][2*di+1],  fac[14*di+6], fac[14*di+7] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j][i][2*di], WgArr[k-1][j][i][2*di+1],  fac[14*di+6], fac[14*di+7] );
+
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j-1][i][2*di], WgArr[k-1][j-1][i][2*di+1],  fac[14*di+8], fac[14*di+9] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j-1][i][2*di], WgArr[k-1][j-1][i][2*di+1],  fac[14*di+8], fac[14*di+9] );
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j][i-1][2*di], WgArr[k-1][j][i-1][2*di+1],  fac[14*di+10], fac[14*di+11] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j][i-1][2*di], WgArr[k-1][j][i-1][2*di+1],  fac[14*di+10], fac[14*di+11] );
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k][j-1][i-1][2*di], WgArr[k][j-1][i-1][2*di+1],  fac[14*di+12], fac[14*di+13] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k][j-1][i-1][2*di], WgArr[k][j-1][i-1][2*di+1],  fac[14*di+12], fac[14*di+13] );
+            } // k3
+          } // k2 
+        } // k1 
+
       }
     }
     // do YZ Plane ... x = lx;
     i=lx;
     for (j=ly+1; j<ny; j++) { // 1st y layer has already been computed ...
       for (k=lz; k<nz; k++) { 
+        for(int k3 = -P, di = 0; k3 < P; k3++) {
+          for(int k2 = -P; k2 < P; k2++) {
+            for(int k1 = -P; k1 < P; k1++, di++) {
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j-1][i-1][2*di], WgArr[k-1][j-1][i-1][2*di+1],  fac[14*di], fac[14*di+1] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j-1][i-1][2*di], WgArr[k-1][j-1][i-1][2*di+1],  fac[14*di], fac[14*di+1] );
+
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[14*di+2], fac[14*di+3] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[14*di+2], fac[14*di+3] );
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k][j-1][i][2*di], WgArr[k][j-1][i][2*di+1],  fac[14*di+4], fac[14*di+5] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k][j-1][i][2*di], WgArr[k][j-1][i][2*di+1],  fac[14*di+4], fac[14*di+5] );
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j][i][2*di], WgArr[k-1][j][i][2*di+1],  fac[14*di+6], fac[14*di+7] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j][i][2*di], WgArr[k-1][j][i][2*di+1],  fac[14*di+6], fac[14*di+7] );
+
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j-1][i][2*di], WgArr[k-1][j-1][i][2*di+1],  fac[14*di+8], fac[14*di+9] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j-1][i][2*di], WgArr[k-1][j-1][i][2*di+1],  fac[14*di+8], fac[14*di+9] );
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j][i-1][2*di], WgArr[k-1][j][i-1][2*di+1],  fac[14*di+10], fac[14*di+11] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j][i-1][2*di], WgArr[k-1][j][i-1][2*di+1],  fac[14*di+10], fac[14*di+11] );
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k][j-1][i-1][2*di], WgArr[k][j-1][i-1][2*di+1],  fac[14*di+12], fac[14*di+13] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k][j-1][i-1][2*di], WgArr[k][j-1][i-1][2*di+1],  fac[14*di+12], fac[14*di+13] );
+            } // k3
+          } // k2 
+        } // k1 
 
       }
     }
@@ -953,6 +1052,28 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
     j=ly;
     for (k=lz+1; k<nz; k++) {
       for (i=lx+1; i<nx; i++) {
+        for(int k3 = -P, di = 0; k3 < P; k3++) {
+          for(int k2 = -P; k2 < P; k2++) {
+            for(int k1 = -P; k1 < P; k1++, di++) {
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j-1][i-1][2*di], WgArr[k-1][j-1][i-1][2*di+1],  fac[14*di], fac[14*di+1] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j-1][i-1][2*di], WgArr[k-1][j-1][i-1][2*di+1],  fac[14*di], fac[14*di+1] );
+
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[14*di+2], fac[14*di+3] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[14*di+2], fac[14*di+3] );
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k][j-1][i][2*di], WgArr[k][j-1][i][2*di+1],  fac[14*di+4], fac[14*di+5] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k][j-1][i][2*di], WgArr[k][j-1][i][2*di+1],  fac[14*di+4], fac[14*di+5] );
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j][i][2*di], WgArr[k-1][j][i][2*di+1],  fac[14*di+6], fac[14*di+7] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j][i][2*di], WgArr[k-1][j][i][2*di+1],  fac[14*di+6], fac[14*di+7] );
+
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j-1][i][2*di], WgArr[k-1][j-1][i][2*di+1],  fac[14*di+8], fac[14*di+9] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j-1][i][2*di], WgArr[k-1][j-1][i][2*di+1],  fac[14*di+8], fac[14*di+9] );
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j][i-1][2*di], WgArr[k-1][j][i-1][2*di+1],  fac[14*di+10], fac[14*di+11] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j][i-1][2*di], WgArr[k-1][j][i-1][2*di+1],  fac[14*di+10], fac[14*di+11] );
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k][j-1][i-1][2*di], WgArr[k][j-1][i-1][2*di+1],  fac[14*di+12], fac[14*di+13] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k][j-1][i-1][2*di], WgArr[k][j-1][i-1][2*di+1],  fac[14*di+12], fac[14*di+13] );
+            } // k3
+          } // k2 
+        } // k1 
 
       }
     }
