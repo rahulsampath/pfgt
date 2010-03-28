@@ -16,11 +16,16 @@
 #undef MPI_WTIME_IS_GLOBAL
 #endif
 
-PetscLogEvent s2wEvent;
-PetscLogEvent w2lEvent;
-PetscLogEvent l2tEvent;
-PetscLogEvent fgtEvent;
 PetscCookie fgtCookie;
+PetscLogEvent fgtEvent;
+PetscLogEvent s2wEvent;
+PetscLogEvent s2wCommEvent;
+PetscLogEvent w2dEvent;
+PetscLogEvent d2dEvent;
+PetscLogEvent w2lEvent;
+PetscLogEvent d2lEvent;
+PetscLogEvent l2tCommEvent;
+PetscLogEvent l2tEvent;
 
 #define SEEDA 0x12345678 
 
@@ -36,7 +41,12 @@ int main(int argc, char** argv) {
   PetscCookieRegister("FGT", &fgtCookie);
   PetscLogEventRegister("FGT", fgtCookie, &fgtEvent);
   PetscLogEventRegister("S2W", fgtCookie, &s2wEvent);
+  PetscLogEventRegister("S2Wcomm", fgtCookie, &s2wCommEvent);
+  PetscLogEventRegister("W2D", fgtCookie, &w2dEvent);
+  PetscLogEventRegister("D2D", fgtCookie, &d2dEvent);
   PetscLogEventRegister("W2L", fgtCookie, &w2lEvent);
+  PetscLogEventRegister("D2L", fgtCookie, &d2lEvent);
+  PetscLogEventRegister("L2Tcomm", fgtCookie, &l2tCommEvent);
   PetscLogEventRegister("L2T", fgtCookie, &l2tEvent);
 
   int npes, rank;

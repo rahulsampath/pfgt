@@ -10,7 +10,12 @@
 
 extern PetscLogEvent fgtEvent;
 extern PetscLogEvent s2wEvent;
+extern PetscLogEvent s2wCommEvent;
+extern PetscLogEvent w2dEvent;
+extern PetscLogEvent d2dEvent;
 extern PetscLogEvent w2lEvent;
+extern PetscLogEvent d2lEvent;
+extern PetscLogEvent l2tCommEvent;
 extern PetscLogEvent l2tEvent;
 
 #define __PI__ 3.14159265
@@ -90,6 +95,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   const unsigned int ptGridSizeWithinBox = static_cast<unsigned int>(floor(pow( numPtsPerBox, (1.0/3.0) )));
   long long trueLocalNumPts = ptGridSizeWithinBox*ptGridSizeWithinBox*ptGridSizeWithinBox*numLocalOcts;
 
+  //S2W
   PetscLogEventBegin(s2wEvent, 0, 0, 0, 0);
 
   //Loop over local expand octants and execute S2W in each octant
@@ -101,6 +107,8 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   std::vector<std::vector<std::vector<double> > > tmp2R;
   std::vector<std::vector<std::vector<double> > > tmp2C;
+
+  std::vector<std::vector<double> > Woct(numLocalExpandOcts);
 
   for(unsigned int i = 0; i < numLocalExpandOcts; i++) {
     unsigned int lev = expandTree[i].getLevel();
@@ -131,24 +139,147 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
     //Tensor-Product Acceleration 
 
+    //Stage-1
+
+    tmp1R.resize(2*P);
+    tmp1C.resize(2*P);
+    for(int k1 = -P; k1 < P; k1++) {
+      int shiftK1 = (k1 + P);
+
+      tmp1R[shiftK1].resize(ptGridSizeWithinBox);
+      tmp1C[shiftK1].resize(ptGridSizeWithinBox);
+
+      for(int j3 = 0; j3 < ptGridSizeWithinBox; j3++) {
+        tmp1R[shiftK1][j3].resize(ptGridSizeWithinBox);
+        tmp1C[shiftK1][j3].resize(ptGridSizeWithinBox);
+
+        for(int j2 = 0; j2 < ptGridSizeWithinBox; j2++) {
+          tmp1R[shiftK1][j3][j2] = 0.0;
+          tmp1C[shiftK1][j3][j2] = 0.0;
+
+          for(int j1 = 0; j1 < ptGridSizeWithinBox; j1++) {
+            double px = aOx + ptGridOff + (ptGridH*(static_cast<double>(j1)));
+
+            double theta = lambda*(static_cast<double>(k1)*(cx - px));
+
+            //Replace fMag by drand48() if you want
+            tmp1R[shiftK1][j3][j2] += (fMag*cos(theta));
+            tmp1C[shiftK1][j3][j2] += (fMag*sin(theta));
+
+          }//end for j1
+        }//end for j2
+      }//end for j3
+    }//end for k1
+
+    //Stage-2
+
+    tmp2R.resize(2*P);
+    tmp2C.resize(2*P);
+    for(int k2 = -P; k2 < P; k2++) {
+      int shiftK2 = (k2 + P);
+
+      tmp2R[shiftK2].resize(2*P);
+      tmp2C[shiftK2].resize(2*P);
+
+      for(int k1 = -P; k1 < P; k1++) {
+        int shiftK1 = (k1 + P);
+
+        tmp2R[shiftK2][shiftK1].resize(ptGridSizeWithinBox);
+        tmp2C[shiftK2][shiftK1].resize(ptGridSizeWithinBox);
+
+        for(int j3 = 0; j3 < ptGridSizeWithinBox; j3++) {
+          tmp2R[shiftK2][shiftK1][j3] = 0.0;
+          tmp2C[shiftK2][shiftK1][j3] = 0.0;
+
+          for(int j2 = 0; j2 < ptGridSizeWithinBox; j2++) {
+            double py = aOy + ptGridOff + (ptGridH*(static_cast<double>(j2)));
+
+            double theta = lambda*(static_cast<double>(k2)*(cy - py));
+
+            double rVal = tmp1R[shiftK1][j3][j2];
+            double cVal = tmp1C[shiftK1][j3][j2];
+
+            tmp2R[shiftK2][shiftK1][j3] += ( (rVal*cos(theta)) - (cVal*sin(theta)) );
+            tmp2C[shiftK2][shiftK1][j3] += ( (rVal*sin(theta)) + (cVal*cos(theta)) );
+
+          }//end for j2
+        }//end for j3
+      }//end for k1
+    }//end for k2
+
+    //Stage-3
+
+    Woct[i].resize(Ndofs);
+
+    for(int k3 = -P, di = 0; k3 < P; k3++) {
+      for(int k2 = -P; k2 < P; k2++) {
+        int shiftK2 = (k2 + P);
+
+        for(int k1 = -P; k1 < P; k1++, di++) {
+          int shiftK1 = (k1 + P);
+
+          Woct[i][2*di] = 0.0;
+          Woct[i][(2*di) + 1] = 0.0;
+
+          for(int j3 = 0; j3 < ptGridSizeWithinBox; j3++) {
+            double pz = aOz + ptGridOff + (ptGridH*(static_cast<double>(j3)));
+
+            double theta = lambda*(static_cast<double>(k3)*(cz - pz));
+
+            double rVal = tmp2R[shiftK2][shiftK1][j3];
+            double cVal = tmp2C[shiftK2][shiftK1][j3];
+
+            Woct[i][2*di] += ( (rVal*cos(theta)) - (cVal*sin(theta)) );
+            Woct[i][(2*di) + 1] += ( (rVal*sin(theta)) + (cVal*cos(theta)) );
+
+          }//end for j3
+        }//end for k1
+      }//end for k2
+    }//end for k3
 
   }//end for i
 
   PetscLogEventEnd(s2wEvent, 0, 0, 0, 0);
 
+  //S2W-Comm
+  PetscLogEventBegin(s2wCommEvent, 0, 0, 0, 0);
+
+  PetscLogEventEnd(s2wCommEvent, 0, 0, 0, 0);
+
+  //W2D
+  PetscLogEventBegin(w2dEvent, 0, 0, 0, 0);
+
+  std::vector<std::vector<double> > directResults(numLocalDirectOcts);
+
+  PetscLogEventEnd(w2dEvent, 0, 0, 0, 0);
+
+  //D2D
+  PetscLogEventBegin(d2dEvent, 0, 0, 0, 0);
+
+  PetscLogEventEnd(d2dEvent, 0, 0, 0, 0);
+
+  //W2L
   PetscLogEventBegin(w2lEvent, 0, 0, 0, 0);
 
   PetscLogEventEnd(w2lEvent, 0, 0, 0, 0);
 
-  //Loop over local octants and execute L2T in each octant
+  //D2L
+  PetscLogEventBegin(d2lEvent, 0, 0, 0, 0);
 
+  PetscLogEventEnd(d2lEvent, 0, 0, 0, 0);
+
+  //L2T-Comm
+  PetscLogEventBegin(l2tCommEvent, 0, 0, 0, 0);
+
+  PetscLogEventEnd(l2tCommEvent, 0, 0, 0, 0);
+
+  //L2T
   PetscLogEventBegin(l2tEvent, 0, 0, 0, 0);
 
   const double C0 = ( pow((0.5/sqrt(__PI__)), 3.0)*
       pow((static_cast<double>(L)/static_cast<double>(P)), 3.0) );
 
   std::vector<std::vector<double> > expandResults(numLocalExpandOcts);
-  std::vector<std::vector<double> > directResults(numLocalDirectOcts);
 
   PetscLogEventEnd(l2tEvent, 0, 0, 0, 0);
 
