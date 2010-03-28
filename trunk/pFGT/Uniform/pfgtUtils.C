@@ -653,8 +653,8 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
   VecZeroEntries(Wglobal);
   DAVecGetArrayDOF(da, Wglobal, &WgArr);
 
-  directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, lambda);
-  // sweepW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, lambda);
+  // directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, lambda);
+  sweepW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, lambda);
   
 
   DAVecRestoreArrayDOF(da, Wlocal, &WlArr);
@@ -931,11 +931,12 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               const int P, const double lambda) {
   
   // compute the first layer directly ...  
+  /*
   directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, 1, Ne, h, K, P, lambda); // XY Plane
   directW2L(WlArr, WgArr, xs, ys+1, zs, 1, ny-1, nz, Ne, h, K, P, lambda); // YZ Plane
   directW2L(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, lambda); // ZX Plane 
-  
-  // directLayer(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, lambda); // ZX Plane 
+  */
+  directLayer(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, lambda); // ZX Plane 
 
   // return;
 
