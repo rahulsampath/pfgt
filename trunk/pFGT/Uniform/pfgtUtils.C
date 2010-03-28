@@ -830,7 +830,9 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
   PetscFunctionReturn(0);
 }
 
-void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int zs, int nx, int ny, int nz, int Ne, double h, const int StencilWidth, const int PforType2, const double lambda) {
+void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, 
+    int xs, int ys, int zs, int nx, int ny, int nz, int Ne,
+    double h, const int StencilWidth, const int PforType2, const double lambda) {
   //Loop over local boxes and their Interaction lists and do a direct translation
   for(PetscInt zi = 0; zi < nz; zi++) {
     for(PetscInt yi = 0; yi < ny; yi++) {
@@ -872,16 +874,6 @@ void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int
           Ize = (Ne - 1);
         }
 
-#ifdef __DEBUG__
-        assert(Ixs >= gxs);
-        assert(Iys >= gys);
-        assert(Izs >= gzs);
-
-        assert(Ixe < (gxs + gnx));
-        assert(Iye < (gys + gny));
-        assert(Ize < (gzs + gnz));
-#endif
-
         //Loop over Ilist of box B
         for(int zj = Izs; zj <= Ize; zj++) {
           for(int yj = Iys; yj <= Iye; yj++) {
@@ -892,16 +884,14 @@ void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int
               double cCy =  h*(0.5 + static_cast<double>(yj));
               double cCz =  h*(0.5 + static_cast<double>(zj));
 
-              for(int k3 = -PforType2; k3 < PforType2; k3++) {
+              for(int k3 = -PforType2, di = 0; k3 < PforType2; k3++) {
                 int shiftK3 = (k3 + PforType2);
 
                 for(int k2 = -PforType2; k2 < PforType2; k2++) {
                   int shiftK2 = (k2 + PforType2);
 
-                  for(int k1 = -PforType2; k1 < PforType2; k1++) {
+                  for(int k1 = -PforType2; k1 < PforType2; k1++, di++) {
                     int shiftK1 = (k1 + PforType2);
-
-                    int di = ( (4*shiftK3*PforType2*PforType2) +  (2*shiftK2*PforType2) + shiftK1 );
 
                     double theta = lambda*( (static_cast<double>(k1)*(cBx - cCx)) +
                         (static_cast<double>(k2)*(cBy - cCy)) +

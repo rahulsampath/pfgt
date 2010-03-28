@@ -17,5 +17,5 @@ export delta=0.0625
 
 export numProcStr=1
 
-${MPIEXEC} -n ${numProcStr} ./runMe ${numPtsPerProc} ${fMag} ${epsilon} ${delta} ${writeOut} -log_summary >& testFGTout.${numPtsStr}.${numProcStr}.txt
+${MPIEXEC} -n ${numProcStr} ./runUniform ${numPtsPerProc} ${fMag} ${epsilon} ${delta} ${writeOut} -log_summary >& upfgt.${numPtsStr}.${numProcStr}.txt
 

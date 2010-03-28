@@ -7,7 +7,7 @@ include ${DENDRO_DIR}/makeVariables
 
 CEXT = C
 
-CFLAGS = -DPETSC_USE_LOG  -O3 -O2 -O1
+CFLAGS = -DPETSC_USE_LOG  -O3 
 
 include ./makefileCore
 
