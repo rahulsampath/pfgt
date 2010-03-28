@@ -653,8 +653,8 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
   VecZeroEntries(Wglobal);
   DAVecGetArrayDOF(da, Wglobal, &WgArr);
 
-  // directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, lambda);
-  sweepW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, lambda);
+  directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, lambda);
+  // sweepW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, lambda);
   
 
   DAVecRestoreArrayDOF(da, Wlocal, &WlArr);
@@ -934,6 +934,8 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
   directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, 1, Ne, h, K, P, lambda); // XY Plane
   directW2L(WlArr, WgArr, xs, ys+1, zs, 1, ny-1, nz, Ne, h, K, P, lambda); // YZ Plane
   directW2L(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, lambda); // ZX Plane 
+  
+  // directLayer(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, lambda); // ZX Plane 
 
   // return;
 
@@ -1303,7 +1305,9 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
     const int K, const int P, const double lambda) {
   
   int i,j,k;
-  double theta;
+  int p,q,r;
+  double theta, ct, st;
+
   // 0. compute directly for first box ... xs, ys, zs
   directW2L(WlArr, WgArr, xs, ys, zs, 1, 1, 1, Ne, h, K, P, lambda); 
 
@@ -1327,7 +1331,6 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
     }
   }
 
-  
   // 2. Now incrementaly for the XY plane ...
   k = zs;
   for (j=ys; j<ys+ny; j++) {
@@ -1344,21 +1347,75 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
             }
           }
         }
-
-      }
-      // Get from -X neighbour ... 
-      for(int k3 = -P, di = 0; k3 < P; k3++) {
-        for(int k2 = -P; k2 < P; k2++) {
-          for(int k1 = -P; k1 < P; k1++, di++) {
-            WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[6*di], fac[6*di+1] );
-            WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[6*di], fac[6*di+1] );
+        // add/sub layer ... will add/sub the XZ plane ...
+        for (r=-K; r<=K; r++) {
+          for (p=-K; p<=K; p++) {
+            for(int k3 = -P, di = 0; k3 < P; k3++) {
+              for(int k2 = -P; k2 < P; k2++) {
+                for(int k1 = -P; k1 < P; k1++, di++) {
+                  // add the layer ...
+                  q = j+K;
+                  if ( ( (j+K) < Ne) && ((i+p) >= 0) && ((i+p) < Ne) && ((k+r) >= 0) && ((k+r) < Ne) ) {  
+                    theta = lambda*h* ( (static_cast<double>( -K*k2 - p*k1 - r*k3 ) ) );
+                    ct = cos(theta);
+                    st = sin(theta);
+                    WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+r][j+K][i+p][2*di], WlArr[k+r][j+K][i+p][2*di+1],  ct, st );
+                    WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WlArr[k+r][j+K][i+p][2*di], WlArr[k+r][j+K][i+p][2*di+1],  ct, st );
+                  }
+                  // remove the layer 
+                  q = j-K-1;
+                  if ( ( (j-K-1) >= 0) && ((i+p) >= 0) && ((i+p) < Ne) && ((k+r) >= 0) && ((k+r) < Ne) ) {  
+                    theta = lambda*h* ( (static_cast<double>( (K+1)*k2 - p*k1 - r*k3 ) ) );
+                    ct = cos(theta);
+                    st = sin(theta);
+                    WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k+r][j-K-1][i+p][2*di], WlArr[k+r][j-K-1][i+p][2*di+1],  ct, st );
+                    WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WlArr[k+r][j-K-1][i+p][2*di], WlArr[k+r][j-K-1][i+p][2*di+1],  ct, st );
+                  }
+                } // k1
+              } // k2
+            } //k3
+          } //q
+        } // r
+      } else {
+        // Get from -X neighbour ... 
+        for(int k3 = -P, di = 0; k3 < P; k3++) {
+          for(int k2 = -P; k2 < P; k2++) {
+            for(int k1 = -P; k1 < P; k1++, di++) {
+              WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[6*di], fac[6*di+1] );
+              WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[6*di], fac[6*di+1] );
+            }
           }
         }
-      }
-      // add layer ...
-
-      // subtract layer ...
-
+        // add/sub layer ... will add/sub the YZ plane ...
+        for (r=-K; r<=K; r++) {
+          for (q=-K; q<=K; q++) {
+            for(int k3 = -P, di = 0; k3 < P; k3++) {
+              for(int k2 = -P; k2 < P; k2++) {
+                for(int k1 = -P; k1 < P; k1++, di++) {
+                  // add the layer ...
+                  p = i+K;
+                  if ( ( (i+K) < Ne) && ((j+q) >= 0) && ((j+q) < Ne) && ((k+r) >= 0) && ((k+r) < Ne) ) {  
+                    theta = lambda*h* ( (static_cast<double>( -K*k1 - q*k2 - r*k3 ) ) );
+                    ct = cos(theta);
+                    st = sin(theta);
+                    WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+r][j+q][i+K][2*di], WlArr[k+r][j+q][i+K][2*di+1],  ct, st );
+                    WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WlArr[k+r][j+q][i+K][2*di], WlArr[k+r][j+q][i+K][2*di+1],  ct, st );
+                  }
+                  // remove the layer 
+                  p = i-K-1;
+                  if ( ( (i-K-1) >= 0) && ((j+q) >= 0) && ((j+q) < Ne) && ((k+r) >= 0) && ((k+r) < Ne) ) {  
+                    theta = lambda*h* ( (static_cast<double>( (K+1)*k1 - q*k2 - r*k3 ) ) );
+                    ct = cos(theta);
+                    st = sin(theta);
+                    WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k+r][j+q][i-K-1][2*di], WlArr[k+r][j+q][i-K-1][2*di+1],  ct, st );
+                    WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WlArr[k+r][j+q][i-K-1][2*di], WlArr[k+r][j+q][i-K-1][2*di+1],  ct, st );
+                  }
+                } // k1
+              } // k2
+            } //k3
+          } //q
+        } // r
+      } // special 
     } // i
   } // j
 
@@ -1375,13 +1432,40 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
           }
         }
       }
-      // add layer ...
 
-      // subtract layer ...
+      // add/sub layer ... will add/sub the XY plane ...
+      for (q=-K; q<=K; q++) {
+        for (p=-K; p<=K; p++) {
+          for(int k3 = -P, di = 0; k3 < P; k3++) {
+            for(int k2 = -P; k2 < P; k2++) {
+              for(int k1 = -P; k1 < P; k1++, di++) {
+                // add the layer ...
+                r = k+K;
+                if ( ( (k+K) < Ne) && ((j+q) >= 0) && ((j+q) < Ne) && ((i+p) >= 0) && ((i+r) < Ne) ) {  
+                  theta = lambda*h* ( (static_cast<double>( -p*k1 - q*k2 - K*k3 ) ) );
+                  ct = cos(theta);
+                  st = sin(theta);
+                  WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+K][j+q][i+p][2*di], WlArr[k+K][j+q][i+p][2*di+1],  ct, st );
+                  WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WlArr[k+K][j+q][i+p][2*di], WlArr[k+K][j+q][i+p][2*di+1],  ct, st );
+                }
+                // remove the layer 
+                r = k-K-1;
+                if ( ( (k-K-1) >= 0) && ((j+q) >= 0) && ((j+q) < Ne) && ((i+p) >= 0) && ((i+p) < Ne) ) {  
+                  theta = lambda*h* ( (static_cast<double>( -p*k1 - q*k2 + (K+1)*k3 ) ) );
+                  ct = cos(theta);
+                  st = sin(theta);
+                  WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k-K-1][j+q][i+p][2*di], WlArr[k-K-1][j+q][i+p][2*di+1],  ct, st );
+                  WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WlArr[k-K-1][j+q][i+p][2*di], WlArr[k-K-1][j+q][i+p][2*di+1],  ct, st );
+                }
+              } // k1
+            } // k2
+          } //k3
+        } //q
+      } // r
 
-    } // i
-  } // j
-  
+    } // j
+  } // k
+
   // 4. And finally the ZX plane
   j = xs;
   for (k=zs+1; k<zs+nz; k++) {
@@ -1395,10 +1479,35 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
           }
         }
       }
-      // add layer ...
-
-      // subtract layer ...
-
+      // add/sub layer ... will add/sub the XY plane ...
+      for (q=-K; q<=K; q++) {
+        for (p=-K; p<=K; p++) {
+          for(int k3 = -P, di = 0; k3 < P; k3++) {
+            for(int k2 = -P; k2 < P; k2++) {
+              for(int k1 = -P; k1 < P; k1++, di++) {
+                // add the layer ...
+                r = k+K;
+                if ( ( (k+K) < Ne) && ((j+q) >= 0) && ((j+q) < Ne) && ((i+p) >= 0) && ((i+r) < Ne) ) {  
+                  theta = lambda*h* ( (static_cast<double>( -p*k1 - q*k2 - K*k3 ) ) );
+                  ct = cos(theta);
+                  st = sin(theta);
+                  WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+K][j+q][i+p][2*di], WlArr[k+K][j+q][i+p][2*di+1],  ct, st );
+                  WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WlArr[k+K][j+q][i+p][2*di], WlArr[k+K][j+q][i+p][2*di+1],  ct, st );
+                }
+                // remove the layer 
+                r = k-K-1;
+                if ( ( (k-K-1) >= 0) && ((j+q) >= 0) && ((j+q) < Ne) && ((i+p) >= 0) && ((i+p) < Ne) ) {  
+                  theta = lambda*h* ( (static_cast<double>( -p*k1 - q*k2 + (K+1)*k3 ) ) );
+                  ct = cos(theta);
+                  st = sin(theta);
+                  WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k-K-1][j+q][i+p][2*di], WlArr[k-K-1][j+q][i+p][2*di+1],  ct, st );
+                  WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WlArr[k-K-1][j+q][i+p][2*di], WlArr[k-K-1][j+q][i+p][2*di+1],  ct, st );
+                }
+              } // k1
+            } // k2
+          } //k3
+        } //q
+      } // r
     } // i
   } // j
 
