@@ -86,6 +86,7 @@ int main(int argc, char** argv) {
   const unsigned int seed = (SEEDA + (SEEDB*rank));
   srand48(seed);
 
+  //Generate gaussian distribution for the octree
   std::vector<double> pts;
   pts.resize(3*numOctPtsPerProc);
   for(unsigned int i = 0; i < (3*numOctPtsPerProc); i++) {
@@ -127,9 +128,13 @@ int main(int argc, char** argv) {
   gSize[1] = 1.0;
   gSize[2] = 1.0;
 
+  //construct the octree
   linOct.clear();
   ot::points2Octree(pts, gSize, linOct, dim, maxDepth, maxNumPts, MPI_COMM_WORLD);
   pts.clear();
+
+  //FGT
+  pfgt(linOct, maxDepth, delta, fMag, numFgtPtsPerProc, P, L, K, writeOut);
 
   PetscFinalize();
 
