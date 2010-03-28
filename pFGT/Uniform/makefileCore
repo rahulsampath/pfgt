@@ -1,0 +1,20 @@
+
+INCLUDE = ${PETSC_INCLUDE} 
+#${DENDRO_INCLUDE} ${PETSC_INCLUDE} 
+
+LIBS = ${PETSC_LIB} 
+#${DENDRO_LIB} ${PETSC_LIB} 
+
+all : runMe
+
+%.o: %.$(CEXT)
+	$(PCC) -c $(CFLAGS) $(INCLUDE) $< -o $@
+
+runMe : ./runUniformPFGT.o ./pfgtUtils.o 
+	$(PCC) $(CFLAGS) $^ -o $@ $(LIBS) 
+
+clean :
+	rm -rf runMe
+	rm -rf *.o
+
+
