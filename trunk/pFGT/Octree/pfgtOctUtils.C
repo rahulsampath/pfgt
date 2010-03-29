@@ -61,6 +61,10 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
       PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, Ndofs, K,
       PETSC_NULL, PETSC_NULL, PETSC_NULL, &da);
 
+  if(!rank) {
+    std::cout<<"Created DA"<<std::endl;
+  }
+
   //Split octree into 2 sets
   std::vector<ot::TreeNode> expandTree;
   std::vector<ot::TreeNode> directTree;
@@ -80,6 +84,10 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     }
   }//end for i
   linOct.clear();
+
+  if(!rank) {
+    std::cout<<"Marked Octants"<<std::endl;
+  }
 
   const unsigned int numLocalExpandOcts = expandTree.size();
   const unsigned int numLocalDirectOcts = directTree.size();
@@ -246,6 +254,10 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   }//end for i
 
   PetscLogEventEnd(s2wEvent, 0, 0, 0, 0);
+
+  if(!rank) {
+    std::cout<<"Finished S2W"<<std::endl;
+  }
 
   //S2W-Comm
   PetscLogEventBegin(s2wCommEvent, 0, 0, 0, 0);
@@ -433,6 +445,10 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   PetscLogEventEnd(s2wCommEvent, 0, 0, 0, 0);
 
+  if(!rank) {
+    std::cout<<"Finished S2Wcomm"<<std::endl;
+  }
+
   const double C0 = ( pow((0.5/sqrt(__PI__)), 3.0)*
       pow((static_cast<double>(L)/static_cast<double>(P)), 3.0) );
 
@@ -443,10 +459,18 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   PetscLogEventEnd(w2dEvent, 0, 0, 0, 0);
 
+  if(!rank) {
+    std::cout<<"Finished W2D"<<std::endl;
+  }
+
   //D2D
   PetscLogEventBegin(d2dEvent, 0, 0, 0, 0);
 
   PetscLogEventEnd(d2dEvent, 0, 0, 0, 0);
+
+  if(!rank) {
+    std::cout<<"Finished D2D"<<std::endl;
+  }
 
   //W2L
   PetscLogEventBegin(w2lEvent, 0, 0, 0, 0);
@@ -461,15 +485,27 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   PetscLogEventEnd(w2lEvent, 0, 0, 0, 0);
 
+  if(!rank) {
+    std::cout<<"Finished W2L"<<std::endl;
+  }
+
   //D2L
   PetscLogEventBegin(d2lEvent, 0, 0, 0, 0);
 
   PetscLogEventEnd(d2lEvent, 0, 0, 0, 0);
 
+  if(!rank) {
+    std::cout<<"Finished D2L"<<std::endl;
+  }
+
   //L2T-Comm
   PetscLogEventBegin(l2tCommEvent, 0, 0, 0, 0);
 
   PetscLogEventEnd(l2tCommEvent, 0, 0, 0, 0);
+
+  if(!rank) {
+    std::cout<<"Finished L2Tcomm"<<std::endl;
+  }
 
   //L2T
   PetscLogEventBegin(l2tEvent, 0, 0, 0, 0);
@@ -477,6 +513,10 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   std::vector<std::vector<double> > expandResults(numLocalExpandOcts);
 
   PetscLogEventEnd(l2tEvent, 0, 0, 0, 0);
+
+  if(!rank) {
+    std::cout<<"Finished L2T"<<std::endl;
+  }
 
   DADestroy(da);
 
