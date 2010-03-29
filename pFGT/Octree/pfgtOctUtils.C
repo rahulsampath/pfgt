@@ -437,9 +437,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   sendFgtVals.clear();
   recvFgtVals.clear();
 
-  sendFgtIds.clear();
-  recvFgtIds.clear();
-
   DAVecRestoreArrayDOF(da, Wglobal, &WgArr);
 
   PetscLogEventEnd(s2wCommEvent, 0, 0, 0, 0);
@@ -511,6 +508,9 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   PetscLogEventBegin(l2tCommEvent, 0, 0, 0, 0);
 
   DAVecRestoreArrayDOF(da, Wglobal, &WgArr);
+
+  sendFgtIds.clear();
+  recvFgtIds.clear();
 
   PetscLogEventEnd(l2tCommEvent, 0, 0, 0, 0);
 
