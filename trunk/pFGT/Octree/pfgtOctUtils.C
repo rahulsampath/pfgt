@@ -59,15 +59,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     std::cout<<"StencilWidth = "<< K <<std::endl;
   }
 
-  DA da;
-  DACreate3d(comm, DA_NONPERIODIC, DA_STENCIL_BOX, Ne, Ne, Ne,
-      PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, Ndofs, K,
-      PETSC_NULL, PETSC_NULL, PETSC_NULL, &da);
-
-  if(!rank) {
-    std::cout<<"Created DA"<<std::endl;
-  }
-
   //Split octree into 2 sets
   std::vector<ot::TreeNode> expandTree;
   std::vector<ot::TreeNode> directTree;
@@ -286,6 +277,17 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
       Wfgt[fgtIndex][j] += Woct[i][j];
     }//end for j
   }//end for i
+
+  Woct.clear();
+
+  DA da;
+  DACreate3d(comm, DA_NONPERIODIC, DA_STENCIL_BOX, Ne, Ne, Ne,
+      PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, Ndofs, K,
+      PETSC_NULL, PETSC_NULL, PETSC_NULL, &da);
+
+  if(!rank) {
+    std::cout<<"Created DA"<<std::endl;
+  }
 
   //Do Not Free lx, ly, lz. They are managed by DA
   const PetscInt* lx = NULL;
@@ -552,6 +554,149 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   PetscLogEventBegin(l2tEvent, 0, 0, 0, 0);
 
   std::vector<std::vector<double> > expandResults(numLocalExpandOcts);
+
+  for(unsigned int i = 0; i < numLocalExpandOcts; i++) {
+    unsigned int lev = expandTree[i].getLevel();
+    double hCurrOct = hOctFac*static_cast<double>(1u << (maxDepth - lev));
+
+    double ptGridOff = 0.1*hCurrOct;
+    double ptGridH = 0.8*hCurrOct/(static_cast<double>(ptGridSizeWithinBox) - 1.0);
+
+    //Anchor of the octant
+    unsigned int anchX = expandTree[i].getX();
+    unsigned int anchY = expandTree[i].getY();
+    unsigned int anchZ = expandTree[i].getZ();
+
+    double aOx =  hOctFac*(static_cast<double>(anchX));
+    double aOy =  hOctFac*(static_cast<double>(anchY));
+    double aOz =  hOctFac*(static_cast<double>(anchZ));
+
+    unsigned int fgtIndex = oct2fgtIdmap[i];
+    unsigned int fgtId = uniqueOct2fgtIdmap[fgtIndex];
+    unsigned int fgtzid = (fgtId/(Ne*Ne));
+    unsigned int fgtyid = ((fgtId%(Ne*Ne))/Ne);
+    unsigned int fgtxid = ((fgtId%(Ne*Ne))%Ne);
+
+    //Anchor of the FGT box
+    double aFx = hRg*static_cast<double>(fgtxid);
+    double aFy = hRg*static_cast<double>(fgtyid);
+    double aFz = hRg*static_cast<double>(fgtzid);
+
+    //Center of the FGT box
+    double halfH = (0.5*hRg);
+    double cx =  aFx + halfH;
+    double cy =  aFy + halfH;
+    double cz =  aFz + halfH;
+
+    //Tensor Product Acceleration
+
+    //Stage - 1
+
+    tmp1R.resize(ptGridSizeWithinBox);
+    tmp1C.resize(ptGridSizeWithinBox);
+    for(unsigned int k1 = 0; k1 < ptGridSizeWithinBox; k1++) {
+      tmp1R[k1].resize(2*P);
+      tmp1C[k1].resize(2*P);
+
+      double px = aOx + ptGridOff + (ptGridH*(static_cast<double>(k1)));
+
+      for(int j3 = -P, di = 0; j3 < P; j3++) {
+        int shiftJ3 = (j3 + P);
+
+        tmp1R[k1][shiftJ3].resize(2*P);
+        tmp1C[k1][shiftJ3].resize(2*P);
+
+        for(int j2 = -P; j2 < P; j2++) {
+          int shiftJ2 = (j2 + P);
+
+          double rSum = 0.0;
+          double cSum = 0.0;
+
+          for(int j1 = -P; j1 < P; j1++, di++) {
+            double theta = lambda*(static_cast<double>(j1)*(px - cx)) ;
+
+            double a = Wfgt[fgtIndex][2*di];
+            double b = Wfgt[fgtIndex][(2*di) + 1];
+            double c = cos(theta);
+            double d = sin(theta);
+            double factor = exp(-lambda*lambda*static_cast<double>( (j1*j1) + (j2*j2) + (j3*j3) )/4.0);
+
+            rSum += (factor*( (a*c) - (b*d) ));
+            cSum += (factor*( (a*d) + (b*c) ));
+          }//end for j1
+
+          tmp1R[k1][shiftJ3][shiftJ2] = (C0*rSum);
+          tmp1C[k1][shiftJ3][shiftJ2] = (C0*cSum);
+        }//end for j2
+      }//end for j3
+    }//end for k1
+
+    //Stage - 2
+
+    tmp2R.resize(ptGridSizeWithinBox);
+    tmp2C.resize(ptGridSizeWithinBox);
+    for(unsigned int k2 = 0; k2 < ptGridSizeWithinBox; k2++) {
+      tmp2R[k2].resize(ptGridSizeWithinBox);
+      tmp2C[k2].resize(ptGridSizeWithinBox);
+
+      double py = aOy + ptGridOff + (ptGridH*(static_cast<double>(k2)));
+
+      for(unsigned int k1 = 0; k1 < ptGridSizeWithinBox; k1++) {
+        tmp2R[k2][k1].resize(2*P);
+        tmp2C[k2][k1].resize(2*P);
+
+        for(int j3 = -P; j3 < P; j3++) {
+          int shiftJ3 = (j3 + P);
+
+          tmp2R[k2][k1][shiftJ3] = 0.0;
+          tmp2C[k2][k1][shiftJ3] = 0.0;
+
+          for(int j2 = -P; j2 < P; j2++) {
+            int shiftJ2 = (j2 + P);
+
+            double theta = lambda*(static_cast<double>(j2)*(py - cy)) ;
+
+            double a = tmp1R[k1][shiftJ3][shiftJ2];
+            double b = tmp1C[k1][shiftJ3][shiftJ2];
+            double c = cos(theta);
+            double d = sin(theta);
+
+            tmp2R[k2][k1][shiftJ3] += ( (a*c) - (b*d) );
+            tmp2C[k2][k1][shiftJ3] += ( (a*d) + (b*c) );
+          }//end for j2
+        }//end for j3
+      }//end for k1
+    }//end for k2
+
+    //Stage - 3
+
+    expandResults[i].resize(ptGridSizeWithinBox*ptGridSizeWithinBox*ptGridSizeWithinBox);
+
+    for(unsigned int k3 = 0, pt = 0; k3 < ptGridSizeWithinBox; k3++) {
+      double pz = aOz + ptGridOff + (ptGridH*(static_cast<double>(k3)));
+
+      for(unsigned int k2 = 0; k2 < ptGridSizeWithinBox; k2++) {
+        for(unsigned int k1 = 0; k1 < ptGridSizeWithinBox; k1++, pt++) {
+
+          expandResults[i][pt] = 0.0;
+
+          for(int j3 = -P; j3 < P; j3++) {
+            int shiftJ3 = (j3 + P);
+
+            double theta = lambda*(static_cast<double>(j3)*(pz - cz)) ;
+
+            double a = tmp2R[k2][k1][shiftJ3];
+            double b = tmp2C[k2][k1][shiftJ3];
+            double c = cos(theta);
+            double d = sin(theta);
+
+            expandResults[i][pt] += ( (a*c) - (b*d) );
+          }//end for j3
+        }//end for k1
+      }//end for k2
+    }//end for k3
+
+  }//end for i
 
   PetscLogEventEnd(l2tEvent, 0, 0, 0, 0);
 
