@@ -479,7 +479,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   DAGlobalToLocalBegin(da, Wglobal, INSERT_VALUES, Wlocal);
   DAGlobalToLocalEnd(da, Wglobal, INSERT_VALUES, Wlocal);
-  
+
   //Sequential W2L
   PetscScalar**** WlArr;
   DAVecGetArrayDOF(da, Wlocal, &WlArr);
@@ -489,7 +489,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   // directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, lambda);
   sweepW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, hRg, K, P, lambda);
-  
+
   DAVecRestoreArrayDOF(da, Wlocal, &WlArr);
 
   PetscLogEventEnd(w2lEvent, 0, 0, 0, 0);
@@ -510,6 +510,8 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   //L2T-Comm
   PetscLogEventBegin(l2tCommEvent, 0, 0, 0, 0);
 
+  DAVecRestoreArrayDOF(da, Wglobal, &WgArr);
+
   PetscLogEventEnd(l2tCommEvent, 0, 0, 0, 0);
 
   if(!rank) {
@@ -527,10 +529,10 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     std::cout<<"Finished L2T"<<std::endl;
   }
 
-  DADestroy(da);
-
   VecDestroy(Wlocal);
   VecDestroy(Wglobal);
+
+  DADestroy(da);
 
   if(writeOut) {
     char fname[256];
@@ -596,10 +598,10 @@ void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int
 
         //Center of the box B
         /*
-        double cBx =  h*(0.5 + static_cast<double>(xi + xs));
-        double cBy =  h*(0.5 + static_cast<double>(yi + ys));
-        double cBz =  h*(0.5 + static_cast<double>(zi + zs));
-        */
+           double cBx =  h*(0.5 + static_cast<double>(xi + xs));
+           double cBy =  h*(0.5 + static_cast<double>(yi + ys));
+           double cBz =  h*(0.5 + static_cast<double>(zi + zs));
+           */
         //Bounds for Ilist of box B
         int Ixs = xi + xs - StencilWidth;
         int Ixe = xi + xs + StencilWidth;
@@ -648,10 +650,10 @@ void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int
 
               //Center of the box C
               /*
-              double cCx =  h*(0.5 + static_cast<double>(xj));
-              double cCy =  h*(0.5 + static_cast<double>(yj));
-              double cCz =  h*(0.5 + static_cast<double>(zj));
-              */
+                 double cCx =  h*(0.5 + static_cast<double>(xj));
+                 double cCy =  h*(0.5 + static_cast<double>(yj));
+                 double cCz =  h*(0.5 + static_cast<double>(zj));
+                 */
 
               for(int k3 = -P, di = 0; k3 < P; k3++) {
                 for(int k2 = -P; k2 < P; k2++) {
@@ -676,17 +678,17 @@ void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int
 }
 
 void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, 
-              int xs, int ys, int zs, 
-              int nx, int ny, int nz, 
-              int Ne, double h, const int K, 
-              const int P, const double lambda) {
-  
+    int xs, int ys, int zs, 
+    int nx, int ny, int nz, 
+    int Ne, double h, const int K, 
+    const int P, const double lambda) {
+
   // compute the first layer directly ...  
   /*
-  directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, 1, Ne, h, K, P, lambda); // XY Plane
-  directW2L(WlArr, WgArr, xs, ys+1, zs, 1, ny-1, nz, Ne, h, K, P, lambda); // YZ Plane
-  directW2L(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, lambda); // ZX Plane 
-  */
+     directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, 1, Ne, h, K, P, lambda); // XY Plane
+     directW2L(WlArr, WgArr, xs, ys+1, zs, 1, ny-1, nz, Ne, h, K, P, lambda); // YZ Plane
+     directW2L(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, lambda); // ZX Plane 
+     */
   directLayer(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, lambda); // ZX Plane 
 
   // return;
@@ -744,7 +746,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
         // At this stage ...  (i,j,k) needs to be computed and (i-1,j-1,k-1),
         // and the other 6 boxes between them should have already been
         // computed.
-        
+
         for(int k3 = -P, di = 0; k3 < P; k3++) {
           for(int k2 = -P; k2 < P; k2++) {
             for(int k1 = -P; k1 < P; k1++, di++) {
@@ -869,7 +871,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
           } // k2 
         } // k1 
 
-         // now the corner corrections ...
+        // now the corner corrections ...
         for(int k3 = -P, di = 0; k3 < P; k3++) {
           for(int k2 = -P; k2 < P; k2++) {
             for(int k1 = -P; k1 < P; k1++, di++) {
@@ -970,11 +972,11 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
           } // k2 
         } // k1 
 
-         // now the corner corrections ...
+        // now the corner corrections ...
         for(int k3 = -P, di = 0; k3 < P; k3++) {
           for(int k2 = -P; k2 < P; k2++) {
             for(int k1 = -P; k1 < P; k1++, di++) {
-               // corner 000
+              // corner 000
               if ( ( (k-K-1) >=0) && ((j-K-1) >=0) && ((i-K-1) >=0) ) {  
                 theta = lambda*h* ( (static_cast<double>((K+1)*(k1 + k2 + k3)) ) );
                 ct = cos(theta);
@@ -1055,7 +1057,7 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
     int nx, int ny, int nz, 
     int Ne, double h, 
     const int K, const int P, const double lambda) {
-  
+
   int i,j,k;
   int p,q,r;
   double theta, ct, st;
@@ -1082,10 +1084,10 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
       }
     }
   }
-  
+
   // printf("Precomputed facs\n");
   // MPI_Barrier(MPI_COMM_WORLD);
- 
+
   // 2. Now incrementaly for the XY plane ...
   k = zs;
   for (j=ys; j<ys+ny; j++) {
@@ -1222,7 +1224,7 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
 
     } // j
   } // k
-  
+
   // MPI_Barrier(MPI_COMM_WORLD);
   // printf("Done plane YZ\n");
   // MPI_Barrier(MPI_COMM_WORLD);
