@@ -55,13 +55,13 @@ int main(int argc, char** argv) {
 
   if(argc < 7) {
     if(!rank) {
-      std::cout<<"Usage: exe numOctPtsPerProc numFgtPtsPerProc fMag epsilon delta writeOut"<<std::endl;
+      std::cout<<"Usage: exe numOctPtsPerProc numFgtPtsPerDimPerOct fMag epsilon delta writeOut"<<std::endl;
     }
     PetscFinalize();
   }
 
   unsigned int numOctPtsPerProc = atoi(argv[1]);
-  unsigned int numFgtPtsPerProc = atoi(argv[2]);
+  unsigned int numFgtPtsPerDimPerOct = atoi(argv[2]);
   double fMag = atof(argv[3]);
   double epsilon = atof(argv[4]);  
   double delta = atof(argv[5]);
@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
   }
 
   //FGT
-  pfgt(linOct, maxDepth, delta, fMag, numFgtPtsPerProc, P, L, K, writeOut);
+  pfgt(linOct, maxDepth, delta, fMag, numFgtPtsPerDimPerOct, P, L, K, writeOut);
 
   PetscFinalize();
 
