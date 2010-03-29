@@ -86,7 +86,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
       directTree.push_back(linOct[i]);
     }
   }//end for i
-  linOct.clear();
 
   if(!rank) {
     std::cout<<"Marked Octants"<<std::endl;
@@ -280,7 +279,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     assert(idxFound);
     assert(uniqueOct2fgtIdmap[fgtIndex] == fgtId);
 
-    //Reset map value 
+    //Reset map value  
     oct2fgtIdmap[i] = fgtIndex;
 
     for(unsigned int j = 0; j < Ndofs; j++) {
@@ -356,7 +355,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
       unsigned int boxId = ( ((fgtzid - zs)*nx*ny) + ((fgtyid - ys)*nx) + (fgtxid - xs) );
       isFGTboxEmpty[boxId] = false;
       for(unsigned int j = 0; j < Ndofs; j++) {
-        WgArr[fgtzid][fgtyid][fgtxid][j] += Wfgt[i][j];
+        WgArr[fgtzid][fgtyid][fgtxid][j] = Wfgt[i][j];
       }//end for j
     } else {
       sendCnts[part[i]]++;
@@ -504,13 +503,44 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   //L2T-Comm
   PetscLogEventBegin(l2tCommEvent, 0, 0, 0, 0);
 
+  for(unsigned int i = 0; i < recvFgtIds.size(); i++) {
+    unsigned int fgtId = recvFgtIds[i];
+    unsigned int fgtzid = (fgtId/(Ne*Ne));
+    unsigned int fgtyid = ((fgtId%(Ne*Ne))/Ne);
+    unsigned int fgtxid = ((fgtId%(Ne*Ne))%Ne);
+
+    for(unsigned int j = 0; j < Ndofs; j++) {
+      recvFgtVals[(i*Ndofs) + j] = WgArr[fgtzid][fgtyid][fgtxid][j];
+    }//end for j
+  }//end for i
+
+  //Reverse of S2W comm
+  MPI_Alltoallv( (&(*(recvFgtVals.begin()))), (&(*(recvCnts.begin()))), (&(*(recvDisps.begin()))), MPI_DOUBLE,
+      (&(*(sendFgtVals.begin()))), (&(*(sendCnts.begin()))), (&(*(sendDisps.begin()))), MPI_DOUBLE, comm );
+
+  for(int i = 0; i < npes; i++) {
+    sendCnts[i] = 0;
+  }//end for i
+
+  for(unsigned int i = 0; i < Wfgt.size(); i++) {
+    if(part[i] == rank) {
+      unsigned int fgtId = uniqueOct2fgtIdmap[i];
+      unsigned int fgtzid = (fgtId/(Ne*Ne));
+      unsigned int fgtyid = ((fgtId%(Ne*Ne))/Ne);
+      unsigned int fgtxid = ((fgtId%(Ne*Ne))%Ne);
+
+      for(unsigned int j = 0; j < Ndofs; j++) {
+        Wfgt[i][j] = WgArr[fgtzid][fgtyid][fgtxid][j];
+      }//end for j
+    } else {
+      for(unsigned int j = 0; j < Ndofs; j++) {
+        Wfgt[i][j] = sendFgtVals[ sendDisps[part[i]] + sendCnts[part[i]] + j ];
+      }//end for j
+      sendCnts[part[i]] += Ndofs;
+    }
+  }//end for i
+
   DAVecRestoreArrayDOF(da, Wglobal, &WgArr);
-
-  sendFgtVals.clear();
-  recvFgtVals.clear();
-
-  sendFgtIds.clear();
-  recvFgtIds.clear();
 
   PetscLogEventEnd(l2tCommEvent, 0, 0, 0, 0);
 
