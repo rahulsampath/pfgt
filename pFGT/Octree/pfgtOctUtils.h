@@ -7,7 +7,7 @@
 #include <vector>
 
 PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
-    double delta, double fMag, unsigned int numFgtPtsPerProc,
+    double delta, double fMag, unsigned int numFgtPtsPerDimPerProc,
     int P, int L, int K, int writeOut);
 
 

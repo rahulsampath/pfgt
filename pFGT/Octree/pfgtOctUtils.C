@@ -22,7 +22,7 @@ extern PetscLogEvent l2tEvent;
 #define __PI__ 3.14159265
 
 PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
-    double delta, double fMag, unsigned int numPtsPerProc, 
+    double delta, double fMag, unsigned int ptGridSizeWithinBox, 
     int P, int L, int K, int writeOut)
 {
   PetscFunctionBegin;
@@ -94,15 +94,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   //Tensor-Product grid on each octant
 
-  //Maximum value
-  unsigned int numPtsPerBox = numPtsPerProc/numLocalOcts;
-
-  if(!rank) {
-    std::cout<<" NumPtsPerBox = "<< numPtsPerBox << std::endl;
-  }
-
   //Tensor-Product Grid
-  const unsigned int ptGridSizeWithinBox = static_cast<unsigned int>(floor(pow( numPtsPerBox, (1.0/3.0) )));
   long long trueLocalNumPts = ptGridSizeWithinBox*ptGridSizeWithinBox*ptGridSizeWithinBox*numLocalOcts;
 
   //S2W
