@@ -322,6 +322,10 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     part[i] = (((zRes*npy) + yRes)*npx) + xRes;
   }//end for i
 
+  Vec Wglobal;
+  DACreateGlobalVector(da, &Wglobal);
+  VecZeroEntries(Wglobal);
+
   PetscLogEventEnd(s2wCommEvent, 0, 0, 0, 0);
 
   const double C0 = ( pow((0.5/sqrt(__PI__)), 3.0)*
@@ -341,6 +345,14 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   //W2L
   PetscLogEventBegin(w2lEvent, 0, 0, 0, 0);
+
+  Vec Wlocal;
+  DACreateLocalVector(da, &Wlocal);
+
+  DAGlobalToLocalBegin(da, Wglobal, INSERT_VALUES, Wlocal);
+  DAGlobalToLocalEnd(da, Wglobal, INSERT_VALUES, Wlocal);
+
+  //Sequential W2L
 
   PetscLogEventEnd(w2lEvent, 0, 0, 0, 0);
 
@@ -362,6 +374,9 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   PetscLogEventEnd(l2tEvent, 0, 0, 0, 0);
 
   DADestroy(da);
+
+  VecDestroy(Wlocal);
+  VecDestroy(Wglobal);
 
   if(writeOut) {
     char fname[256];
