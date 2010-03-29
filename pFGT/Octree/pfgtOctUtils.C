@@ -61,37 +61,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
       PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, Ndofs, K,
       PETSC_NULL, PETSC_NULL, PETSC_NULL, &da);
 
-  PetscInt xs, ys, zs, nx, ny, nz;
-  DAGetCorners(da, &xs, &ys, &zs, &nx, &ny, &nz);
-
-  //Do Not Free lx, ly, lz. They are managed by DA
-  const PetscInt* lx = NULL;
-  const PetscInt* ly = NULL;
-  const PetscInt* lz = NULL;
-  PetscInt npx, npy, npz;
-
-  //Information about DA partition
-  DAGetOwnershipRanges(da, &lx, &ly, &lz);
-  DAGetInfo(da, PETSC_NULL, PETSC_NULL, PETSC_NULL, PETSC_NULL, &npx, &npy, &npz,	
-      PETSC_NULL, PETSC_NULL, PETSC_NULL, PETSC_NULL);
-
-  std::vector<unsigned int> scanLx(npx);
-  std::vector<unsigned int> scanLy(npy);
-  std::vector<unsigned int> scanLz(npz);
-
-  scanLx[0] = 0.0;
-  scanLy[0] = 0.0;
-  scanLz[0] = 0.0;
-  for(int i = 1; i < npx; i++) {
-    scanLx[i] = scanLx[i - 1] + lx[i - 1];
-  }
-  for(int i = 1; i < npy; i++) {
-    scanLy[i] = scanLy[i - 1] + ly[i - 1];
-  }
-  for(int i = 1; i < npz; i++) {
-    scanLz[i] = scanLz[i - 1] + lz[i - 1];
-  }
-
   //Split octree into 2 sets
   std::vector<ot::TreeNode> expandTree;
   std::vector<ot::TreeNode> directTree;
@@ -306,6 +275,42 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
       Wfgt[fgtIndex][j] += Woct[i][j];
     }//end for j
   }//end for i
+
+  PetscInt xs, ys, zs, nx, ny, nz;
+  DAGetCorners(da, &xs, &ys, &zs, &nx, &ny, &nz);
+
+  std::vector<bool> isFGTboxEmpty(nx*ny*nz);
+  for(unsigned int i = 0; i < isFGTboxEmpty.size(); i++) {
+    isFGTboxEmpty[i] = true;
+  }//end for i
+
+  //Do Not Free lx, ly, lz. They are managed by DA
+  const PetscInt* lx = NULL;
+  const PetscInt* ly = NULL;
+  const PetscInt* lz = NULL;
+  PetscInt npx, npy, npz;
+
+  //Information about DA partition
+  DAGetOwnershipRanges(da, &lx, &ly, &lz);
+  DAGetInfo(da, PETSC_NULL, PETSC_NULL, PETSC_NULL, PETSC_NULL, &npx, &npy, &npz,	
+      PETSC_NULL, PETSC_NULL, PETSC_NULL, PETSC_NULL);
+
+  std::vector<unsigned int> scanLx(npx);
+  std::vector<unsigned int> scanLy(npy);
+  std::vector<unsigned int> scanLz(npz);
+
+  scanLx[0] = 0.0;
+  scanLy[0] = 0.0;
+  scanLz[0] = 0.0;
+  for(int i = 1; i < npx; i++) {
+    scanLx[i] = scanLx[i - 1] + lx[i - 1];
+  }
+  for(int i = 1; i < npy; i++) {
+    scanLy[i] = scanLy[i - 1] + ly[i - 1];
+  }
+  for(int i = 1; i < npz; i++) {
+    scanLz[i] = scanLz[i - 1] + lz[i - 1];
+  }
 
   Vec Wglobal;
   DACreateGlobalVector(da, &Wglobal);
