@@ -307,9 +307,17 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     }//end for j
   }//end for i
 
-  std::vector<int> sendCnt(npes); 
+  Vec Wglobal;
+  DACreateGlobalVector(da, &Wglobal);
+
+  VecZeroEntries(Wglobal);
+
+  PetscScalar**** WgArr;
+  DAVecGetArrayDOF(da, Wglobal, &WgArr);
+
+  std::vector<int> sendCnts(npes); 
   for(int i = 0; i < npes; i++) {
-    sendCnt[i] = 0;
+    sendCnts[i] = 0;
   }//end for i
 
   std::vector<int> part(Wfgt.size());
@@ -326,12 +334,27 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
     part[i] = (((zRes*npy) + yRes)*npx) + xRes;
 
-    sendCnt[part[i]]++;
+    if(part[i] == rank) {
+    } else {
+      sendCnts[part[i]]++;
+    }
   }//end for i
 
-  Vec Wglobal;
-  DACreateGlobalVector(da, &Wglobal);
-  VecZeroEntries(Wglobal);
+  std::vector<int> recvCnts(npes); 
+
+  MPI_Alltoall( (&(*(sendCnts.begin()))), 1, MPI_INT,
+      (&(*(recvCnts.begin()))), 1, MPI_INT, comm );
+
+  std::vector<int> sendDisps(npes);
+  std::vector<int> recvDisps(npes);
+  sendDisps[0] = 0;
+  recvDisps[0] = 0;
+  for(int i = 1; i < npes; i++) {
+    sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
+    recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
+  }//end for i
+
+  DAVecRestoreArrayDOF(da, Wglobal, &WgArr);
 
   PetscLogEventEnd(s2wCommEvent, 0, 0, 0, 0);
 
