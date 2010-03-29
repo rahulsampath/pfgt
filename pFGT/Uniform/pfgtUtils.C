@@ -602,8 +602,6 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
         //Stage-3
 
         for(int k3 = -P, di = 0; k3 < P; k3++) {
-          // int shiftK3 = (k3 + P);
-
           for(int k2 = -P; k2 < P; k2++) {
             int shiftK2 = (k2 + P);
 
@@ -655,7 +653,7 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
 
   // directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, lambda);
   sweepW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, lambda);
-  
+
 
   DAVecRestoreArrayDOF(da, Wlocal, &WlArr);
 
@@ -694,6 +692,8 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
           tmp1R[k1].resize(2*P);
           tmp1C[k1].resize(2*P);
 
+          double px = ax + ptGridOff + (ptGridH*(static_cast<double>(k1)));
+
           for(int j3 = -P, di = 0; j3 < P; j3++) {
             int shiftJ3 = (j3 + P);
 
@@ -707,10 +707,6 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
               double cSum = 0.0;
 
               for(int j1 = -P; j1 < P; j1++, di++) {
-                // int shiftJ1 = (j1 + P);
-
-                double px = ax + ptGridOff + (ptGridH*(static_cast<double>(k1)));
-
                 double theta = lambda*(static_cast<double>(j1)*(px - cx)) ;
 
                 double a = WgArr[zi + zs][yi + ys][xi + xs][2*di];
@@ -737,6 +733,8 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
           tmp2R[k2].resize(ptGridSizeWithinBox);
           tmp2C[k2].resize(ptGridSizeWithinBox);
 
+          double py = ay + ptGridOff + (ptGridH*(static_cast<double>(k2)));
+
           for(unsigned int k1 = 0; k1 < ptGridSizeWithinBox; k1++) {
             tmp2R[k2][k1].resize(2*P);
             tmp2C[k2][k1].resize(2*P);
@@ -749,8 +747,6 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
 
               for(int j2 = -P; j2 < P; j2++) {
                 int shiftJ2 = (j2 + P);
-
-                double py = ay + ptGridOff + (ptGridH*(static_cast<double>(k2)));
 
                 double theta = lambda*(static_cast<double>(j2)*(py - cy)) ;
 
@@ -771,6 +767,8 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
         results[boxId].resize(ptGridSizeWithinBox*ptGridSizeWithinBox*ptGridSizeWithinBox);
 
         for(unsigned int k3 = 0, pt = 0; k3 < ptGridSizeWithinBox; k3++) {
+          double pz = az + ptGridOff + (ptGridH*(static_cast<double>(k3)));
+
           for(unsigned int k2 = 0; k2 < ptGridSizeWithinBox; k2++) {
             for(unsigned int k1 = 0; k1 < ptGridSizeWithinBox; k1++, pt++) {
 
@@ -778,8 +776,6 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
 
               for(int j3 = -P; j3 < P; j3++) {
                 int shiftJ3 = (j3 + P);
-
-                double pz = az + ptGridOff + (ptGridH*(static_cast<double>(k3)));
 
                 double theta = lambda*(static_cast<double>(j3)*(pz - cz)) ;
 
@@ -845,10 +841,10 @@ void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int
 
         //Center of the box B
         /*
-        double cBx =  h*(0.5 + static_cast<double>(xi + xs));
-        double cBy =  h*(0.5 + static_cast<double>(yi + ys));
-        double cBz =  h*(0.5 + static_cast<double>(zi + zs));
-        */
+           double cBx =  h*(0.5 + static_cast<double>(xi + xs));
+           double cBy =  h*(0.5 + static_cast<double>(yi + ys));
+           double cBz =  h*(0.5 + static_cast<double>(zi + zs));
+           */
         //Bounds for Ilist of box B
         int Ixs = xi + xs - StencilWidth;
         int Ixe = xi + xs + StencilWidth;
@@ -897,10 +893,10 @@ void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int
 
               //Center of the box C
               /*
-              double cCx =  h*(0.5 + static_cast<double>(xj));
-              double cCy =  h*(0.5 + static_cast<double>(yj));
-              double cCz =  h*(0.5 + static_cast<double>(zj));
-              */
+                 double cCx =  h*(0.5 + static_cast<double>(xj));
+                 double cCy =  h*(0.5 + static_cast<double>(yj));
+                 double cCz =  h*(0.5 + static_cast<double>(zj));
+                 */
 
               for(int k3 = -P, di = 0; k3 < P; k3++) {
                 for(int k2 = -P; k2 < P; k2++) {
@@ -925,17 +921,17 @@ void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int
 }
 
 void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, 
-              int xs, int ys, int zs, 
-              int nx, int ny, int nz, 
-              int Ne, double h, const int K, 
-              const int P, const double lambda) {
-  
+    int xs, int ys, int zs, 
+    int nx, int ny, int nz, 
+    int Ne, double h, const int K, 
+    const int P, const double lambda) {
+
   // compute the first layer directly ...  
   /*
-  directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, 1, Ne, h, K, P, lambda); // XY Plane
-  directW2L(WlArr, WgArr, xs, ys+1, zs, 1, ny-1, nz, Ne, h, K, P, lambda); // YZ Plane
-  directW2L(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, lambda); // ZX Plane 
-  */
+     directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, 1, Ne, h, K, P, lambda); // XY Plane
+     directW2L(WlArr, WgArr, xs, ys+1, zs, 1, ny-1, nz, Ne, h, K, P, lambda); // YZ Plane
+     directW2L(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, lambda); // ZX Plane 
+     */
   directLayer(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, lambda); // ZX Plane 
 
   // return;
@@ -993,7 +989,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
         // At this stage ...  (i,j,k) needs to be computed and (i-1,j-1,k-1),
         // and the other 6 boxes between them should have already been
         // computed.
-        
+
         for(int k3 = -P, di = 0; k3 < P; k3++) {
           for(int k2 = -P; k2 < P; k2++) {
             for(int k1 = -P; k1 < P; k1++, di++) {
@@ -1118,7 +1114,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
           } // k2 
         } // k1 
 
-         // now the corner corrections ...
+        // now the corner corrections ...
         for(int k3 = -P, di = 0; k3 < P; k3++) {
           for(int k2 = -P; k2 < P; k2++) {
             for(int k1 = -P; k1 < P; k1++, di++) {
@@ -1219,11 +1215,11 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
           } // k2 
         } // k1 
 
-         // now the corner corrections ...
+        // now the corner corrections ...
         for(int k3 = -P, di = 0; k3 < P; k3++) {
           for(int k2 = -P; k2 < P; k2++) {
             for(int k1 = -P; k1 < P; k1++, di++) {
-               // corner 000
+              // corner 000
               if ( ( (k-K-1) >=0) && ((j-K-1) >=0) && ((i-K-1) >=0) ) {  
                 theta = lambda*h* ( (static_cast<double>((K+1)*(k1 + k2 + k3)) ) );
                 ct = cos(theta);
@@ -1304,7 +1300,7 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
     int nx, int ny, int nz, 
     int Ne, double h, 
     const int K, const int P, const double lambda) {
-  
+
   int i,j,k;
   int p,q,r;
   double theta, ct, st;
@@ -1331,10 +1327,10 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
       }
     }
   }
-  
+
   // printf("Precomputed facs\n");
   // MPI_Barrier(MPI_COMM_WORLD);
- 
+
   // 2. Now incrementaly for the XY plane ...
   k = zs;
   for (j=ys; j<ys+ny; j++) {
@@ -1471,7 +1467,7 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
 
     } // j
   } // k
-  
+
   // MPI_Barrier(MPI_COMM_WORLD);
   // printf("Done plane YZ\n");
   // MPI_Barrier(MPI_COMM_WORLD);
