@@ -143,15 +143,6 @@ int main(int argc, char** argv) {
   ot::points2Octree(pts, gSize, linOct, dim, maxDepth, maxNumPts, MPI_COMM_WORLD);
   pts.clear();
 
-  long long totalNumOctants;
-  long long localNumOctants = linOct.size();
-
-  MPI_Reduce(&localNumOctants, &totalNumOctants, 1, MPI_LONG_LONG_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-
-  if(!rank) {
-    std::cout<<"Total Num Octs: "<< totalNumOctants << std::endl;
-  }
-
   //FGT
   pfgt(linOct, maxDepth, delta, fMag, numFgtPtsPerDimPerOct, P, L, K, writeOut);
 
