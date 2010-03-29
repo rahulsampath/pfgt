@@ -307,6 +307,11 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     }//end for j
   }//end for i
 
+  std::vector<int> sendCnt(npes); 
+  for(int i = 0; i < npes; i++) {
+    sendCnt[i] = 0;
+  }//end for i
+
   std::vector<int> part(Wfgt.size());
   for(unsigned int i = 0; i < Wfgt.size(); i++) {
     unsigned int fgtId = uniqueOct2fgtIdmap[i];
@@ -320,6 +325,8 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     seq::maxLowerBound<unsigned int>(scanLz, fgtzid, zRes, 0, 0);
 
     part[i] = (((zRes*npy) + yRes)*npx) + xRes;
+
+    sendCnt[part[i]]++;
   }//end for i
 
   Vec Wglobal;
