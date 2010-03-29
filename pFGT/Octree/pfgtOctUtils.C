@@ -97,6 +97,10 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   //Maximum value
   unsigned int numPtsPerBox = numPtsPerProc/numLocalOcts;
 
+  if(!rank) {
+    std::cout<<" NumPtsPerBox = "<< numPtsPerBox << std::endl;
+  }
+
   //Tensor-Product Grid
   const unsigned int ptGridSizeWithinBox = static_cast<unsigned int>(floor(pow( numPtsPerBox, (1.0/3.0) )));
   long long trueLocalNumPts = ptGridSizeWithinBox*ptGridSizeWithinBox*ptGridSizeWithinBox*numLocalOcts;
