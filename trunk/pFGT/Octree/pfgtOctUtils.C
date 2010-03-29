@@ -267,21 +267,14 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     bool idxFound = seq::BinarySearch<unsigned int>( (&(*(uniqueOct2fgtIdmap.begin()))), 
         uniqueOct2fgtIdmap.size(), fgtId, &fgtIndex);
     assert(idxFound);
+    assert(uniqueOct2fgtIdmap[fgtIndex] == fgtId);
 
-    //Reset map value
+    //Reset map value 
     oct2fgtIdmap[i] = fgtIndex;
 
     for(unsigned int j = 0; j < Ndofs; j++) {
       Wfgt[fgtIndex][j] += Woct[i][j];
     }//end for j
-  }//end for i
-
-  PetscInt xs, ys, zs, nx, ny, nz;
-  DAGetCorners(da, &xs, &ys, &zs, &nx, &ny, &nz);
-
-  std::vector<bool> isFGTboxEmpty(nx*ny*nz);
-  for(unsigned int i = 0; i < isFGTboxEmpty.size(); i++) {
-    isFGTboxEmpty[i] = true;
   }//end for i
 
   //Do Not Free lx, ly, lz. They are managed by DA
@@ -320,6 +313,14 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   PetscScalar**** WgArr;
   DAVecGetArrayDOF(da, Wglobal, &WgArr);
 
+  PetscInt xs, ys, zs, nx, ny, nz;
+  DAGetCorners(da, &xs, &ys, &zs, &nx, &ny, &nz);
+
+  std::vector<bool> isFGTboxEmpty(nx*ny*nz);
+  for(unsigned int i = 0; i < isFGTboxEmpty.size(); i++) {
+    isFGTboxEmpty[i] = true;
+  }//end for i
+
   std::vector<int> sendCnts(npes); 
   for(int i = 0; i < npes; i++) {
     sendCnts[i] = 0;
@@ -337,9 +338,15 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     seq::maxLowerBound<unsigned int>(scanLy, fgtyid, yRes, 0, 0);
     seq::maxLowerBound<unsigned int>(scanLz, fgtzid, zRes, 0, 0);
 
+    //Processor that owns the FGT box
     part[i] = (((zRes*npy) + yRes)*npx) + xRes;
 
     if(part[i] == rank) {
+      unsigned int boxId = ( ((fgtzid - zs)*nx*ny) + ((fgtyid - ys)*nx) + (fgtxid - xs) );
+      isFGTboxEmpty[boxId] = false;
+      for(unsigned int j = 0; j < Ndofs; j++) {
+        WgArr[fgtzid][fgtyid][fgtxid][j] += Wfgt[i][j];
+      }//end for j
     } else {
       sendCnts[part[i]]++;
     }
@@ -358,6 +365,69 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
     recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
   }//end for i
+
+  std::vector<unsigned int> sendFgtIds(sendDisps[npes - 1] + sendCnts[npes - 1]);
+
+  for(int i = 0; i < npes; i++) {
+    sendCnts[i] = 0;
+  }//end for i
+
+  for(unsigned int i = 0; i < Wfgt.size(); i++) {
+    if(part[i] != rank) {
+      sendFgtIds[ sendDisps[part[i]] + sendCnts[part[i]] ] = uniqueOct2fgtIdmap[i];
+      sendCnts[part[i]]++;
+    }
+  }//end for i
+
+  std::vector<unsigned int> recvFgtIds(recvDisps[npes - 1] + recvCnts[npes - 1]);
+
+  MPI_Alltoallv( (&(*(sendFgtIds.begin()))), (&(*(sendCnts.begin()))), (&(*(sendDisps.begin()))), MPI_UNSIGNED, 
+      (&(*(recvFgtIds.begin()))), (&(*(recvCnts.begin()))), (&(*(recvDisps.begin()))), MPI_UNSIGNED, comm );
+
+  for(unsigned int i = 0; i < npes; i++) {
+    sendDisps[i] *= Ndofs;
+    recvCnts[i] *= Ndofs;
+    recvDisps[i] *= Ndofs;
+  }//end for i
+
+  std::vector<double> sendFgtVals((Ndofs*(sendFgtIds.size())));
+
+  for(int i = 0; i < npes; i++) {
+    sendCnts[i] = 0;
+  }//end for i
+
+  for(unsigned int i = 0; i < Wfgt.size(); i++) {
+    if(part[i] != rank) {
+      for(unsigned int j = 0; j < Ndofs; j++) {
+        sendFgtVals[ sendDisps[part[i]] + sendCnts[part[i]] + j ] = Wfgt[i][j];
+      }//end for j
+      sendCnts[part[i]] += Ndofs;
+    }
+  }//end for i
+
+  std::vector<double> recvFgtVals(recvDisps[npes - 1] + recvCnts[npes - 1]);
+
+  MPI_Alltoallv( (&(*(sendFgtVals.begin()))), (&(*(sendCnts.begin()))), (&(*(sendDisps.begin()))), MPI_DOUBLE, 
+      (&(*(recvFgtVals.begin()))), (&(*(recvCnts.begin()))), (&(*(recvDisps.begin()))), MPI_DOUBLE, comm );
+
+  for(unsigned int i = 0; i < recvFgtIds.size(); i++) {
+    unsigned int fgtId = recvFgtIds[i];
+    unsigned int fgtzid = (fgtId/(Ne*Ne));
+    unsigned int fgtyid = ((fgtId%(Ne*Ne))/Ne);
+    unsigned int fgtxid = ((fgtId%(Ne*Ne))%Ne);
+
+    unsigned int boxId = ( ((fgtzid - zs)*nx*ny) + ((fgtyid - ys)*nx) + (fgtxid - xs) );
+    isFGTboxEmpty[boxId] = false;
+    for(unsigned int j = 0; j < Ndofs; j++) {
+      WgArr[fgtzid][fgtyid][fgtxid][j] += recvFgtVals[(i*Ndofs) + j];
+    }//end for j
+  }//end for i
+
+  sendFgtVals.clear();
+  recvFgtVals.clear();
+
+  sendFgtIds.clear();
+  recvFgtIds.clear();
 
   DAVecRestoreArrayDOF(da, Wglobal, &WgArr);
 
