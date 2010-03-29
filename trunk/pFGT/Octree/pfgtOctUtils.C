@@ -89,8 +89,8 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     std::cout<<"Marked Octants"<<std::endl;
   }
 
-  const unsigned int numLocalExpandOcts = expandTree.size();
-  const unsigned int numLocalDirectOcts = directTree.size();
+  long long numLocalExpandOcts = expandTree.size();
+  long long numLocalDirectOcts = directTree.size();
 
   //Tensor-Product grid on each octant
 
@@ -552,6 +552,17 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   if(!rank) {
     std::cout<<"True Total NumPts: "<<trueTotalPts<<std::endl; 
+  }
+
+  long long totalNumExpandOcts;
+  long long totalNumDirectOcts;
+
+  MPI_Reduce(&numLocalExpandOcts, &totalNumExpandOcts, 1, MPI_LONG_LONG_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&numLocalDirectOcts, &totalNumDirectOcts, 1, MPI_LONG_LONG_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  if(!rank) {
+    std::cout<<"Total Num Expand Octs: "<< totalNumExpandOcts << std::endl;
+    std::cout<<"Total Num Direct Octs: "<< totalNumDirectOcts << std::endl;
   }
 
   PetscLogEventEnd(fgtEvent, 0, 0, 0, 0);
