@@ -435,8 +435,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     }//end for j
   }//end for i
 
-  DAVecRestoreArrayDOF(da, Wglobal, &WgArr);
-
   PetscLogEventEnd(s2wCommEvent, 0, 0, 0, 0);
 
   if(!rank) {
@@ -613,9 +611,35 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   MPI_Alltoallv( (&(*(w2dSendFgtIds.begin()))), (&(*(w2dSendCnts.begin()))), (&(*(w2dSendDisps.begin()))), MPI_UNSIGNED, 
       (&(*(w2dRecvFgtIds.begin()))), (&(*(w2dRecvCnts.begin()))), (&(*(w2dRecvDisps.begin()))), MPI_UNSIGNED, comm );
 
+  for(unsigned int i = 0; i < npes; i++) {
+    w2dSendCnts[i] *= Ndofs;
+    w2dSendDisps[i] *= Ndofs;
+    w2dRecvCnts[i] *= Ndofs;
+    w2dRecvDisps[i] *= Ndofs;
+  }//end for i
 
+  std::vector<double> w2dSendFgtVals((Ndofs*(w2dRecvFgtIds.size())));
+
+  for(unsigned int i = 0; i < w2dRecvFgtIds.size(); i++) {
+    unsigned int fgtId = w2dRecvFgtIds[i];
+    unsigned int fgtzid = (fgtId/(Ne*Ne));
+    unsigned int fgtyid = ((fgtId%(Ne*Ne))/Ne);
+    unsigned int fgtxid = ((fgtId%(Ne*Ne))%Ne);
+
+    for(unsigned int j = 0; j < Ndofs; j++) {
+      w2dSendFgtVals[ (Ndofs*i) + j ] = WgArr[fgtzid][fgtyid][fgtxid][j];
+    }//end for j
+  }//end for i
+
+  std::vector<double> w2dRecvFgtVals((Ndofs*(w2dSendFgtIds.size())));
+
+  //Reverse communication
+  MPI_Alltoallv( (&(*(w2dSendFgtVals.begin()))), (&(*(w2dRecvCnts.begin()))), (&(*(w2dRecvDisps.begin()))), MPI_DOUBLE,
+      (&(*(w2dRecvFgtVals.begin()))), (&(*(w2dSendCnts.begin()))), (&(*(w2dSendDisps.begin()))), MPI_DOUBLE, comm );
 
   std::vector<std::vector<double> > directResults(numLocalDirectOcts);
+
+  DAVecRestoreArrayDOF(da, Wglobal, &WgArr);
 
   PetscLogEventEnd(w2dEvent, 0, 0, 0, 0);
 
