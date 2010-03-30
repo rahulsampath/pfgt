@@ -642,9 +642,11 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     w2dSendCnts[i] = 0;
   }//end for i
 
+  std::vector<unsigned int> w2dCommMap(requiredFgtIds.size());
   for(unsigned int i = 0; i < requiredFgtIds.size(); i++) {
     if(w2dPart[i] != rank) {
       w2dSendFgtIds[ w2dSendDisps[w2dPart[i]] + w2dSendCnts[w2dPart[i]] ] = requiredFgtIds[i];
+      w2dCommMap[i] = ( w2dSendDisps[w2dPart[i]] + w2dSendCnts[w2dPart[i]] );
       w2dSendCnts[w2dPart[i]]++;
     }
   }//end for i
@@ -843,12 +845,12 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
                           double theta = lambda*( (static_cast<double>(k1)*(px - cx)) +
                               (static_cast<double>(k2)*(py - cy)) + (static_cast<double>(k3)*(pz - cz)) );
 
-                          //double a = [2*di];
-                          //double b = [(2*di) + 1];
+                          double a = w2dRecvFgtVals[ (Ndofs*w2dCommMap[foundIdx]) + (2*di) ];
+                          double b = w2dRecvFgtVals[ (Ndofs*w2dCommMap[foundIdx]) + (2*di) + 1 ];
                           double c = cos(theta);
                           double d = sin(theta);
 
-                          //sum += (factor*( (a*c) - (b*d) ));
+                          sum += (factor*( (a*c) - (b*d) ));
                         }//end for k1
                       }//end for k2
                     }//end for k3
