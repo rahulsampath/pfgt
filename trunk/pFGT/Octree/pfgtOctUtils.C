@@ -333,9 +333,9 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     isFGTboxEmpty[i] = true;
   }//end for i
 
-  std::vector<int> sendCnts(npes); 
+  std::vector<int> s2wSendCnts(npes); 
   for(int i = 0; i < npes; i++) {
-    sendCnts[i] = 0;
+    s2wSendCnts[i] = 0;
   }//end for i
 
   std::vector<int> s2wPart(Wfgt.size());
@@ -360,70 +360,70 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
         WgArr[fgtzid][fgtyid][fgtxid][j] = Wfgt[i][j];
       }//end for j
     } else {
-      sendCnts[s2wPart[i]]++;
+      s2wSendCnts[s2wPart[i]]++;
     }
   }//end for i
 
-  std::vector<int> recvCnts(npes); 
+  std::vector<int> s2wRecvCnts(npes); 
 
-  MPI_Alltoall( (&(*(sendCnts.begin()))), 1, MPI_INT,
-      (&(*(recvCnts.begin()))), 1, MPI_INT, comm );
+  MPI_Alltoall( (&(*(s2wSendCnts.begin()))), 1, MPI_INT,
+      (&(*(s2wRecvCnts.begin()))), 1, MPI_INT, comm );
 
-  std::vector<int> sendDisps(npes);
-  std::vector<int> recvDisps(npes);
-  sendDisps[0] = 0;
-  recvDisps[0] = 0;
+  std::vector<int> s2wSendDisps(npes);
+  std::vector<int> s2wRecvDisps(npes);
+  s2wSendDisps[0] = 0;
+  s2wRecvDisps[0] = 0;
   for(int i = 1; i < npes; i++) {
-    sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
-    recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
+    s2wSendDisps[i] = s2wSendDisps[i - 1] + s2wSendCnts[i - 1];
+    s2wRecvDisps[i] = s2wRecvDisps[i - 1] + s2wRecvCnts[i - 1];
   }//end for i
 
-  std::vector<unsigned int> sendFgtIds(sendDisps[npes - 1] + sendCnts[npes - 1]);
+  std::vector<unsigned int> s2wSendFgtIds(s2wSendDisps[npes - 1] + s2wSendCnts[npes - 1]);
 
   for(int i = 0; i < npes; i++) {
-    sendCnts[i] = 0;
+    s2wSendCnts[i] = 0;
   }//end for i
 
   for(unsigned int i = 0; i < Wfgt.size(); i++) {
     if(s2wPart[i] != rank) {
-      sendFgtIds[ sendDisps[s2wPart[i]] + sendCnts[s2wPart[i]] ] = uniqueOct2fgtIdmap[i];
-      sendCnts[s2wPart[i]]++;
+      s2wSendFgtIds[ s2wSendDisps[s2wPart[i]] + s2wSendCnts[s2wPart[i]] ] = uniqueOct2fgtIdmap[i];
+      s2wSendCnts[s2wPart[i]]++;
     }
   }//end for i
 
-  std::vector<unsigned int> recvFgtIds(recvDisps[npes - 1] + recvCnts[npes - 1]);
+  std::vector<unsigned int> s2wRecvFgtIds(s2wRecvDisps[npes - 1] + s2wRecvCnts[npes - 1]);
 
-  MPI_Alltoallv( (&(*(sendFgtIds.begin()))), (&(*(sendCnts.begin()))), (&(*(sendDisps.begin()))), MPI_UNSIGNED, 
-      (&(*(recvFgtIds.begin()))), (&(*(recvCnts.begin()))), (&(*(recvDisps.begin()))), MPI_UNSIGNED, comm );
+  MPI_Alltoallv( (&(*(s2wSendFgtIds.begin()))), (&(*(s2wSendCnts.begin()))), (&(*(s2wSendDisps.begin()))), MPI_UNSIGNED, 
+      (&(*(s2wRecvFgtIds.begin()))), (&(*(s2wRecvCnts.begin()))), (&(*(s2wRecvDisps.begin()))), MPI_UNSIGNED, comm );
 
   for(unsigned int i = 0; i < npes; i++) {
-    sendDisps[i] *= Ndofs;
-    recvCnts[i] *= Ndofs;
-    recvDisps[i] *= Ndofs;
+    s2wSendDisps[i] *= Ndofs;
+    s2wRecvCnts[i] *= Ndofs;
+    s2wRecvDisps[i] *= Ndofs;
   }//end for i
 
-  std::vector<double> sendFgtVals((Ndofs*(sendFgtIds.size())));
+  std::vector<double> s2wSendFgtVals((Ndofs*(s2wSendFgtIds.size())));
 
   for(int i = 0; i < npes; i++) {
-    sendCnts[i] = 0;
+    s2wSendCnts[i] = 0;
   }//end for i
 
   for(unsigned int i = 0; i < Wfgt.size(); i++) {
     if(s2wPart[i] != rank) {
       for(unsigned int j = 0; j < Ndofs; j++) {
-        sendFgtVals[ sendDisps[s2wPart[i]] + sendCnts[s2wPart[i]] + j ] = Wfgt[i][j];
+        s2wSendFgtVals[ s2wSendDisps[s2wPart[i]] + s2wSendCnts[s2wPart[i]] + j ] = Wfgt[i][j];
       }//end for j
-      sendCnts[s2wPart[i]] += Ndofs;
+      s2wSendCnts[s2wPart[i]] += Ndofs;
     }
   }//end for i
 
-  std::vector<double> recvFgtVals(recvDisps[npes - 1] + recvCnts[npes - 1]);
+  std::vector<double> s2wRecvFgtVals(s2wRecvDisps[npes - 1] + s2wRecvCnts[npes - 1]);
 
-  MPI_Alltoallv( (&(*(sendFgtVals.begin()))), (&(*(sendCnts.begin()))), (&(*(sendDisps.begin()))), MPI_DOUBLE, 
-      (&(*(recvFgtVals.begin()))), (&(*(recvCnts.begin()))), (&(*(recvDisps.begin()))), MPI_DOUBLE, comm );
+  MPI_Alltoallv( (&(*(s2wSendFgtVals.begin()))), (&(*(s2wSendCnts.begin()))), (&(*(s2wSendDisps.begin()))), MPI_DOUBLE, 
+      (&(*(s2wRecvFgtVals.begin()))), (&(*(s2wRecvCnts.begin()))), (&(*(s2wRecvDisps.begin()))), MPI_DOUBLE, comm );
 
-  for(unsigned int i = 0; i < recvFgtIds.size(); i++) {
-    unsigned int fgtId = recvFgtIds[i];
+  for(unsigned int i = 0; i < s2wRecvFgtIds.size(); i++) {
+    unsigned int fgtId = s2wRecvFgtIds[i];
     unsigned int fgtzid = (fgtId/(Ne*Ne));
     unsigned int fgtyid = ((fgtId%(Ne*Ne))/Ne);
     unsigned int fgtxid = ((fgtId%(Ne*Ne))%Ne);
@@ -431,7 +431,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     unsigned int boxId = ( ((fgtzid - zs)*nx*ny) + ((fgtyid - ys)*nx) + (fgtxid - xs) );
     isFGTboxEmpty[boxId] = false;
     for(unsigned int j = 0; j < Ndofs; j++) {
-      WgArr[fgtzid][fgtyid][fgtxid][j] += recvFgtVals[(i*Ndofs) + j];
+      WgArr[fgtzid][fgtyid][fgtxid][j] += s2wRecvFgtVals[(i*Ndofs) + j];
     }//end for j
   }//end for i
 
@@ -612,23 +612,23 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   //L2T-Comm
   PetscLogEventBegin(l2tCommEvent, 0, 0, 0, 0);
 
-  for(unsigned int i = 0; i < recvFgtIds.size(); i++) {
-    unsigned int fgtId = recvFgtIds[i];
+  for(unsigned int i = 0; i < s2wRecvFgtIds.size(); i++) {
+    unsigned int fgtId = s2wRecvFgtIds[i];
     unsigned int fgtzid = (fgtId/(Ne*Ne));
     unsigned int fgtyid = ((fgtId%(Ne*Ne))/Ne);
     unsigned int fgtxid = ((fgtId%(Ne*Ne))%Ne);
 
     for(unsigned int j = 0; j < Ndofs; j++) {
-      recvFgtVals[(i*Ndofs) + j] = WgArr[fgtzid][fgtyid][fgtxid][j];
+      s2wRecvFgtVals[(i*Ndofs) + j] = WgArr[fgtzid][fgtyid][fgtxid][j];
     }//end for j
   }//end for i
 
   //Reverse of S2W comm
-  MPI_Alltoallv( (&(*(recvFgtVals.begin()))), (&(*(recvCnts.begin()))), (&(*(recvDisps.begin()))), MPI_DOUBLE,
-      (&(*(sendFgtVals.begin()))), (&(*(sendCnts.begin()))), (&(*(sendDisps.begin()))), MPI_DOUBLE, comm );
+  MPI_Alltoallv( (&(*(s2wRecvFgtVals.begin()))), (&(*(s2wRecvCnts.begin()))), (&(*(s2wRecvDisps.begin()))), MPI_DOUBLE,
+      (&(*(s2wSendFgtVals.begin()))), (&(*(s2wSendCnts.begin()))), (&(*(s2wSendDisps.begin()))), MPI_DOUBLE, comm );
 
   for(int i = 0; i < npes; i++) {
-    sendCnts[i] = 0;
+    s2wSendCnts[i] = 0;
   }//end for i
 
   for(unsigned int i = 0; i < Wfgt.size(); i++) {
@@ -643,9 +643,9 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
       }//end for j
     } else {
       for(unsigned int j = 0; j < Ndofs; j++) {
-        Wfgt[i][j] = sendFgtVals[ sendDisps[s2wPart[i]] + sendCnts[s2wPart[i]] + j ];
+        Wfgt[i][j] = s2wSendFgtVals[ s2wSendDisps[s2wPart[i]] + s2wSendCnts[s2wPart[i]] + j ];
       }//end for j
-      sendCnts[s2wPart[i]] += Ndofs;
+      s2wSendCnts[s2wPart[i]] += Ndofs;
     }
   }//end for i
 
