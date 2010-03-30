@@ -441,9 +441,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     std::cout<<"Finished S2Wcomm"<<std::endl;
   }
 
-  const double C0 = ( pow((0.5/sqrt(__PI__)), 3.0)*
-      pow((static_cast<double>(L)/static_cast<double>(P)), 3.0) );
-
   //W2D
   PetscLogEventBegin(w2dEvent, 0, 0, 0, 0);
 
@@ -519,29 +516,75 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
           for(int zid = minZid; zid < maxZid; zid++) {
             for(int yid = minYid; yid < maxYid; yid++) {
               for(int xid = minXid; xid < maxXid; xid++) {
-                unsigned int fgtId = ( (zid*Ne*Ne) + (yid*Ne) + xid );
 
-                unsigned int foundIdx;
-                bool foundIt = seq::maxLowerBound<unsigned int>(requiredFgtIds, fgtId, foundIdx, 0, 0);
+                //Bounds for Ilist of box
+                int Ixs = xid - K;
+                int Ixe = xid + K + 1;
 
-                if(foundIt) {
-                  assert( requiredFgtIds[foundIdx] <= fgtId );
-                  if( (foundIdx + 1) < (requiredFgtIds.size()) ) {
-                    assert( requiredFgtIds[foundIdx + 1] > fgtId );
+                int Iys = yid - K;
+                int Iye = yid + K + 1;
+
+                int Izs = zid - K;
+                int Ize = zid + K + 1;
+
+                if(Ixs < 0) {
+                  Ixs = 0;
+                }
+                if(Ixe > Ne) {
+                  Ixe = Ne;
+                }
+
+                if(Iys < 0) {
+                  Iys = 0;
+                }
+                if(Iye > Ne) {
+                  Iye = Ne;
+                }
+
+                if(Izs < 0) {
+                  Izs = 0;
+                }
+                if(Ize > Ne) {
+                  Ize = Ne;
+                }
+
+                bool addFgt = false;
+
+                if( (px > (hRg*static_cast<double>(Ixs))) && (px < (hRg*static_cast<double>(Ixe))) ) {
+                  if( (py > (hRg*static_cast<double>(Iys))) && (py < (hRg*static_cast<double>(Iye))) ) {
+                    if( (pz > (hRg*static_cast<double>(Izs))) && (pz < (hRg*static_cast<double>(Ize))) ) {
+                      addFgt = true;
+                    }
                   }
+                }
 
-                  requiredFgtIds.insert( (requiredFgtIds.begin() + foundIdx + 1), fgtId );
+                if(addFgt) {
+                  unsigned int fgtId = ( (zid*Ne*Ne) + (yid*Ne) + xid );
 
-                  assert( (foundIdx + 1) < (requiredFgtIds.size()) );
-                  assert( requiredFgtIds[foundIdx + 1] == fgtId );
-                } else {
-                  if( !(requiredFgtIds.empty()) ) {
-                    assert( requiredFgtIds[0] > fgtId );
+                  unsigned int foundIdx;
+                  bool foundIt = seq::maxLowerBound<unsigned int>(requiredFgtIds, fgtId, foundIdx, 0, 0);
+
+                  if(foundIt) {
+                    assert( requiredFgtIds[foundIdx] <= fgtId );
+                    if( (foundIdx + 1) < (requiredFgtIds.size()) ) {
+                      assert( requiredFgtIds[foundIdx + 1] > fgtId );
+                    }
+
+                    if( requiredFgtIds[foundIdx] != fgtId ) {
+                      requiredFgtIds.insert( (requiredFgtIds.begin() + foundIdx + 1), fgtId );
+                    }
+
+                    assert( (foundIdx + 1) < (requiredFgtIds.size()) );
+                    assert( requiredFgtIds[foundIdx + 1] == fgtId );
+                  } else {
+                    if( !(requiredFgtIds.empty()) ) {
+                      assert( requiredFgtIds[0] > fgtId );
+                    }
+
+                    requiredFgtIds.insert( requiredFgtIds.begin(), fgtId );
+
+                    assert( requiredFgtIds[0] == fgtId );
                   }
-
-                  requiredFgtIds.insert( requiredFgtIds.begin(), fgtId );
-
-                  assert( requiredFgtIds[0] == fgtId );
                 }
 
               }//end for xid
@@ -637,7 +680,192 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   MPI_Alltoallv( (&(*(w2dSendFgtVals.begin()))), (&(*(w2dRecvCnts.begin()))), (&(*(w2dRecvDisps.begin()))), MPI_DOUBLE,
       (&(*(w2dRecvFgtVals.begin()))), (&(*(w2dSendCnts.begin()))), (&(*(w2dSendDisps.begin()))), MPI_DOUBLE, comm );
 
+  const double C0 = ( pow((0.5/sqrt(__PI__)), 3.0)*
+      pow((static_cast<double>(L)/static_cast<double>(P)), 3.0) );
+
   std::vector<std::vector<double> > directResults(numLocalDirectOcts);
+
+  for(unsigned int i = 0; i < numLocalDirectOcts; i++) {
+    unsigned int lev = directTree[i].getLevel();
+    double hCurrOct = hOctFac*static_cast<double>(1u << (maxDepth - lev));
+
+    double ptGridOff = 0.1*hCurrOct;
+    double ptGridH = 0.8*hCurrOct/(static_cast<double>(ptGridSizeWithinBox) - 1.0);
+
+    //Anchor of the octant
+    unsigned int anchX = directTree[i].getX();
+    unsigned int anchY = directTree[i].getY();
+    unsigned int anchZ = directTree[i].getZ();
+
+    double aOx =  hOctFac*(static_cast<double>(anchX));
+    double aOy =  hOctFac*(static_cast<double>(anchY));
+    double aOz =  hOctFac*(static_cast<double>(anchZ));
+
+    directResults[i].resize(ptGridSizeWithinBox*ptGridSizeWithinBox*ptGridSizeWithinBox);
+
+    for(int j3 = 0, pt = 0; j3 < ptGridSizeWithinBox; j3++) {
+      double pz = aOz + ptGridOff + (ptGridH*(static_cast<double>(j3)));
+
+      double minZ = pz - (static_cast<double>(K)*hRg);
+      double maxZ = pz + (static_cast<double>(K)*hRg);
+
+      int minZid = static_cast<int>(floor(minZ/hRg));
+      int maxZid = static_cast<int>(ceil(maxZ/hRg));
+
+      if(minZid < 0) {
+        minZid = 0;
+      }
+
+      if(maxZid > Ne) {
+        maxZid = Ne;
+      }
+
+      for(int j2 = 0; j2 < ptGridSizeWithinBox; j2++) {
+        double py = aOy + ptGridOff + (ptGridH*(static_cast<double>(j2)));
+
+        double minY = py - (static_cast<double>(K)*hRg);
+        double maxY = py + (static_cast<double>(K)*hRg);
+
+        int minYid = static_cast<int>(floor(minY/hRg));
+        int maxYid = static_cast<int>(ceil(maxY/hRg));
+
+        if(minYid < 0) {
+          minYid = 0;
+        }
+
+        if(maxYid > Ne) {
+          maxYid = Ne;
+        }
+
+        for(int j1 = 0; j1 < ptGridSizeWithinBox; j1++, pt++) {
+          double px = aOx + ptGridOff + (ptGridH*(static_cast<double>(j1)));
+
+          double minX = px - (static_cast<double>(K)*hRg);
+          double maxX = px + (static_cast<double>(K)*hRg);
+
+          int minXid = static_cast<int>(floor(minX/hRg));
+          int maxXid = static_cast<int>(ceil(maxX/hRg));
+
+          if(minXid < 0) {
+            minXid = 0;
+          }
+
+          if(maxXid > Ne) {
+            maxXid = Ne;
+          }
+
+          directResults[i][pt] = 0.0;
+
+          for(int zid = minZid; zid < maxZid; zid++) {
+            for(int yid = minYid; yid < maxYid; yid++) {
+              for(int xid = minXid; xid < maxXid; xid++) {
+
+                //Bounds for Ilist of box
+                int Ixs = xid - K;
+                int Ixe = xid + K + 1;
+
+                int Iys = yid - K;
+                int Iye = yid + K + 1;
+
+                int Izs = zid - K;
+                int Ize = zid + K + 1;
+
+                if(Ixs < 0) {
+                  Ixs = 0;
+                }
+                if(Ixe > Ne) {
+                  Ixe = Ne;
+                }
+
+                if(Iys < 0) {
+                  Iys = 0;
+                }
+                if(Iye > Ne) {
+                  Iye = Ne;
+                }
+
+                if(Izs < 0) {
+                  Izs = 0;
+                }
+                if(Ize > Ne) {
+                  Ize = Ne;
+                }
+
+                bool addFgt = false;
+
+                if( (px > (hRg*static_cast<double>(Ixs))) && (px < (hRg*static_cast<double>(Ixe))) ) {
+                  if( (py > (hRg*static_cast<double>(Iys))) && (py < (hRg*static_cast<double>(Iye))) ) {
+                    if( (pz > (hRg*static_cast<double>(Izs))) && (pz < (hRg*static_cast<double>(Ize))) ) {
+                      addFgt = true;
+                    }
+                  }
+                }
+
+                if(addFgt) {
+                  unsigned int fgtId = ( (zid*Ne*Ne) + (yid*Ne) + xid );
+
+                  //Center of the FGT box
+                  double cx = hRg*(0.5 + static_cast<double>(xid));
+                  double cy = hRg*(0.5 + static_cast<double>(yid));
+                  double cz = hRg*(0.5 + static_cast<double>(zid));
+
+                  unsigned int foundIdx;
+                  bool foundIt = seq::BinarySearch<unsigned int>( (&(*(requiredFgtIds.begin()))),
+                      requiredFgtIds.size(), fgtId, &foundIdx);
+                  assert(foundIt);
+                  assert(requiredFgtIds[foundIdx] == fgtId);
+
+                  double sum = 0.0;
+                  if(w2dPart[foundIdx] == rank) {
+                    for(int k3 = -P, di = 0; k3 < P; k3++) {
+                      for(int k2 = -P; k2 < P; k2++) {
+                        for(int k1 = -P; k1 < P; k1++, di++) {
+                          double factor = exp(-lambda*lambda*static_cast<double>( (k1*k1) + (k2*k2) + (k3*k3) )/4.0);
+
+                          double theta = lambda*( (static_cast<double>(k1)*(px - cx)) +
+                              (static_cast<double>(k2)*(py - cy)) + (static_cast<double>(k3)*(pz - cz)) );
+
+                          double a = WgArr[zid][yid][xid][2*di];
+                          double b = WgArr[zid][yid][xid][(2*di) + 1];
+                          double c = cos(theta);
+                          double d = sin(theta);
+
+                          sum += (factor*( (a*c) - (b*d) ));
+                        }//end for k1
+                      }//end for k2
+                    }//end for k3
+                  } else {
+                    for(int k3 = -P, di = 0; k3 < P; k3++) {
+                      for(int k2 = -P; k2 < P; k2++) {
+                        for(int k1 = -P; k1 < P; k1++, di++) {
+                          double factor = exp(-lambda*lambda*static_cast<double>( (k1*k1) + (k2*k2) + (k3*k3) )/4.0);
+
+                          double theta = lambda*( (static_cast<double>(k1)*(px - cx)) +
+                              (static_cast<double>(k2)*(py - cy)) + (static_cast<double>(k3)*(pz - cz)) );
+
+                          //double a = [2*di];
+                          //double b = [(2*di) + 1];
+                          double c = cos(theta);
+                          double d = sin(theta);
+
+                          //sum += (factor*( (a*c) - (b*d) ));
+                        }//end for k1
+                      }//end for k2
+                    }//end for k3
+                  }
+
+                  directResults[i][pt] += (C0*sum);
+                }
+
+              }//end for xid
+            }//end for yid
+          }//end for zid
+
+        }//end for j1
+      }//end for j2
+    }//end for j3
+
+  }//end for i
 
   DAVecRestoreArrayDOF(da, Wglobal, &WgArr);
 
