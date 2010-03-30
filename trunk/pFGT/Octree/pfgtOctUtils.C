@@ -556,6 +556,65 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   }//end for i
 
+  std::vector<int> w2dSendCnts(npes); 
+  for(int i = 0; i < npes; i++) {
+    w2dSendCnts[i] = 0;
+  }//end for i
+
+  std::vector<int> w2dPart(requiredFgtIds.size());
+  for(unsigned int i = 0; i < requiredFgtIds.size(); i++) {
+    unsigned int fgtId = requiredFgtIds[i];
+    unsigned int fgtzid = (fgtId/(Ne*Ne));
+    unsigned int fgtyid = ((fgtId%(Ne*Ne))/Ne);
+    unsigned int fgtxid = ((fgtId%(Ne*Ne))%Ne);
+
+    unsigned int xRes, yRes, zRes;
+    seq::maxLowerBound<unsigned int>(scanLx, fgtxid, xRes, 0, 0);
+    seq::maxLowerBound<unsigned int>(scanLy, fgtyid, yRes, 0, 0);
+    seq::maxLowerBound<unsigned int>(scanLz, fgtzid, zRes, 0, 0);
+
+    //Processor that owns the FGT box
+    w2dPart[i] = (((zRes*npy) + yRes)*npx) + xRes;
+
+    if(w2dPart[i] != rank) {
+      w2dSendCnts[w2dPart[i]]++;
+    }
+  }//end for i
+
+  std::vector<int> w2dRecvCnts(npes); 
+
+  MPI_Alltoall( (&(*(w2dSendCnts.begin()))), 1, MPI_INT,
+      (&(*(w2dRecvCnts.begin()))), 1, MPI_INT, comm );
+
+  std::vector<int> w2dSendDisps(npes);
+  std::vector<int> w2dRecvDisps(npes);
+  w2dSendDisps[0] = 0;
+  w2dRecvDisps[0] = 0;
+  for(int i = 1; i < npes; i++) {
+    w2dSendDisps[i] = w2dSendDisps[i - 1] + w2dSendCnts[i - 1];
+    w2dRecvDisps[i] = w2dRecvDisps[i - 1] + w2dRecvCnts[i - 1];
+  }//end for i
+
+  std::vector<unsigned int> w2dSendFgtIds(w2dSendDisps[npes - 1] + w2dSendCnts[npes - 1]);
+
+  for(int i = 0; i < npes; i++) {
+    w2dSendCnts[i] = 0;
+  }//end for i
+
+  for(unsigned int i = 0; i < requiredFgtIds.size(); i++) {
+    if(w2dPart[i] != rank) {
+      w2dSendFgtIds[ w2dSendDisps[w2dPart[i]] + w2dSendCnts[w2dPart[i]] ] = requiredFgtIds[i];
+      w2dSendCnts[w2dPart[i]]++;
+    }
+  }//end for i
+
+  std::vector<unsigned int> w2dRecvFgtIds(w2dRecvDisps[npes - 1] + w2dRecvCnts[npes - 1]);
+
+  MPI_Alltoallv( (&(*(w2dSendFgtIds.begin()))), (&(*(w2dSendCnts.begin()))), (&(*(w2dSendDisps.begin()))), MPI_UNSIGNED, 
+      (&(*(w2dRecvFgtIds.begin()))), (&(*(w2dRecvCnts.begin()))), (&(*(w2dRecvDisps.begin()))), MPI_UNSIGNED, comm );
+
+
+
   std::vector<std::vector<double> > directResults(numLocalDirectOcts);
 
   PetscLogEventEnd(w2dEvent, 0, 0, 0, 0);
