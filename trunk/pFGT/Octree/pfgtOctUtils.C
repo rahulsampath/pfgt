@@ -518,9 +518,37 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
             maxXid = Ne;
           }
 
-          if( requiredFgtIds.empty() ) {
-          } else {
-          }
+          for(int zid = minZid; zid < maxZid; zid++) {
+            for(int yid = minYid; yid < maxYid; yid++) {
+              for(int xid = minXid; xid < maxXid; xid++) {
+                unsigned int fgtId = ( (zid*Ne*Ne) + (yid*Ne) + xid );
+
+                unsigned int foundIdx;
+                bool foundIt = seq::maxLowerBound<unsigned int>(requiredFgtIds, fgtId, foundIdx, 0, 0);
+
+                if(foundIt) {
+                  assert( requiredFgtIds[foundIdx] <= fgtId );
+                  if( (foundIdx + 1) < (requiredFgtIds.size()) ) {
+                    assert( requiredFgtIds[foundIdx + 1] > fgtId );
+                  }
+
+                  requiredFgtIds.insert( (requiredFgtIds.begin() + foundIdx + 1), fgtId );
+
+                  assert( (foundIdx + 1) < (requiredFgtIds.size()) );
+                  assert( requiredFgtIds[foundIdx + 1] == fgtId );
+                } else {
+                  if( !(requiredFgtIds.empty()) ) {
+                    assert( requiredFgtIds[0] > fgtId );
+                  }
+
+                  requiredFgtIds.insert( requiredFgtIds.begin(), fgtId );
+
+                  assert( requiredFgtIds[0] == fgtId );
+                }
+
+              }//end for xid
+            }//end for yid
+          }//end for zid
 
         }//end for j1
       }//end for j2
