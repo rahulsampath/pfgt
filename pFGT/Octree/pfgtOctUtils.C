@@ -338,7 +338,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     sendCnts[i] = 0;
   }//end for i
 
-  std::vector<int> part(Wfgt.size());
+  std::vector<int> s2wPart(Wfgt.size());
   for(unsigned int i = 0; i < Wfgt.size(); i++) {
     unsigned int fgtId = uniqueOct2fgtIdmap[i];
     unsigned int fgtzid = (fgtId/(Ne*Ne));
@@ -351,16 +351,16 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     seq::maxLowerBound<unsigned int>(scanLz, fgtzid, zRes, 0, 0);
 
     //Processor that owns the FGT box
-    part[i] = (((zRes*npy) + yRes)*npx) + xRes;
+    s2wPart[i] = (((zRes*npy) + yRes)*npx) + xRes;
 
-    if(part[i] == rank) {
+    if(s2wPart[i] == rank) {
       unsigned int boxId = ( ((fgtzid - zs)*nx*ny) + ((fgtyid - ys)*nx) + (fgtxid - xs) );
       isFGTboxEmpty[boxId] = false;
       for(unsigned int j = 0; j < Ndofs; j++) {
         WgArr[fgtzid][fgtyid][fgtxid][j] = Wfgt[i][j];
       }//end for j
     } else {
-      sendCnts[part[i]]++;
+      sendCnts[s2wPart[i]]++;
     }
   }//end for i
 
@@ -385,9 +385,9 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   }//end for i
 
   for(unsigned int i = 0; i < Wfgt.size(); i++) {
-    if(part[i] != rank) {
-      sendFgtIds[ sendDisps[part[i]] + sendCnts[part[i]] ] = uniqueOct2fgtIdmap[i];
-      sendCnts[part[i]]++;
+    if(s2wPart[i] != rank) {
+      sendFgtIds[ sendDisps[s2wPart[i]] + sendCnts[s2wPart[i]] ] = uniqueOct2fgtIdmap[i];
+      sendCnts[s2wPart[i]]++;
     }
   }//end for i
 
@@ -409,11 +409,11 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   }//end for i
 
   for(unsigned int i = 0; i < Wfgt.size(); i++) {
-    if(part[i] != rank) {
+    if(s2wPart[i] != rank) {
       for(unsigned int j = 0; j < Ndofs; j++) {
-        sendFgtVals[ sendDisps[part[i]] + sendCnts[part[i]] + j ] = Wfgt[i][j];
+        sendFgtVals[ sendDisps[s2wPart[i]] + sendCnts[s2wPart[i]] + j ] = Wfgt[i][j];
       }//end for j
-      sendCnts[part[i]] += Ndofs;
+      sendCnts[s2wPart[i]] += Ndofs;
     }
   }//end for i
 
@@ -632,7 +632,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   }//end for i
 
   for(unsigned int i = 0; i < Wfgt.size(); i++) {
-    if(part[i] == rank) {
+    if(s2wPart[i] == rank) {
       unsigned int fgtId = uniqueOct2fgtIdmap[i];
       unsigned int fgtzid = (fgtId/(Ne*Ne));
       unsigned int fgtyid = ((fgtId%(Ne*Ne))/Ne);
@@ -643,9 +643,9 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
       }//end for j
     } else {
       for(unsigned int j = 0; j < Ndofs; j++) {
-        Wfgt[i][j] = sendFgtVals[ sendDisps[part[i]] + sendCnts[part[i]] + j ];
+        Wfgt[i][j] = sendFgtVals[ sendDisps[s2wPart[i]] + sendCnts[s2wPart[i]] + j ];
       }//end for j
-      sendCnts[part[i]] += Ndofs;
+      sendCnts[s2wPart[i]] += Ndofs;
     }
   }//end for i
 
