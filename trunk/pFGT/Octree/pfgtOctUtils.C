@@ -449,6 +449,85 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   //W2D
   PetscLogEventBegin(w2dEvent, 0, 0, 0, 0);
 
+  std::vector<unsigned int> requiredFgtIds; 
+
+  for(unsigned int i = 0; i < numLocalDirectOcts; i++) {
+    unsigned int lev = directTree[i].getLevel();
+    double hCurrOct = hOctFac*static_cast<double>(1u << (maxDepth - lev));
+
+    double ptGridOff = 0.1*hCurrOct;
+    double ptGridH = 0.8*hCurrOct/(static_cast<double>(ptGridSizeWithinBox) - 1.0);
+
+    //Anchor of the octant
+    unsigned int anchX = directTree[i].getX();
+    unsigned int anchY = directTree[i].getY();
+    unsigned int anchZ = directTree[i].getZ();
+
+    double aOx =  hOctFac*(static_cast<double>(anchX));
+    double aOy =  hOctFac*(static_cast<double>(anchY));
+    double aOz =  hOctFac*(static_cast<double>(anchZ));
+
+    for(int j3 = 0; j3 < ptGridSizeWithinBox; j3++) {
+      double pz = aOz + ptGridOff + (ptGridH*(static_cast<double>(j3)));
+
+      double minZ = pz - (static_cast<double>(K)*hRg);
+      double maxZ = pz + (static_cast<double>(K)*hRg);
+
+      int minZid = static_cast<int>(floor(minZ/hRg));
+      int maxZid = static_cast<int>(ceil(maxZ/hRg));
+
+      if(minZid < 0) {
+        minZid = 0;
+      }
+
+      if(maxZid > Ne) {
+        maxZid = Ne;
+      }
+
+      for(int j2 = 0; j2 < ptGridSizeWithinBox; j2++) {
+        double py = aOy + ptGridOff + (ptGridH*(static_cast<double>(j2)));
+
+        double minY = py - (static_cast<double>(K)*hRg);
+        double maxY = py + (static_cast<double>(K)*hRg);
+
+        int minYid = static_cast<int>(floor(minY/hRg));
+        int maxYid = static_cast<int>(ceil(maxY/hRg));
+
+        if(minYid < 0) {
+          minYid = 0;
+        }
+
+        if(maxYid > Ne) {
+          maxYid = Ne;
+        }
+
+        for(int j1 = 0; j1 < ptGridSizeWithinBox; j1++) {
+          double px = aOx + ptGridOff + (ptGridH*(static_cast<double>(j1)));
+
+          double minX = px - (static_cast<double>(K)*hRg);
+          double maxX = px + (static_cast<double>(K)*hRg);
+
+          int minXid = static_cast<int>(floor(minX/hRg));
+          int maxXid = static_cast<int>(ceil(maxX/hRg));
+
+          if(minXid < 0) {
+            minXid = 0;
+          }
+
+          if(maxXid > Ne) {
+            maxXid = Ne;
+          }
+
+          if( requiredFgtIds.empty() ) {
+          } else {
+          }
+
+        }//end for j1
+      }//end for j2
+    }//end for j3
+
+  }//end for i
+
   std::vector<std::vector<double> > directResults(numLocalDirectOcts);
 
   PetscLogEventEnd(w2dEvent, 0, 0, 0, 0);
@@ -761,31 +840,27 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
 }
 
-void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int zs, int nx, int ny, int nz, int Ne, double h, const int StencilWidth, const int P, const double lambda) {
+void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, 
+    int xs, int ys, int zs, int nx, int ny, int nz, 
+    int Ne, double h, const int StencilWidth, const int P, const double lambda) {
   //Loop over local boxes and their Interaction lists and do a direct translation
 
   for(PetscInt zi = 0; zi < nz; zi++) {
     for(PetscInt yi = 0; yi < ny; yi++) {
       for(PetscInt xi = 0; xi < nx; xi++) {
-        int xx = xi +xs;
-        int yy = yi +ys;
-        int zz = zi +zs;
+        int xx = xi + xs;
+        int yy = yi + ys;
+        int zz = zi + zs;
 
-        //Center of the box B
-        /*
-           double cBx =  h*(0.5 + static_cast<double>(xi + xs));
-           double cBy =  h*(0.5 + static_cast<double>(yi + ys));
-           double cBz =  h*(0.5 + static_cast<double>(zi + zs));
-           */
         //Bounds for Ilist of box B
-        int Ixs = xi + xs - StencilWidth;
-        int Ixe = xi + xs + StencilWidth;
+        int Ixs = xx - StencilWidth;
+        int Ixe = xx + StencilWidth;
 
-        int Iys = yi + ys - StencilWidth;
-        int Iye = yi + ys + StencilWidth;
+        int Iys = yy - StencilWidth;
+        int Iye = yy + StencilWidth;
 
-        int Izs = zi + zs - StencilWidth;
-        int Ize = zi + zs + StencilWidth;
+        int Izs = zz - StencilWidth;
+        int Ize = zz + StencilWidth;
 
         if(Ixs < 0) {
           Ixs = 0;
@@ -823,21 +898,14 @@ void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int
           for(int yj = Iys; yj <= Iye; yj++) {
             for(int xj = Ixs; xj <= Ixe; xj++) {
 
-              //Center of the box C
-              /*
-                 double cCx =  h*(0.5 + static_cast<double>(xj));
-                 double cCy =  h*(0.5 + static_cast<double>(yj));
-                 double cCz =  h*(0.5 + static_cast<double>(zj));
-                 */
-
               for(int k3 = -P, di = 0; k3 < P; k3++) {
                 for(int k2 = -P; k2 < P; k2++) {
                   for(int k1 = -P; k1 < P; k1++, di++) {
 
                     double theta = lambda*h*( static_cast<double>(k1*(xj - xx) + k2*(yj - yy) + k3*(zj - zz) ) );
 
-                    WgArr[zi + zs][yi + ys][xi + xs][2*di] += (WlArr[zj][yj][xj][2*di]*cos(theta));
-                    WgArr[zi + zs][yi + ys][xi + xs][(2*di) + 1] += (WlArr[zj][yj][xj][(2*di) + 1]*sin(theta));
+                    WgArr[zz][yy][xx][2*di] += (WlArr[zj][yj][xj][2*di]*cos(theta));
+                    WgArr[zz][yy][xx][(2*di) + 1] += (WlArr[zj][yj][xj][(2*di) + 1]*sin(theta));
 
                   }//end for k1
                 }//end for k2
