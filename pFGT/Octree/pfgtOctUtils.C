@@ -932,6 +932,7 @@ void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
     int Ne, double h, const int StencilWidth, const int P, const double lambda) {
   //Loop over local boxes and their Interaction lists and do a direct translation
 
+  double theta, ct, st;
   for(PetscInt zi = 0; zi < nz; zi++) {
     for(PetscInt yi = 0; yi < ny; yi++) {
       for(PetscInt xi = 0; xi < nx; xi++) {
@@ -989,10 +990,12 @@ void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
                 for(int k2 = -P; k2 < P; k2++) {
                   for(int k1 = -P; k1 < P; k1++, di++) {
 
-                    double theta = lambda*h*( static_cast<double>(k1*(xj - xx) + k2*(yj - yy) + k3*(zj - zz) ) );
+                    theta = lambda*h*( static_cast<double>(k1*(xx - xj) + k2*(yy - yj) + k3*(zz - zj) ) );
+                    ct = cos(theta);
+                    st = sin(theta);
 
-                    WgArr[zz][yy][xx][2*di] += (WlArr[zj][yj][xj][2*di]*cos(theta));
-                    WgArr[zz][yy][xx][(2*di) + 1] += (WlArr[zj][yj][xj][(2*di) + 1]*sin(theta));
+                    WgArr[zx][yy][xx][2*di] += __COMP_MUL_RE(WlArr[zj][yj][xj][2*di], WlArr[zj][yj][xj][(2*di) + 1], ct, st);
+                    WgArr[zx][yy][xx][(2*di) + 1] += __COMP_MUL_IM(WlArr[zj][yj][xj][2*di], WlArr[zj][yj][xj][(2*di) + 1], ct, st);
 
                   }//end for k1
                 }//end for k2
