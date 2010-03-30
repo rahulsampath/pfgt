@@ -829,31 +829,27 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
   PetscFunctionReturn(0);
 }
 
-void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int zs, int nx, int ny, int nz, int Ne, double h, const int StencilWidth, const int P, const double lambda) {
+void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
+    int xs, int ys, int zs, int nx, int ny, int nz, 
+    int Ne, double h, const int StencilWidth, const int P, const double lambda) {
   //Loop over local boxes and their Interaction lists and do a direct translation
 
   for(PetscInt zi = 0; zi < nz; zi++) {
     for(PetscInt yi = 0; yi < ny; yi++) {
       for(PetscInt xi = 0; xi < nx; xi++) {
-        int xx = xi +xs;
-        int yy = yi +ys;
-        int zz = zi +zs;
+        int xx = xi + xs;
+        int yy = yi + ys;
+        int zz = zi + zs;
 
-        //Center of the box B
-        /*
-           double cBx =  h*(0.5 + static_cast<double>(xi + xs));
-           double cBy =  h*(0.5 + static_cast<double>(yi + ys));
-           double cBz =  h*(0.5 + static_cast<double>(zi + zs));
-           */
         //Bounds for Ilist of box B
-        int Ixs = xi + xs - StencilWidth;
-        int Ixe = xi + xs + StencilWidth;
+        int Ixs = xx - StencilWidth;
+        int Ixe = xx + StencilWidth;
 
-        int Iys = yi + ys - StencilWidth;
-        int Iye = yi + ys + StencilWidth;
+        int Iys = yy - StencilWidth;
+        int Iye = yy + StencilWidth;
 
-        int Izs = zi + zs - StencilWidth;
-        int Ize = zi + zs + StencilWidth;
+        int Izs = zz - StencilWidth;
+        int Ize = zz + StencilWidth;
 
         if(Ixs < 0) {
           Ixs = 0;
@@ -891,21 +887,14 @@ void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int
           for(int yj = Iys; yj <= Iye; yj++) {
             for(int xj = Ixs; xj <= Ixe; xj++) {
 
-              //Center of the box C
-              /*
-                 double cCx =  h*(0.5 + static_cast<double>(xj));
-                 double cCy =  h*(0.5 + static_cast<double>(yj));
-                 double cCz =  h*(0.5 + static_cast<double>(zj));
-                 */
-
               for(int k3 = -P, di = 0; k3 < P; k3++) {
                 for(int k2 = -P; k2 < P; k2++) {
                   for(int k1 = -P; k1 < P; k1++, di++) {
 
                     double theta = lambda*h*( static_cast<double>(k1*(xj - xx) + k2*(yj - yy) + k3*(zj - zz) ) );
 
-                    WgArr[zi + zs][yi + ys][xi + xs][2*di] += (WlArr[zj][yj][xj][2*di]*cos(theta));
-                    WgArr[zi + zs][yi + ys][xi + xs][(2*di) + 1] += (WlArr[zj][yj][xj][(2*di) + 1]*sin(theta));
+                    WgArr[zz][yy][xx][2*di] += (WlArr[zj][yj][xj][2*di]*cos(theta));
+                    WgArr[zz][yy][xx][(2*di) + 1] += (WlArr[zj][yj][xj][(2*di) + 1]*sin(theta));
 
                   }//end for k1
                 }//end for k2
