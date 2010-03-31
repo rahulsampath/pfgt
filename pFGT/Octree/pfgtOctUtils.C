@@ -881,29 +881,239 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   PetscLogEventBegin(d2dEvent, 0, 0, 0, 0);
 
   ot::TreeNode rootOct(3, maxDepth);
-  ot::TreeNode minMaxDirectOct[2];
-  if( directTree.empty() ) {
-    minMaxDirectOct[0] = rootOct; 
-    minMaxDirectOct[1] = rootOct; 
-  } else {
-    minMaxDirectOct[0] = directTree[0];
-    minMaxDirectOct[1] = directTree[directTree.size() - 1];
+  ot::TreeNode minDirectOct = rootOct;
+  if( !(directTree.empty()) ) {
+    minDirectOct = directTree[0];
   }
 
-  std::vector<ot::TreeNode> directTreePartInfo(2*npes);
+  std::vector<ot::TreeNode> directTreePartInfo(npes);
 
-  MPI_Allgather( minMaxDirectOct, 2, par::Mpi_datatype<ot::TreeNode>::value(),
-      (&(*(directTreePartInfo.begin()))), 2, par::Mpi_datatype<ot::TreeNode>::value(), comm );
+  MPI_Allgather( &minDirectOct, 1, par::Mpi_datatype<ot::TreeNode>::value(),
+      (&(*(directTreePartInfo.begin()))), 1, par::Mpi_datatype<ot::TreeNode>::value(), comm );
 
   std::vector<ot::TreeNode> directTreeMins;
-  std::vector<ot::TreeNode> directTreeMaxs;
-  for(unsigned int i = 0; i < directTreePartInfo.size(); i += 2) {
+  for(unsigned int i = 0; i < npes; i++) {
     if(directTreePartInfo[i] != rootOct) {
-      directTreePartInfo[i].setWeight(i/2);
-      directTreePartInfo[i + 1].setWeight(i/2);
+      directTreePartInfo[i].setWeight(i);
       directTreeMins.push_back(directTreePartInfo[i]);
-      directTreeMaxs.push_back(directTreePartInfo[i + 1]);
     }
+  }//end for i
+  directTreePartInfo.clear();
+
+  std::vector<std::vector<double> > d2dSendPts(npes);
+
+  for(unsigned int i = 0; i < numLocalDirectOcts; i++) {
+    unsigned int lev = directTree[i].getLevel();
+    double hCurrOct = hOctFac*static_cast<double>(1u << (maxDepth - lev));
+
+    double ptGridOff = 0.1*hCurrOct;
+    double ptGridH = 0.8*hCurrOct/(static_cast<double>(ptGridSizeWithinBox) - 1.0);
+
+    //Anchor of the octant
+    unsigned int anchX = directTree[i].getX();
+    unsigned int anchY = directTree[i].getY();
+    unsigned int anchZ = directTree[i].getZ();
+
+    double aOx =  hOctFac*(static_cast<double>(anchX));
+    double aOy =  hOctFac*(static_cast<double>(anchY));
+    double aOz =  hOctFac*(static_cast<double>(anchZ));
+
+    for(int j3 = 0; j3 < ptGridSizeWithinBox; j3++) {
+      double pz = aOz + ptGridOff + (ptGridH*(static_cast<double>(j3)));
+
+      double minZ = pz - (static_cast<double>(K)*hRg);
+      double maxZ = pz + (static_cast<double>(K)*hRg);
+
+      if(minZ < 0.0) {
+        minZ = 0.0;
+      }
+
+      if(maxZ > 1.0) {
+        maxZ = 1.0;
+      }
+
+      unsigned int uiMinZ = static_cast<unsigned int>(floor(minZ*static_cast<double>(1u << maxDepth)));
+      unsigned int uiMaxZ = static_cast<unsigned int>(ceil(maxZ*static_cast<double>(1u << maxDepth)));
+
+      for(int j2 = 0; j2 < ptGridSizeWithinBox; j2++) {
+        double py = aOy + ptGridOff + (ptGridH*(static_cast<double>(j2)));
+
+        double minY = py - (static_cast<double>(K)*hRg);
+        double maxY = py + (static_cast<double>(K)*hRg);
+
+        if(minY < 0.0) {
+          minY = 0.0;
+        }
+
+        if(maxY > 1.0) {
+          maxY = 1.0;
+        }
+
+        unsigned int uiMinY = static_cast<unsigned int>(floor(minY*static_cast<double>(1u << maxDepth)));
+        unsigned int uiMaxY = static_cast<unsigned int>(ceil(maxY*static_cast<double>(1u << maxDepth)));
+
+        for(int j1 = 0; j1 < ptGridSizeWithinBox; j1++) {
+          double px = aOx + ptGridOff + (ptGridH*(static_cast<double>(j1)));
+
+          double minX = px - (static_cast<double>(K)*hRg);
+          double maxX = px + (static_cast<double>(K)*hRg);
+
+          if(minX < 0.0) {
+            minX = 0.0;
+          }
+
+          if(maxX > 1.0) {
+            maxX = 1.0;
+          }
+
+          unsigned int uiMinX = static_cast<unsigned int>(floor(minX*static_cast<double>(1u << maxDepth)));
+          unsigned int uiMaxX = static_cast<unsigned int>(ceil(maxX*static_cast<double>(1u << maxDepth)));
+
+          ot::TreeNode minPt(uiMinX, uiMinY, uiMinZ, maxDepth, 3, maxDepth);
+          ot::TreeNode maxPt( (uiMaxX - 1), (uiMaxY - 1), (uiMaxZ - 1), maxDepth, 3, maxDepth);
+
+          unsigned int minPtIdx;
+          bool foundMin = seq::maxLowerBound<ot::TreeNode>(directTreeMins, minPt, minPtIdx, 0, 0);
+
+          if(!foundMin) {
+            minPtIdx = 0;
+          }
+
+          unsigned int maxPtIdx;
+          bool foundMax = seq::maxLowerBound<ot::TreeNode>(directTreeMins, maxPt, maxPtIdx, 0, 0);
+
+          //maxPt > currPt and currPt > currOct and currOct is a direct octant
+          assert(foundMax);
+
+          for(unsigned int idx = minPtIdx; idx <= maxPtIdx; idx++) {
+            unsigned procId = directTreeMins[idx].getWeight();
+
+            d2dSendPts[procId].push_back(px);
+            d2dSendPts[procId].push_back(py);
+            d2dSendPts[procId].push_back(pz);
+
+            //Use drand48() instead if you want
+            d2dSendPts[procId].push_back(fMag);
+          }//end idx
+
+        }//end for j1
+      }//end for j2
+    }//end for j3
+
+  }//end for i
+
+  std::vector<int> d2dSendCnts(npes);
+  for(int i = 0; i < npes; i++) {
+    d2dSendCnts[i] = d2dSendPts[i].size();
+  }//end for i
+
+  std::vector<int> d2dRecvCnts(npes);
+
+  MPI_Alltoall( (&(*(d2dSendCnts.begin()))), 1, MPI_INT,
+      (&(*(d2dRecvCnts.begin()))), 1, MPI_INT, comm );
+
+  std::vector<int> d2dSendDisps(npes);
+  std::vector<int> d2dRecvDisps(npes);
+  d2dSendDisps[0] = 0;
+  d2dRecvDisps[0] = 0;
+  for(int i = 1; i < npes; i++) {
+    d2dSendDisps[i] = d2dSendDisps[i - 1] + d2dSendCnts[i - 1];
+    d2dRecvDisps[i] = d2dRecvDisps[i - 1] + d2dRecvCnts[i - 1];
+  }//end for i
+
+  std::vector<double> d2dSendVals(d2dSendDisps[npes - 1] + d2dSendCnts[npes - 1]);
+  for(int i = 0; i < npes; i++) {
+    for(int j = 0; j < d2dSendCnts[i]; j++) {
+      d2dSendVals[d2dSendDisps[i] + j] = d2dSendPts[i][j];
+    }//end for j
+  }//end for i
+  d2dSendPts.clear();
+
+  std::vector<double> d2dRecvVals(d2dRecvDisps[npes - 1] + d2dRecvCnts[npes - 1]);
+
+  MPI_Alltoallv( (&(*(d2dSendVals.begin()))), (&(*(d2dSendCnts.begin()))), (&(*(d2dSendDisps.begin()))), MPI_DOUBLE, 
+      (&(*(d2dRecvVals.begin()))), (&(*(d2dRecvCnts.begin()))), (&(*(d2dRecvDisps.begin()))), MPI_DOUBLE, comm );
+
+  d2dSendVals.clear();
+  d2dSendCnts.clear();
+  d2dSendDisps.clear();
+
+  d2dRecvCnts.clear();
+  d2dRecvDisps.clear();
+
+  const unsigned int numRecvSourcePts = d2dRecvVals.size()/4;
+
+  for(unsigned int i = 0; i < numRecvSourcePts; i++) {
+    //Source point
+    double sx = d2dRecvVals[4*i];
+    double sy = d2dRecvVals[(4*i) + 1];
+    double sz = d2dRecvVals[(4*i) + 2];
+    double sf = d2dRecvVals[(4*i) + 3];
+
+    //Ilist of source point
+    double minX = sx - (static_cast<double>(K)*hRg);
+    double maxX = sx + (static_cast<double>(K)*hRg);
+
+    double minY = sy - (static_cast<double>(K)*hRg);
+    double maxY = sy + (static_cast<double>(K)*hRg);
+
+    double minZ = sz - (static_cast<double>(K)*hRg);
+    double maxZ = sz + (static_cast<double>(K)*hRg);
+
+    if(minX < 0.0) {
+      minX = 0.0;
+    }
+
+    if(maxX > 1.0) {
+      maxX = 1.0;
+    }
+
+    if(minY < 0.0) {
+      minY = 0.0;
+    }
+
+    if(maxY > 1.0) {
+      maxY = 1.0;
+    }
+
+    if(minZ < 0.0) {
+      minZ = 0.0;
+    }
+
+    if(maxZ > 1.0) {
+      maxZ = 1.0;
+    }
+
+    unsigned int uiMinX = static_cast<unsigned int>(floor(minX*static_cast<double>(1u << maxDepth)));
+    unsigned int uiMaxX = static_cast<unsigned int>(ceil(maxX*static_cast<double>(1u << maxDepth)));
+
+    unsigned int uiMinY = static_cast<unsigned int>(floor(minY*static_cast<double>(1u << maxDepth)));
+    unsigned int uiMaxY = static_cast<unsigned int>(ceil(maxY*static_cast<double>(1u << maxDepth)));
+
+    unsigned int uiMinZ = static_cast<unsigned int>(floor(minZ*static_cast<double>(1u << maxDepth)));
+    unsigned int uiMaxZ = static_cast<unsigned int>(ceil(maxZ*static_cast<double>(1u << maxDepth)));
+
+    ot::TreeNode minPt(uiMinX, uiMinY, uiMinZ, maxDepth, 3, maxDepth);
+    ot::TreeNode maxPt( (uiMaxX - 1), (uiMaxY - 1), (uiMaxZ - 1), maxDepth, 3, maxDepth);
+
+    unsigned int minPtIdx;
+    bool foundMin = seq::maxLowerBound<ot::TreeNode>(directTree, minPt, minPtIdx, 0, 0);
+
+    if(!foundMin) {
+      minPtIdx = 0;
+    }
+
+    unsigned int maxPtIdx;
+    bool foundMax = seq::maxLowerBound<ot::TreeNode>(directTree, maxPt, maxPtIdx, 0, 0);
+
+    //This source point was sent only to those procs
+    //whose directTreeMin <= maxPt
+    assert(foundMax);
+
+    for(unsigned int idx = minPtIdx; idx <= maxPtIdx; idx++) {
+
+    }//end for idx
+
   }//end for i
 
   PetscLogEventEnd(d2dEvent, 0, 0, 0, 0);
