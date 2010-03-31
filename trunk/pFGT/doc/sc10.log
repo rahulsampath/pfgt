@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (MiKTeX 2.8) (preloaded format=pdflatex 2009.11.11)  30 MAR 2010 19:23
+This is pdfTeX, Version 3.1415926-1.40.10 (MiKTeX 2.8) (preloaded format=pdflatex 2009.11.11)  30 MAR 2010 20:41
 entering extended mode
 **C:/parallelFGT/pfgt/pFGT/doc/sc10.tex
 (C:/parallelFGT/pfgt/pFGT/doc/sc10.tex
@@ -756,66 +756,44 @@ LaTeX Font Info:    Try loading font information for U+msb on input line 54.
 
 ("C:\Program Files\MiKTeX 2.8\tex\latex\amsfonts\umsb.fd"
 File: umsb.fd 2009/06/22 v3.00 AMS symbols B
-)
-Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 90.
-LaTeX Font Info:    Try loading font information for OT1+pcr on input line 92.
+) [1{C:/Documents and Settings/All Users/Application Data/MiKTeX/2.8/pdftex/con
+fig/pdftex.map}
+
+
+]
+LaTeX Font Info:    Try loading font information for OT1+pcr on input line 117.
+
 
 ("C:\Program Files\MiKTeX 2.8\tex\latex\psnfss\ot1pcr.fd"
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
-Underfull \hbox (badness 10000) in paragraph at lines 94--95
-[] []\OT1/pcr/m/n/10 Input : $\OML/cmm/m/it/10 N$ \OT1/pcr/m/n/10 sources $\OMS
-/cmsy/m/n/10 f\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 y[]; f[]\OT1/cmr/m/n/10 )\OMS/c
-msy/m/n/10 j\OML/cmm/m/it/10 j \OT1/cmr/m/n/10 = 1\OML/cmm/m/it/10 ::N\OMS/cmsy
-/m/n/10 g$\OT1/pcr/m/n/10 , $\OML/cmm/m/it/10 M$
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 94--95
-\OT1/pcr/m/n/10 targets $\OMS/cmsy/m/n/10 f\OML/cmm/m/it/10 x[]\OMS/cmsy/m/n/10
- j\OML/cmm/m/it/10 j \OT1/cmr/m/n/10 = 1\OML/cmm/m/it/10 ::M\OMS/cmsy/m/n/10 g$
-\OT1/pcr/m/n/10 , bandwidth $\OML/cmm/m/it/10 $ \OT1/pcr/m/n/10 and
- []
-
-LaTeX Font Info:    Font shape `OT1/pcr/bx/n' in size <10> not available
-(Font)              Font shape `OT1/pcr/b/n' tried instead on input line 96.
-
-Underfull \hbox (badness 10000) in paragraph at lines 98--100
-[] []\OT1/pcr/m/n/10 Find $\OMS/cmsy/m/n/10 I\OT1/cmr/m/n/10 [\OML/cmm/m/it/10 
-y[]\OT1/cmr/m/n/10 ]$\OT1/pcr/m/n/10 : set of all the targets that
- []
-
-[1{C:/Documents and Settings/All Users/Application Data/MiKTeX/2.8/pdftex/confi
-g/pdftex.map}
-
-
-]
-Underfull \hbox (badness 4673) in paragraph at lines 136--140
+Underfull \hbox (badness 4673) in paragraph at lines 115--119
 \OT1/ptm/m/n/10 boxes, the next step is to form each of their lo-cal
  []
 
 
-Underfull \hbox (badness 3536) in paragraph at lines 136--140
+Underfull \hbox (badness 3536) in paragraph at lines 115--119
 \OT1/ptm/m/n/10 ex-pan-sions. Since the FGT boxes are of size $\OMS/cmsy/m/n/10
  O\OT1/cmr/m/n/10 ([])$\OT1/ptm/m/n/10 ,
  []
 
 
-Underfull \hbox (badness 1540) in paragraph at lines 136--140
+Underfull \hbox (badness 1540) in paragraph at lines 115--119
 \OT1/ptm/m/n/10 only a fixed num-ber of sur-round-ing boxes con-tribute to
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 136--140
+Underfull \hbox (badness 10000) in paragraph at lines 115--119
 \OT1/ptm/m/n/10 to zero, the pseudo-code for the di-rect scheme is:
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 136--140
+Underfull \hbox (badness 10000) in paragraph at lines 115--119
 
  []
 
+LaTeX Font Info:    Font shape `OT1/pcr/bx/n' in size <10> not available
+(Font)              Font shape `OT1/pcr/b/n' tried instead on input line 120.
 (C:\parallelFGT\pfgt\pFGT\doc\sweep.tex
 Underfull \hbox (badness 1371) in paragraph at lines 2--4
  \OT1/ptm/m/it/10 a) Ac-cel-er-at-ing the plane-wave trans-la-tion step: [][] \
@@ -832,73 +810,70 @@ m/n/10   \OML/cmm/m/it/10 e[]w[] \OT1/cmr/m/n/10 + \OML/cmm/m/it/10 e[]w[]
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
 ) [2]
-Underfull \hbox (badness 10000) in paragraph at lines 186--188
+Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
+put line 159.
+
+Underfull \hbox (badness 10000) in paragraph at lines 165--167
 [] []\OT1/pcr/m/n/10 assign $\OML/cmm/m/it/10 `$ \OT1/pcr/m/n/10 to $\OML/cmm/m
 /it/10 T[]$ \OT1/pcr/m/n/10 (direct or truncation
  []
 
 
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 205--206
+Underfull \hbox (badness 10000) in paragraph at lines 184--185
 [] []\OT1/pcr/m/n/10 (S2W) Add contribution of point in $\OML/cmm/m/it/10 `$ \O
 T1/pcr/m/n/10 to
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 208--209
+Underfull \hbox (badness 10000) in paragraph at lines 187--188
 [] []\OT1/pcr/m/n/10 (W2L) Form local expansions using
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 214--215
+Underfull \hbox (badness 10000) in paragraph at lines 193--194
 [] []\OT1/pcr/m/n/10 Add contribution of $\OML/cmm/m/it/10 x$ \OT1/pcr/m/n/10 t
 o all the
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 214--215
+Underfull \hbox (badness 10000) in paragraph at lines 193--194
 \OT1/pcr/m/n/10 target boxes (in $\OML/cmm/m/it/10 T[]$\OT1/pcr/m/n/10 ) and ta
 rget points
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 221--222
+Underfull \hbox (badness 10000) in paragraph at lines 200--201
 [] []\OT1/pcr/m/n/10 Use local expansion for target points
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 223--224
+Underfull \hbox (badness 10000) in paragraph at lines 202--203
 [] []\OT1/pcr/m/n/10 Use wave expansion for target points in
  []
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-<Grid1.pdf, id=129, 514.92375pt x 417.56pt>
+<Grid1.pdf, id=113, 514.92375pt x 417.56pt>
 File: Grid1.pdf Graphic file (type pdf)
  <use Grid1.pdf>
-<Grid2.pdf, id=130, 514.92375pt x 417.56pt>
+<Grid2.pdf, id=114, 514.92375pt x 417.56pt>
 File: Grid2.pdf Graphic file (type pdf)
  <use Grid2.pdf>
-<Qtree0.pdf, id=131, 514.92375pt x 417.56pt>
+<Qtree0.pdf, id=115, 514.92375pt x 417.56pt>
 File: Qtree0.pdf Graphic file (type pdf)
  <use Qtree0.pdf>
-<Qtree2.pdf, id=132, 514.92375pt x 417.56pt>
+<Qtree2.pdf, id=116, 514.92375pt x 417.56pt>
 File: Qtree2.pdf Graphic file (type pdf)
  <use Qtree2.pdf>
-<Qtree1.pdf, id=133, 514.92375pt x 417.56pt>
+<Qtree1.pdf, id=117, 514.92375pt x 417.56pt>
 File: Qtree1.pdf Graphic file (type pdf)
  <use Qtree1.pdf>
 ! Extra }, or forgotten \endgroup.
 \@endfloatbox ...pagefalse \outer@nobreak \egroup 
                                                   \color@endbox 
-l.302 \end{table}
+l.281 \end{table}
                  
 I've deleted a group-closing symbol because it seems to be
 spurious, as in `$x}$'. But perhaps the } is legitimate and
@@ -906,14 +881,7 @@ you forgot something else, as in `\hbox{$x}'. In such cases
 the way to recover is to insert both the forgotten and the
 deleted material, e.g., by typing `I$}'.
 
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-
-Underfull \vbox (badness 10000) has occurred while \output is active []
-
- [3]
-(C:\parallelFGT\pfgt\pFGT\doc\sc10.bbl)
+[3] (C:\parallelFGT\pfgt\pFGT\doc\sc10.bbl)
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -932,11 +900,11 @@ Before submitting the final camera ready copy, remember to:
 .pdf> <C:/parallelFGT/pfgt/pFGT/doc/Qtree1.pdf>]
 (C:\parallelFGT\pfgt\pFGT\doc\sc10.aux) ) 
 Here is how much of TeX's memory you used:
- 15381 strings out of 495285
- 283186 string characters out of 3180333
- 410629 words of memory out of 3000000
- 18086 multiletter control sequences out of 15000+200000
- 49870 words of font info for 107 fonts, out of 3000000 for 9000
+ 15366 strings out of 495285
+ 282998 string characters out of 3180333
+ 409205 words of memory out of 3000000
+ 18083 multiletter control sequences out of 15000+200000
+ 49438 words of font info for 105 fonts, out of 3000000 for 9000
  14 hyphenation exceptions out of 8191
  47i,9n,65p,1411b,546s stack positions out of 5000i,500n,10000p,200000b,50000s
 {C:/Program Files/MiKTeX 2.8/fonts/enc
@@ -964,9 +932,9 @@ iKTeX 2.8/fonts/type1/urw/courier/ucrr8a.pfb><C:/Program Files/MiKTeX 2.8/fonts
 /type1/urw/times/utmb8a.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/urw/times/
 utmbi8a.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/urw/times/utmr8a.pfb><C:/P
 rogram Files/MiKTeX 2.8/fonts/type1/urw/times/utmri8a.pfb>
-Output written on sc10.pdf (5 pages, 363931 bytes).
+Output written on sc10.pdf (5 pages, 362340 bytes).
 PDF statistics:
- 358 PDF objects out of 1000 (max. 8388607)
- 101 named destinations out of 1000 (max. 500000)
+ 345 PDF objects out of 1000 (max. 8388607)
+ 89 named destinations out of 1000 (max. 500000)
  110 words of extra memory for PDF output out of 10000 (max. 10000000)
 
