@@ -880,6 +880,32 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   //D2D
   PetscLogEventBegin(d2dEvent, 0, 0, 0, 0);
 
+  ot::TreeNode rootOct(3, maxDepth);
+  ot::TreeNode minMaxDirectOct[2];
+  if( directTree.empty() ) {
+    minMaxDirectOct[0] = rootOct; 
+    minMaxDirectOct[1] = rootOct; 
+  } else {
+    minMaxDirectOct[0] = directTree[0];
+    minMaxDirectOct[1] = directTree[directTree.size() - 1];
+  }
+
+  std::vector<ot::TreeNode> directTreePartInfo(2*npes);
+
+  MPI_Allgather( minMaxDirectOct, 2, par::Mpi_datatype<ot::TreeNode>::value(),
+      (&(*(directTreePartInfo.begin()))), 2, par::Mpi_datatype<ot::TreeNode>::value(), comm );
+
+  std::vector<ot::TreeNode> directTreeMins;
+  std::vector<ot::TreeNode> directTreeMaxs;
+  for(unsigned int i = 0; i < directTreePartInfo.size(); i += 2) {
+    if(directTreePartInfo[i] != rootOct) {
+      directTreePartInfo[i].setWeight(i/2);
+      directTreePartInfo[i + 1].setWeight(i/2);
+      directTreeMins.push_back(directTreePartInfo[i]);
+      directTreeMaxs.push_back(directTreePartInfo[i + 1]);
+    }
+  }//end for i
+
   PetscLogEventEnd(d2dEvent, 0, 0, 0, 0);
 
   if(!rank) {
