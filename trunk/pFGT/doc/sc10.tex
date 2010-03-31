@@ -236,33 +236,34 @@ We assume sources and targets are the same for simplicity. We also assume that t
 {\em [In the parallel case, the interaction between $T_d$ and $T_e$ can be done while processors are communicating other info.] }
 
 
-
-
-\begin{figure}[htp]
+\begin{figure}
 \begin{center}
   \subfigure[]{\label{fig:Grid1}\includegraphics[scale=0.32]{Grid1}}
   \subfigure[]{\label{fig:Grid2}\includegraphics[scale=0.32]{Grid2}}  
  \end{center}
-\caption{\em Here we illustrate one of the main steps involved in
-  FGT. a) The leaf nodes (shown in black) of the given quadtree
+\caption{
+ \label{fig:Grid} 
+ \em Here we illustrate one of the main steps involved in FGT.  (a) The leaf nodes (shown in black) of the given quadtree 
   are assigned to regular boxes (shown in red). The size of the boxes
   is chosen so that each box corresponds to a node at some level of
-  the quadtree. b) At a source box $B$, the influence of all  
+  the quadtree. (b) At a source box $B$, the influence of all  
   the constituent leaf nodes is encoded in the wave expansion
-  $\mb{w}^B$. The translation operator  
-  $\mb{t}^{BC}$ transfers the wave expansion of $B$ to the target box
-  $C$. At $C$, the influence of all the source
-  boxes in $\mci[C]$ is encoded in the local expansion $\mb{l}^C$.
-  Finally, $\gausst f$ at a target that belongs to $C$ is given by
-  $<\mb{l}^C, \mb{v}^C(\mbx)>$.}\label{fig:Grid}
+  ${\mb{w}}^B$. The translation operator ${\mb{t}}^{BC}$ transfers the
+   wave expansion of $B$ to the target box $C$. At $C$, the influence of all the source
+  boxes in $\mci[C]$ is encoded in the local expansion ${\mb{l}}^C$.
+  Finally, $\gausst f$ at a target that belongs to $C$ is given by 
+  $<{\mb{l}}^C, {\mb{v}}^C(\mbx)>$. }
 \end{figure}
-%
-\begin{figure}[htp]
+
+\begin{figure}
 \begin{center}
   \subfigure[$Q$]{\label{fig:Qtree0}\includegraphics[scale=0.3]{Qtree0}}
   \subfigure[$Q_{\text{Direct}}$]{\label{fig:Qtree1}\includegraphics[scale=0.3]{Qtree2}}
   \subfigure[$Q_{\text{Expand}}$]{\label{fig:Qtree2}\includegraphics[scale=0.3]{Qtree1}}
-  \end{center}\caption{\em In this figure we illustrate the tree
+  \end{center}
+  \caption{
+  \label{fig:qtree_split}
+  \em In this figure we illustrate the tree
   splitting that we use in CFGT to obtain an algorithmic complexity
   that is independent of the value of $\delta$.  Subfigure (a) shows
   the quadtree, a target $\mbx$, and the support of the Gaussian
@@ -281,7 +282,7 @@ We assume sources and targets are the same for simplicity. We also assume that t
   nodes within the support, we only have to gather the wave expansion
   of the source boxes (red boxes) that are within the support. The
   number of these source boxes is bounded from above by
-  $(2n+1)^2$. }\label{fig:qtree_split}
+  $(2n+1)^2$. }
 \end{figure}
 
 \section{Results}
