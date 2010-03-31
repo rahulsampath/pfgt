@@ -59,7 +59,7 @@ Computing the transform to six-digit accuracy at 120 billion points took 185 sec
 Gauss transform is one of several discrete spatial transforms in the form 
 %
 \beq F(x_j) = \sum_{k=1}^N \kernel f_k \quad \text{at} \quad \{ x_j \, | \, j = 1,...,M \} \, , \label{gt} \eeq
-\[\text{where} \quad x_j, y_k \in \mathbb{R}^d.  \]
+\[\text{where} \quad x_j, y_k \in \mathbb{R}^d. \]
 %
 where the kernel $G_\delta$ is smooth, exponentially decaying in both physical and Fourier domain. The parameter $\delta$ controls how rapidly the kernel decays.  
 In the Gauss transform case, $\kernel = e^{-\frac{\|x_j - y_k\|^2}{\delta}}$.  We call the points $x$ as targets and $y$ as sources.  
@@ -77,36 +77,15 @@ when the source distribution is highly nonuniform.
 
 
 \section{Overview of FGT}
-For simplicity of presentation, we assume that the points are uniformly distributed and that they reside within a unit cube.
-The design of fast algorithms for (\ref{gt}) is strongly dependent on three independent parameter viz., number of sources $N$, the bandwidth $\delta$ and desired accuracy $\epsilon$.  If 
+For simplicity, we assume that the points are uniformly distributed and that they reside within a unit cube.
+The design of fast algorithms for (\ref{gt}) is strongly dependent on three independent parameter viz., number of sources $N$, the bandwidth $\delta$ and desired accuracy $\epsilon$. A Gaussian centered at a source location interacts with targets that are within its support. If there are fewer targets than a threshold value $n^*$, we use a simple {\em truncation algorithm}, otherwise, we use a {\em expansion algorithm}. The threshold  value depends on all three independent parameters and we will discuss its choice after introducing both algorithms. 
 
-\beq n \sqrt{ \delta \ln\left( \frac{1}{\epsilon} \right) } < n_{th} \eeq 
-
-we can use a simple truncation algorithm described next.
 \subsection{Truncation algorithm} 
-The choice of the threshold value will be discussed after introducing the whole algorithm. The complexity of this algorithm is $\bigO(N (n_{th})^3)$. This is a common technique used in the graphics community. However, when $\delta$ is large and/or high accuracy is required, the cost of this algorithm grows quadratically.  
-
-\begin{algorithm}[!h]
-\caption{\em Fast Gauss Transform by truncation}
-\label{a:sfgt}
-{\tt
-\begin{algorithmic}
-\STATE{Input : $N$ sources $\{(y_j, f_j) | j = 1..N\}$, $M$ targets $\{x_j | j = 1..M \}$, bandwidth $\delta$ and precision $\epsilon$}
-\STATE
- \FOR {$j = 1 \quad \text{to} \quad N$}
-    \STATE
-    \STATE Find $\mathcal{I}[y_j]$: set of all the targets that within a distance $r = \sqrt{- \ln 
-           \epsilon}$ from $y_j$
-	 \STATE 
-    \FOR {$\text{each}\quad x \in \mathcal{I}[y_j]$}
-        \STATE{\sc Add contribution of $y_j$ to Gauss transform at $x$}
-	     \STATE $G[f](x) \, += \, e^{-\frac{(x - y_j)^2}{\delta}} f_j$ \hfill 
-    \ENDFOR
- \ENDFOR
-
-\end{algorithmic}
-}
-\end{algorithm}
+Since the kernel in (\ref{gt}) decays exponentially, we can simply truncate the sum to
+%
+\beq F(x_j) = \sum_{y_k \in \mathcal{I}[x_j]} \kernel f_k \eeq
+%
+where $\mathcal{I}[x_j]$ is the interaction list which includes all the sources that are within a distance $\sqrt{\delta \ln (1/\epsilon)}$. Beyond this distance, a Gaussian centered at $x_j$ decays below $\epsilon$. The complexity of this algorithm is $\bigO(N \sqrt{\delta \ln(1/\epsilon)})$. This is a common technique used in the graphics community. When $\delta$ is large and/or high accuracy is required, the cost of this algorithm grows quadratically.  
 
 \subsection{Expansion algorithm}
 There are two variations of FGT: one based on hermite expansion \cite{fgt} and another based on plane-wave expansion \cite{greengard98}. The former has lower expansion costs while the latter has lower translation costs. The latter version is further improved in \cite{fggt} for volumetric data. Our implementation is based on \cite{fggt} and we summarize it here. 
