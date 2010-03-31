@@ -51,8 +51,16 @@ citecolor = {blue}
 \maketitle
 
 \begin{abstract}
-We present a fast parallel algorithm to compute the sum of $N$ Gaussians at $N$ points in an optimal $\bigO(\frac{N}{n_p})$ time on $n_p$ processors. Our implementation is based on the plane-wave representation of the kernels which permits diagonal translation. We present a new algorithm for translation that minimizes work and memory loads compared to previous schemes.
-Computing the transform to six-digit accuracy at 120 billion points took 185 seconds on 4096 cores of Jaguar. 
+We present two fast parallel algorithms to compute the sum of $N$ Gaussians at $N$ points; 
+one for uniform point distributions and the other for non-uniform point distributions. The 
+parallel time complexity of the algorithm for the uniform case is $\bigO(\frac{N}{n_p})$, 
+where $n_p$ is the number of CPUs. The paralell time complexity of the algorithm for the
+non-uniform case is $ $. 
+Our implementation is based on the
+plane-wave representation of the kernels which permits diagonal translation. We present a 
+new algorithm for translation that reduces the computation and storage costs compared to 
+previous schemes. Computing the transform to six-digit accuracy at 120 billion points 
+took 185 seconds on 4096 cores on the Jaguar supercomputer at the Oak Ridge National Laboratory. 
 \end{abstract}
 
 \section{Introduction}  \label{s:intro}
@@ -61,19 +69,38 @@ Gauss transform is one of several discrete spatial transforms of the form
 \beq F(x_j) = \sum_{k=1}^N \kernel f_k \quad \text{at} \quad \{ x_j \, | \, j = 1,...,M \} \, , \label{gt} \eeq
 \[\text{where} \quad x_j, y_k \in \mathbb{R}^d. \]
 %
-where the kernel $G_\delta$ is smooth, exponentially decaying in both physical and Fourier domain. The parameter $\delta$ controls how rapidly the kernel decays.  
-In the Gauss transform case, $\kernel = e^{-\frac{\|x_j - y_k\|^2}{\delta}}$.  We call the points $x$ as targets and $y$ as sources.  
+where the kernel $G_\delta$ is a smooth exponentially decaying function in both the physical
+and Fourier domains. The parameter $\delta$ controls how rapidly the kernel decays.  
+In the Gauss transform case, $\kernel = e^{-\frac{\|x_j - y_k\|^2}{\delta}}$.  We call the
+points $x$ as targets and $y$ as sources.  
 
-Discrete sums of the form (\ref{gt}) are encountered in a variety of disciplines including computational physics, machine learning, computational finance and computer graphics. Computing these sums directly takes $\bigO(NM)$ time and is not feasible for large scale problems. Starting from the earlier work of Greengard and Strain \cite{fgt}, several sequential algorithms have been proposed (e.g.,  \cite{greengard98, duraiswami03, fggt}) to reduced the cost to an optimal $\bigO(N+M)$. However, to our knowledge, there have been no parallel implementations to date. 
+Discrete sums of the form (\ref{gt}) are encountered in a variety of disciplines 
+including computational physics, machine learning, computational finance and computer 
+graphics. Computing these sums directly takes $\bigO(NM)$ time and is not feasible
+for large scale problems. 
 
-\textbf{Contributions.}
+\paragraph{Related work}
+Starting from the earlier work of Greengard and Strain \cite{fgt}, several sequential algorithms have 
+been proposed (e.g.,  \cite{greengard98, duraiswami03, fggt}) to reduced the 
+cost to an optimal $\bigO(N+M)$. 
+
+\paragraph{Contributions}
+The main contributions of this work are given below.
 \begin{itemize} 
-\item We propose a new sequential and parallel algorithm to compute (\ref{gt}) when the sources are distributed on arbitrarily adaptive grids. Our scheme is an extension of the tree-splitting scheme proposed in \cite{veerapaneni08} for computing continuous Gauss transforms. 
-\item We present a novel sequential and parallel translation scheme for the plane wave expansions.
-This scheme particularly minimizes the computational cost and memory requirements 
-when the source distribution is highly nonuniform. 
-\item 
+\item We present a parallel algorithm to compute the fast gauss transform for an 
+uniform distribution of points. To our knowledge, this is the first parallel 
+implementation of the fast gauss transform algorithm. 
+\item We also present a novel scheme for the translation of plane wave expansions; this is one
+of the steps in the sequential fast gauss transform algorithm. This new scheme reduces the 
+computation and storage costs compared to the previous implementations, especially for highly
+non-uniform point distributions.
+\item We present another parallel algorithm to compute (\ref{gt}) when the sources are distributed
+on arbitrarily adaptive grids. To our knowledge, even the sequential algorithm for the non-uniform case
+ is new. This algorithm is an extension of the tree-splitting scheme proposed in \cite{veerapaneni08} 
+ for computing continuous Gauss transforms. 
 \end{itemize}
+
+\paragraph{Organization of the paper}
 
 
 \section{Overview of FGT}
