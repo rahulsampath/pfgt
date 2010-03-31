@@ -56,7 +56,7 @@ Computing the transform to six-digit accuracy at 120 billion points took 185 sec
 \end{abstract}
 
 \section{Introduction}  \label{s:intro}
-Gauss transform is one of several discrete spatial transforms in the form 
+Gauss transform is one of several discrete spatial transforms of the form 
 %
 \beq F(x_j) = \sum_{k=1}^N \kernel f_k \quad \text{at} \quad \{ x_j \, | \, j = 1,...,M \} \, , \label{gt} \eeq
 \[\text{where} \quad x_j, y_k \in \mathbb{R}^d. \]
@@ -68,9 +68,9 @@ Discrete sums of the form (\ref{gt}) are encountered in a variety of disciplines
 
 \textbf{Contributions.}
 \begin{itemize} 
-\item We propose a new sequential algorithm to compute (\ref{gt}) when the sources are distributed on arbitrarily adaptive grids. Our scheme is an extension of the tree-splitting scheme proposed in \cite{veerapaneni08} for computing continuous Gauss transforms. 
+\item We propose a new sequential and parallel algorithm to compute (\ref{gt}) when the sources are distributed on arbitrarily adaptive grids. Our scheme is an extension of the tree-splitting scheme proposed in \cite{veerapaneni08} for computing continuous Gauss transforms. 
 \item We present a novel sequential and parallel translation scheme for the plane wave expansions.
-This scheme is particularly minimizes the computational cost and memory requirements 
+This scheme particularly minimizes the computational cost and memory requirements 
 when the source distribution is highly nonuniform. 
 \item 
 \end{itemize}
