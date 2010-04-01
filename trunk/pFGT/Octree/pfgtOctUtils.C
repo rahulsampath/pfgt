@@ -2097,9 +2097,6 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
     }
   }
 
-  // printf("Precomputed facs\n");
-  // MPI_Barrier(MPI_COMM_WORLD);
-
   // 2. Now incrementaly for the XY plane ...
   k = zs;
   for (j=ys; j<ys+ny; j++) {
@@ -2188,8 +2185,6 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
     } // i
   } // j
 
-  // MPI_Barrier(MPI_COMM_WORLD);
-  // printf("Done plane XY\n");
   // 3. Now for YZ
   i = xs;
   for (k=zs+1; k<zs+nz; k++) {
@@ -2237,10 +2232,6 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
     } // j
   } // k
 
-  // MPI_Barrier(MPI_COMM_WORLD);
-  // printf("Done plane YZ\n");
-  // MPI_Barrier(MPI_COMM_WORLD);
-
   // 4. And finally the ZX plane
   j = ys;
   for (k=zs+1; k<zs+nz; k++) {
@@ -2286,8 +2277,6 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
     } // i
   } // j
 
-  // MPI_Barrier(MPI_COMM_WORLD);
-  // printf("Done plane ZX\n");
   // clean up 
   delete [] fac;
 }
