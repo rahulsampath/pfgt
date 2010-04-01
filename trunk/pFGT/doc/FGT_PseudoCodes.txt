@@ -12,7 +12,8 @@ Input: Sorted (Morton order) distributed linear octree with a tensor product gri
 10. Do L2T
 
 S2W Algorithm
-1. 
+1. Loop over leaves that are marked as Expand
+2. 
 
 S2W-Comm Algorithm
 1.
