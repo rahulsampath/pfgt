@@ -1,0 +1,36 @@
+Octree Overall Algorithm
+Input: Sorted (Morton order) distributed linear octree with a tensor product grid of source and target points inside each leaf. Sources = Targets
+1. Construct a regular grid of FGT boxes partitioned across processors. Each processor owns a sub-grid of boxes. Each box is owned by an unique processor. Note, the FGT partitioning is different from the octree partitoning. 
+2. Mark each leaf as either Expand or Direct depending on its size.
+3. Do S2W
+4. Do S2W-Comm
+5. Do W2D
+6. Do D2D
+7. Do W2L
+8. Do D2L
+9. Do L2T-Comm
+10. Do L2T
+
+S2W Algorithm
+1. 
+
+S2W-Comm Algorithm
+1.
+
+W2D Algorithm
+1.
+
+D2D Algorithm
+1.
+
+W2L Algorithm
+1.
+
+D2L Algorithm
+1.
+
+L2T-Comm Algorithm
+1.
+
+L2T Algorithm
+1.
