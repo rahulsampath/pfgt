@@ -51,20 +51,7 @@ citecolor = {blue}
 \maketitle
 
 \begin{abstract}
-We present fast adaptive parallel algorithms to compute the sum of $N$ Gaussians at $N$ points. 
-Computing these sums directly on a single CPU would take $\bigO(N^2)$ time and is not feasible
-for large scale problems. The parallel time complexity estimates for our algorithms are $ \bigO \left(\frac{N}{n_p} \right)$ 
-for uniform point distributions and $ \bigO\left(\frac{N}{n_p}\log \frac{N}{n_p} + n_p \log n_p\right)$ 
-for nonuniform distributions using $n_p$ CPUs. We use our parallel octree implementation (Sundar et al. 
-SIAM J. SCI. COMPUT. Vol. 30, No. 5, 2008) to efficiently handle nonuniform disrtibutions. We incorporate
- a plane-wave representation of the Gaussian kernel which permits diagonal translation. We introduce a 
- novel scheme for translating the plane-waves to reduce the computation and storage costs in the case of 
- nonuniform distributions. Computing the transform to six-digit accuracy at 120 billion points took
- 185 seconds using 4096 cores on the Jaguar supercomputer at the Oak Ridge National Laboratory. 
-
-Our implementation is {\em kernel-independent} as it can handle other numerous ``Gaussian-type'' kernels even
- when an analytic expression is lacking. These algorithms form a new class of core computational machinery 
- for solving parabolic PDEs on massively parallel architectures. 
+\input abstract.tex
 \end{abstract}
 
 \section{Introduction}  \label{s:intro}
@@ -104,10 +91,10 @@ on arbitrarily adaptive grids. To our knowledge, even the sequential algorithm f
  for computing continuous Gauss transforms. 
 \end{itemize}
 
-\paragraph{Organization of the paper}
+The rest of the paper is organized as follows. In Section \ref{sc:fgt}, we give a high-level overview of the sequential FGT algorithm for uniform point distributions. We introduce a novel translation scheme in Section \ref{sc:sweep}. In the uniform distribution case, our scheme is slightly (nearly twice) more expensive compared to sweeping algorithm introduced in \cite{greengard98}. In the nonuniform case, our scheme significantly improves the storage and computational costs. We also discuss its parallel implementation. In Section \ref{sc:nonuniform}, we will present our sequential and parallel algorithms for nonuniform distributions. Finally, in Section \ref{sc:results}, we will present scalability results of our algorithm using a variety of test cases. 
 
-
-\section{Overview of FGT}
+\section{Overview of FGT} 
+\label{sc:fgt}
 For simplicity, we assume that the points are uniformly distributed and that they reside within a unit cube.
 The design of fast algorithms for (\ref{gt}) is strongly dependent on three independent parameter viz., number of sources $N$, the bandwidth $\delta$ and desired accuracy $\epsilon$. A Gaussian centered at a source location interacts with targets that are within its support. If there are fewer targets than a threshold value $n^*$, we use a simple {\em truncation algorithm}, otherwise, we use a {\em expansion algorithm}. The threshold  value depends on all three independent parameters and we will discuss its choice after introducing both algorithms. 
 
@@ -157,6 +144,7 @@ Once the wave expansions are formed at all the FGT boxes, the next step is to fo
 %
 Assuming the size of $\mathcal{I}[B]$ is $K^3 - 1$, this algorithm requires $\bigO(K^3 p^3 N_B)$ work to form local expansions at all the boxes. 
 %
+\section{Translation scheme} \label{sc:sweep}
 \input sweep.tex
 
 Based on the cost of the expansion based algorithm, we 
@@ -176,6 +164,7 @@ Based on the cost of the expansion based algorithm, we
 
 
 \section{Nonuniform distributions} 
+\label{sc:nonuniform}
 
 {\bf MOTIVATION}
 
@@ -242,7 +231,7 @@ We assume sources and targets are the same for simplicity. We also assume that t
 
 
 \section{Results}
-
+\label{sc:results}
 \begin{table}[h!]
 \small
 \begin{center}
