@@ -130,7 +130,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     unsigned int fgtyid = static_cast<unsigned int>(floor(aOy/hRg));
     unsigned int fgtzid = static_cast<unsigned int>(floor(aOz/hRg));
 
-    oct2fgtIdmap.push_back( ( (fgtzid*Ne*Ne) + (fgtyid*Ne) + fgtxid ) );
+    oct2fgtIdmap[i] = ( (fgtzid*Ne*Ne) + (fgtyid*Ne) + fgtxid );
 
     double aFx = hRg*static_cast<double>(fgtxid);
     double aFy = hRg*static_cast<double>(fgtyid);
