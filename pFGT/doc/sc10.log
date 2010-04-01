@@ -1,11 +1,11 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (MiKTeX 2.8) (preloaded format=pdflatex 2009.11.11)  1 APR 2010 17:57
+This is pdfTeX, Version 3.1415926-1.40.10 (MiKTeX 2.8) (preloaded format=pdflatex 2010.3.30)  1 APR 2010 19:33
 entering extended mode
-**C:/parallelFGT/pfgt/pFGT/doc/sc10.tex
-(C:/parallelFGT/pfgt/pFGT/doc/sc10.tex
+**C:/Users/e7q/Desktop/pfgt/pFGT/doc/sc10.tex
+(C:/Users/e7q/Desktop/pfgt/pFGT/doc/sc10.tex
 LaTeX2e <2009/09/24>
 Babel <v3.8l> and hyphenation patterns for english, dumylang, nohyphenation, ge
 rman, ngerman, german-x-2009-06-19, ngerman-x-2009-06-19, french, loaded.
-("C:\Program Files\MiKTeX 2.8\tex\latex\ieeetran\IEEEtran.cls"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\latex\ieeetran\IEEEtran.cls
 Document Class: IEEEtran 2007/03/05 V1.7a by Michael Shell
 -- See the "IEEEtran_HOWTO" manual for usage information.
 -- http://www.michaelshell.org/tex/ieeetran/
@@ -163,7 +163,7 @@ Package color Info: Driver file: pdftex.def on input line 130.
 File: pdftex.def 2009/08/25 v0.04m Graphics/color for pdfTeX
 \Gread@gobject=\count103
 ))
-("C:\Program Files\MiKTeX 2.8\tex\latex\algorithms\algorithm.sty"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\latex\algorithms\algorithm.sty
 Package: algorithm 2009/08/24 v0.1 Document Style `algorithm' - floating enviro
 nment
 
@@ -181,7 +181,7 @@ Package: ifthen 2001/05/26 v1.1c Standard LaTeX ifthen package (DPC)
 \@float@every@algorithm=\toks22
 \c@algorithm=\count105
 )
-("C:\Program Files\MiKTeX 2.8\tex\latex\algorithms\algorithmic.sty"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\latex\algorithms\algorithmic.sty
 Package: algorithmic 2009/08/24 v0.1 Document Style `algorithmic'
 
 ("C:\Program Files\MiKTeX 2.8\tex\latex\graphics\keyval.sty"
@@ -205,7 +205,7 @@ Package: amsfonts 2009/06/22 v3.00 Basic AMSFonts support
 LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
 (Font)                  U/euf/m/n --> U/euf/b/n on input line 96.
 ))
-("C:\Program Files\MiKTeX 2.8\tex\latex\setspace\setspace.sty"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\latex\setspace\setspace.sty
 Package: setspace 2000/12/01 6.7 Contributed and Supported LaTeX2e package
 
 Package: `setspace' 6.7 <2000/12/01>
@@ -226,7 +226,7 @@ Package graphics Info: Driver file: pdftex.def on input line 91.
 \Gin@req@height=\dimen126
 \Gin@req@width=\dimen127
 )
-("C:\Program Files\MiKTeX 2.8\tex\latex\xcolor\xcolor.sty"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\latex\xcolor\xcolor.sty
 Package: xcolor 2007/01/21 v2.11 LaTeX color extensions (UK)
 
 ("C:\Program Files\MiKTeX 2.8\tex\latex\00miktex\color.cfg"
@@ -244,27 +244,32 @@ Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1358.
 Package xcolor Info: Model `Gray' substituted by `gray' on input line 1359.
 Package xcolor Info: Model `wave' substituted by `hsb' on input line 1360.
 
-("C:\Program Files\MiKTeX 2.8\tex\latex\xcolor\x11nam.def"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\latex\xcolor\x11nam.def
 File: x11nam.def 2007/01/21 v2.11 Predefined colors according to Unix/X11 (UK)
 ))
-("C:\Program Files\MiKTeX 2.8\tex\latex\pgf\frontendlayer\tikz.sty"
-("C:\Program Files\MiKTeX 2.8\tex\latex\pgf\basiclayer\pgf.sty"
-("C:\Program Files\MiKTeX 2.8\tex\latex\pgf\utilities\pgfrcs.sty"
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\utilities\pgfutil-common.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\latex\pgf\frontendlayer\tikz.sty
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\latex\pgf\basiclayer\pgf.sty
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\latex\pgf\utilities\pgfrcs.sty
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\utilities\pgfutil-comm
+on.tex
 \pgfutil@everybye=\toks24
 )
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\utilities\pgfutil-latex.def")
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\utilities\pgfrcs.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\utilities\pgfutil-late
+x.def)
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\utilities\pgfrcs.code.
+tex
 Package: pgfrcs 2008/02/20 v2.00 (rcs-revision 1.21)
 ))
 Package: pgf 2008/01/15 v2.00 (rcs-revision 1.12)
 
-("C:\Program Files\MiKTeX 2.8\tex\latex\pgf\basiclayer\pgfcore.sty"
-("C:\Program Files\MiKTeX 2.8\tex\latex\pgf\systemlayer\pgfsys.sty"
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\systemlayer\pgfsys.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\latex\pgf\basiclayer\pgfcore.sty
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\latex\pgf\systemlayer\pgfsys.sty
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\systemlayer\pgfsys.cod
+e.tex
 Package: pgfsys 2008/02/07 v2.00 (rcs-revision 1.31)
 
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\utilities\pgfkeys.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\utilities\pgfkeys.code
+.tex
 \pgfkeys@pathtoks=\toks25
 \pgfkeys@temptoks=\toks26
 )
@@ -281,47 +286,58 @@ Package: pgfsys 2008/02/07 v2.00 (rcs-revision 1.31)
 \c@pgf@countc=\count112
 \c@pgf@countd=\count113
 
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\systemlayer\pgf.cfg"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\systemlayer\pgf.cfg
 File: pgf.cfg 2008/01/13  (rcs-revision 1.6)
 )
 Package pgfsys Info: Driver file for pgf: pgfsys-pdftex.def on input line 885.
 
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\systemlayer\pgfsys-pdftex.def"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\systemlayer\pgfsys-pdf
+tex.def
 File: pgfsys-pdftex.def 2007/12/20  (rcs-revision 1.20)
 
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\systemlayer\pgfsys-common-pdf.def
-"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\systemlayer\pgfsys-com
+mon-pdf.def
 File: pgfsys-common-pdf.def 2007/12/17  (rcs-revision 1.8)
 )))
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\systemlayer\pgfsyssoftpath.code.t
-ex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\systemlayer\pgfsyssoft
+path.code.tex
 File: pgfsyssoftpath.code.tex 2008/01/23  (rcs-revision 1.6)
 \pgfsyssoftpath@smallbuffer@items=\count114
 \pgfsyssoftpath@bigbuffer@items=\count115
 )
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\systemlayer\pgfsysprotocol.code.t
-ex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\systemlayer\pgfsysprot
+ocol.code.tex
 File: pgfsysprotocol.code.tex 2006/10/16  (rcs-revision 1.4)
-)) ("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\basiclayer\pgfcore.code.tex"
+))
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\basiclayer\pgfcore.cod
+e.tex
 Package: pgfcore 2008/01/15 v2.00 (rcs-revision 1.6)
- ("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\math\pgfmath.code.tex"
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\math\pgfmathcalc.code.tex"
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\math\pgfmathutil.code.tex"
+
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\math\pgfmath.code.tex
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\math\pgfmathcalc.code.
+tex
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\math\pgfmathutil.code.
+tex
 \pgfmath@box=\box31
 )
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\math\pgfmathparser.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\math\pgfmathparser.cod
+e.tex
 \pgfmath@stack=\toks27
 \c@pgfmath@parsecounta=\count116
 \c@pgfmath@parsecountb=\count117
 \c@pgfmath@parsecountc=\count118
 \pgfmath@parsex=\dimen136
 )
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\math\pgfmathoperations.code.tex"
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\math\pgfmathtrig.code.tex")
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\math\pgfmathrnd.code.tex"))
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\math\pgfmathbase.code.tex")))
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\basiclayer\pgfcorepoints.code.tex
-"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\math\pgfmathoperations
+.code.tex
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\math\pgfmathtrig.code.
+tex)
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\math\pgfmathrnd.code.t
+ex))
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\math\pgfmathbase.code.
+tex)))
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\basiclayer\pgfcorepoin
+ts.code.tex
 File: pgfcorepoints.code.tex 2008/02/03  (rcs-revision 1.13)
 \pgf@picminx=\dimen137
 \pgf@picmaxx=\dimen138
@@ -338,102 +354,111 @@ File: pgfcorepoints.code.tex 2008/02/03  (rcs-revision 1.13)
 \pgf@zx=\dimen149
 \pgf@zy=\dimen150
 )
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\basiclayer\pgfcorepathconstruct.c
-ode.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\basiclayer\pgfcorepath
+construct.code.tex
 File: pgfcorepathconstruct.code.tex 2008/02/13  (rcs-revision 1.14)
 \pgf@path@lastx=\dimen151
 \pgf@path@lasty=\dimen152
 )
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\basiclayer\pgfcorepathusage.code.
-tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\basiclayer\pgfcorepath
+usage.code.tex
 File: pgfcorepathusage.code.tex 2008/01/23  (rcs-revision 1.11)
 \pgf@shorten@end@additional=\dimen153
 \pgf@shorten@start@additional=\dimen154
 )
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\basiclayer\pgfcorescopes.code.tex
-"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\basiclayer\pgfcorescop
+es.code.tex
 File: pgfcorescopes.code.tex 2008/01/15  (rcs-revision 1.26)
 \pgfpic=\box32
 \pgf@hbox=\box33
 \pgf@layerbox@main=\box34
 \pgf@picture@serial@count=\count119
 )
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\basiclayer\pgfcoregraphicstate.co
-de.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\basiclayer\pgfcoregrap
+hicstate.code.tex
 File: pgfcoregraphicstate.code.tex 2007/12/12  (rcs-revision 1.8)
 \pgflinewidth=\dimen155
 )
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\basiclayer\pgfcoretransformations
-.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\basiclayer\pgfcoretran
+sformations.code.tex
 File: pgfcoretransformations.code.tex 2008/02/04  (rcs-revision 1.10)
 \pgf@pt@x=\dimen156
 \pgf@pt@y=\dimen157
 \pgf@pt@temp=\dimen158
 )
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\basiclayer\pgfcorequick.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\basiclayer\pgfcorequic
+k.code.tex
 File: pgfcorequick.code.tex 2006/10/11  (rcs-revision 1.2)
 )
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\basiclayer\pgfcoreobjects.code.te
-x"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\basiclayer\pgfcoreobje
+cts.code.tex
 File: pgfcoreobjects.code.tex 2006/10/11  (rcs-revision 1.2)
 )
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\basiclayer\pgfcorepathprocessing.
-code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\basiclayer\pgfcorepath
+processing.code.tex
 File: pgfcorepathprocessing.code.tex 2008/01/23  (rcs-revision 1.7)
 )
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\basiclayer\pgfcorearrows.code.tex
-"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\basiclayer\pgfcorearro
+ws.code.tex
 File: pgfcorearrows.code.tex 2007/06/07  (rcs-revision 1.8)
 )
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\basiclayer\pgfcoreshade.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\basiclayer\pgfcoreshad
+e.code.tex
 File: pgfcoreshade.code.tex 2007/12/10  (rcs-revision 1.9)
 \pgf@max=\dimen159
 \pgf@sys@shading@range@num=\count120
-) ("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\basiclayer\pgfcoreimage.code.te
-x"
+)
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\basiclayer\pgfcoreimag
+e.code.tex
 File: pgfcoreimage.code.tex 2008/01/15  (rcs-revision 1.1)
 \pgfexternal@startupbox=\box35
 )
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\basiclayer\pgfcorelayers.code.tex
-"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\basiclayer\pgfcorelaye
+rs.code.tex
 File: pgfcorelayers.code.tex 2008/01/15  (rcs-revision 1.1)
 )
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\basiclayer\pgfcoretransparency.co
-de.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\basiclayer\pgfcoretran
+sparency.code.tex
 File: pgfcoretransparency.code.tex 2008/01/17  (rcs-revision 1.2)
 )
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\basiclayer\pgfcorepatterns.code.t
-ex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\basiclayer\pgfcorepatt
+erns.code.tex
 File: pgfcorepatterns.code.tex 2008/01/15  (rcs-revision 1.1)
 )))
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\modules\pgfmoduleshapes.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\modules\pgfmoduleshape
+s.code.tex
 File: pgfmoduleshapes.code.tex 2008/02/13  (rcs-revision 1.4)
 \pgfnodeparttextbox=\box36
 \toks@savedmacro=\toks28
-) ("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\modules\pgfmoduleplot.code.tex"
+)
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\modules\pgfmoduleplot.
+code.tex
 File: pgfmoduleplot.code.tex 2008/01/15  (rcs-revision 1.1)
 \pgf@plotwrite=\write3
 )
-("C:\Program Files\MiKTeX 2.8\tex\latex\pgf\compatibility\pgfcomp-version-0-65.
-sty"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\latex\pgf\compatibility\pgfcomp-ve
+rsion-0-65.sty
 Package: pgfcomp-version-0-65 2007/07/03 v2.00 (rcs-revision 1.7)
 \pgf@nodesepstart=\dimen160
 \pgf@nodesepend=\dimen161
 )
-("C:\Program Files\MiKTeX 2.8\tex\latex\pgf\compatibility\pgfcomp-version-1-18.
-sty"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\latex\pgf\compatibility\pgfcomp-ve
+rsion-1-18.sty
 Package: pgfcomp-version-1-18 2007/07/23 v2.00 (rcs-revision 1.1)
-)) ("C:\Program Files\MiKTeX 2.8\tex\latex\pgf\utilities\pgffor.sty"
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\utilities\pgffor.code.tex"
+))
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\latex\pgf\utilities\pgffor.sty
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\utilities\pgffor.code.
+tex
 Package: pgffor 2007/11/07 v2.00 (rcs-revision 1.8)
 \pgffor@iter=\dimen162
 \pgffor@skip=\dimen163
 ))
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\frontendlayer\tikz\tikz.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\frontendlayer\tikz\tik
+z.code.tex
 Package: tikz 2008/02/13 v2.00 (rcs-revision 1.27)
 
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\libraries\pgflibraryplothandlers.
-code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\libraries\pgflibrarypl
+othandlers.code.tex
 File: pgflibraryplothandlers.code.tex 2007/03/09 v2.00 (rcs-revision 1.9)
 \pgf@plot@mark@count=\count121
 \pgfplotmarksize=\dimen164
@@ -451,7 +476,8 @@ File: pgflibraryplothandlers.code.tex 2007/03/09 v2.00 (rcs-revision 1.9)
 \tikznumberofcurrentchild=\count124
 \tikz@fig@count=\count125
 
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\modules\pgfmodulematrix.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\modules\pgfmodulematri
+x.code.tex
 File: pgfmodulematrix.code.tex 2008/01/15  (rcs-revision 1.1)
 \pgfmatrixcurrentrow=\count126
 \pgfmatrixcurrentcolumn=\count127
@@ -459,12 +485,12 @@ File: pgfmodulematrix.code.tex 2008/01/15  (rcs-revision 1.1)
 )
 \tikz@expandcount=\count129
 
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\frontendlayer\tikz\libraries\tikz
-librarytopaths.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\frontendlayer\tikz\lib
+raries\tikzlibrarytopaths.code.tex
 File: tikzlibrarytopaths.code.tex 2008/01/09 v2.00 (rcs-revision 1.1)
 )))
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\frontendlayer\tikz\libraries\tikz
-librarysnakes.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\frontendlayer\tikz\lib
+raries\tikzlibrarysnakes.code.tex
 File: tikzlibrarysnakes.code.tex 2008/02/05 v2.00 (rcs-revision 1.6)
 
 
@@ -472,12 +498,12 @@ Package tikz Warning: Snakes have been superseded by decorations. Please use th
 e decoration libraries instead of the snakes library on input line 14.
 
 
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\frontendlayer\tikz\libraries\tikz
-librarydecorations.pathmorphing.code.tex"
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\frontendlayer\tikz\libraries\tikz
-librarydecorations.code.tex"
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\modules\pgfmoduledecorations.code
-.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\frontendlayer\tikz\lib
+raries\tikzlibrarydecorations.pathmorphing.code.tex
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\frontendlayer\tikz\lib
+raries\tikzlibrarydecorations.code.tex
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\modules\pgfmoduledecor
+ations.code.tex
 \pgfdecoratedcompleteddistance=\dimen171
 \pgfdecoratedremainingdistance=\dimen172
 \pgfdecoratedinputsegmentcompleteddistance=\dimen173
@@ -487,94 +513,95 @@ librarydecorations.code.tex"
 \pgfdecorationsegmentamplitude=\dimen176
 \pgfdecorationsegmentlength=\dimen177
 ))
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\libraries\pgflibrarydecorations.p
-athmorphing.code.tex"))
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\frontendlayer\tikz\libraries\tikz
-librarydecorations.pathreplacing.code.tex"
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\libraries\pgflibrarydecorations.p
-athreplacing.code.tex"))
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\frontendlayer\tikz\libraries\tikz
-librarydecorations.shapes.code.tex"
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\libraries\pgflibrarydecorations.s
-hapes.code.tex")))
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\frontendlayer\tikz\libraries\tikz
-libraryarrows.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\libraries\pgflibraryde
+corations.pathmorphing.code.tex))
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\frontendlayer\tikz\lib
+raries\tikzlibrarydecorations.pathreplacing.code.tex
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\libraries\pgflibraryde
+corations.pathreplacing.code.tex))
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\frontendlayer\tikz\lib
+raries\tikzlibrarydecorations.shapes.code.tex
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\libraries\pgflibraryde
+corations.shapes.code.tex)))
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\frontendlayer\tikz\lib
+raries\tikzlibraryarrows.code.tex
 File: tikzlibraryarrows.code.tex 2008/01/09 v2.00 (rcs-revision 1.1)
 
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\libraries\pgflibraryarrows.code.t
-ex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\libraries\pgflibraryar
+rows.code.tex
 File: pgflibraryarrows.code.tex 2007/06/07 v2.00 (rcs-revision 1.7)
 ))
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\frontendlayer\tikz\libraries\tikz
-libraryshapes.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\frontendlayer\tikz\lib
+raries\tikzlibraryshapes.code.tex
 File: tikzlibraryshapes.code.tex 2008/01/09 v2.00 (rcs-revision 1.1)
 
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\frontendlayer\tikz\libraries\tikz
-libraryshapes.geometric.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\frontendlayer\tikz\lib
+raries\tikzlibraryshapes.geometric.code.tex
 File: tikzlibraryshapes.geometric.code.tex 2008/01/09 v2.00 (rcs-revision 1.1)
 
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\libraries\pgflibraryshapes.geomet
-ric.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\libraries\pgflibrarysh
+apes.geometric.code.tex
 File: pgflibraryshapes.geometric.code.tex 2008/02/01 v2.00 (rcs-revision 1.22)
 ))
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\frontendlayer\tikz\libraries\tikz
-libraryshapes.misc.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\frontendlayer\tikz\lib
+raries\tikzlibraryshapes.misc.code.tex
 File: tikzlibraryshapes.misc.code.tex 2008/01/09 v2.00 (rcs-revision 1.1)
 
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\libraries\pgflibraryshapes.misc.c
-ode.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\libraries\pgflibrarysh
+apes.misc.code.tex
 File: pgflibraryshapes.misc.code.tex 2008/02/12 v2.00 (rcs-revision 1.10)
 ))
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\frontendlayer\tikz\libraries\tikz
-libraryshapes.symbols.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\frontendlayer\tikz\lib
+raries\tikzlibraryshapes.symbols.code.tex
 File: tikzlibraryshapes.symbols.code.tex 2008/01/09 v2.00 (rcs-revision 1.1)
 
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\libraries\pgflibraryshapes.symbol
-s.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\libraries\pgflibrarysh
+apes.symbols.code.tex
 File: pgflibraryshapes.symbols.code.tex 2008/01/30 v2.00 (rcs-revision 1.13)
 ))
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\frontendlayer\tikz\libraries\tikz
-libraryshapes.arrows.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\frontendlayer\tikz\lib
+raries\tikzlibraryshapes.arrows.code.tex
 File: tikzlibraryshapes.arrows.code.tex 2008/01/09 v2.00 (rcs-revision 1.1)
 
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\libraries\pgflibraryshapes.arrows
-.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\libraries\pgflibrarysh
+apes.arrows.code.tex
 File: pgflibraryshapes.arrows.code.tex 2007/11/10 v2.00 (rcs-revision 1.3)
 ))
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\frontendlayer\tikz\libraries\tikz
-libraryshapes.callouts.code.tex"
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\libraries\pgflibraryshapes.callou
-ts.code.tex"))
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\frontendlayer\tikz\libraries\tikz
-libraryshapes.multipart.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\frontendlayer\tikz\lib
+raries\tikzlibraryshapes.callouts.code.tex
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\libraries\pgflibrarysh
+apes.callouts.code.tex))
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\frontendlayer\tikz\lib
+raries\tikzlibraryshapes.multipart.code.tex
 File: tikzlibraryshapes.multipart.code.tex 2008/01/09 v2.00 (rcs-revision 1.1)
 
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\libraries\pgflibraryshapes.multip
-art.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\libraries\pgflibrarysh
+apes.multipart.code.tex
 File: pgflibraryshapes.multipart.code.tex 2008/01/15 v2.00 (rcs-revision 1.7)
 \pgfnodepartlowerbox=\box39
 \pgfnodepartsecondbox=\box40
 \pgfnodepartthirdbox=\box41
 \pgfnodepartfourthbox=\box42
 )))
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\frontendlayer\tikz\libraries\tikz
-librarybackgrounds.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\frontendlayer\tikz\lib
+raries\tikzlibrarybackgrounds.code.tex
 File: tikzlibrarybackgrounds.code.tex 2008/01/09 v2.00 (rcs-revision 1.1)
 \pgf@layerbox@background=\box43
 \pgf@layerboxsaved@background=\box44
 )
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\frontendlayer\tikz\libraries\tikz
-librarypatterns.code.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\frontendlayer\tikz\lib
+raries\tikzlibrarypatterns.code.tex
 File: tikzlibrarypatterns.code.tex 2008/01/15 v2.00 (rcs-revision 1.2)
 
-("C:\Program Files\MiKTeX 2.8\tex\generic\pgf\libraries\pgflibrarypatterns.code
-.tex"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\generic\pgf\libraries\pgflibrarypa
+tterns.code.tex
 File: pgflibrarypatterns.code.tex 2008/01/15 v2.00 (rcs-revision 1.12)
-)) ("C:\Program Files\MiKTeX 2.8\tex\latex\preprint\fullpage.sty"
+))
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\latex\preprint\fullpage.sty
 Package: fullpage 1999/02/23 1.1 (PWD)
 \FP@margin=\skip49
 )
-("C:\Program Files\MiKTeX 2.8\tex\latex\subfigure\subfigure.sty"
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\latex\subfigure\subfigure.sty
 Package: subfigure 2002/07/30 v2.1.4 subfigure package
 \subfigtopskip=\skip50
 \subfigcapskip=\skip51
@@ -590,7 +617,7 @@ Package: subfigure 2002/07/30 v2.1.4 subfigure package
 ****************************************
 * Local config file subfigure.cfg used *
 ****************************************
-("C:\Program Files\MiKTeX 2.8\tex\latex\subfigure\subfigure.cfg")
+(C:\Users\e7q\AppData\Roaming\MiKTeX\2.8\tex\latex\subfigure\subfigure.cfg)
 \subfig@top=\skip54
 \subfig@bottom=\skip55
 )
@@ -703,8 +730,8 @@ Package: atbegshi 2008/07/31 v1.9 At begin shipout hook (HO)
 File: hpdftex.def 2009/10/19 v6.79b Hyperref driver for pdfTeX
 \Fld@listcount=\count141
 )
-(C:\parallelFGT\pfgt\pFGT\doc\macros.tex)
-(C:\parallelFGT\pfgt\pFGT\doc\sc10.aux)
+(C:\Users\e7q\Desktop\pfgt\pFGT\doc\macros.tex)
+(C:\Users\e7q\Desktop\pfgt\pFGT\doc\sc10.aux)
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 28.
 LaTeX Font Info:    ... okay on input line 28.
 LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 28.
@@ -745,10 +772,12 @@ Package: refcount 2008/08/11 v3.1 Data extraction from references (HO)
 LaTeX Info: Redefining \ref on input line 28.
 LaTeX Info: Redefining \pageref on input line 28.
 
-(C:\parallelFGT\pfgt\pFGT\doc\sc10.out) (C:\parallelFGT\pfgt\pFGT\doc\sc10.out)
+(C:\Users\e7q\Desktop\pfgt\pFGT\doc\sc10.out)
+(C:\Users\e7q\Desktop\pfgt\pFGT\doc\sc10.out)
 \@outlinefile=\write4
 \AtBeginShipoutBox=\box46
 LaTeX Font Info:    Try loading font information for U+msa on input line 54.
+
 ("C:\Program Files\MiKTeX 2.8\tex\latex\amsfonts\umsa.fd"
 File: umsa.fd 2009/06/22 v3.00 AMS symbols A
 )
@@ -756,45 +785,44 @@ LaTeX Font Info:    Try loading font information for U+msb on input line 54.
 
 ("C:\Program Files\MiKTeX 2.8\tex\latex\amsfonts\umsb.fd"
 File: umsb.fd 2009/06/22 v3.00 AMS symbols B
-) [1{C:/Documents and Settings/All Users/Application Data/MiKTeX/2.8/pdftex/con
-fig/pdftex.map}
+) [1{C:/Users/e7q/AppData/Local/MiKTeX/2.8/pdftex/config/pdftex.map}
 
 
 ]
-LaTeX Font Info:    Try loading font information for OT1+pcr on input line 140.
+LaTeX Font Info:    Try loading font information for OT1+pcr on input line 148.
 
 
 ("C:\Program Files\MiKTeX 2.8\tex\latex\psnfss\ot1pcr.fd"
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
-Underfull \hbox (badness 4673) in paragraph at lines 138--142
+Underfull \hbox (badness 4673) in paragraph at lines 146--150
 \OT1/ptm/m/n/10 boxes, the next step is to form each of their lo-cal
  []
 
 
-Underfull \hbox (badness 3536) in paragraph at lines 138--142
+Underfull \hbox (badness 3536) in paragraph at lines 146--150
 \OT1/ptm/m/n/10 ex-pan-sions. Since the FGT boxes are of size $\OMS/cmsy/m/n/10
  O\OT1/cmr/m/n/10 ([])$\OT1/ptm/m/n/10 ,
  []
 
 
-Underfull \hbox (badness 1540) in paragraph at lines 138--142
+Underfull \hbox (badness 1540) in paragraph at lines 146--150
 \OT1/ptm/m/n/10 only a fixed num-ber of sur-round-ing boxes con-tribute to
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 138--142
+Underfull \hbox (badness 10000) in paragraph at lines 146--150
 \OT1/ptm/m/n/10 to zero, the pseudo-code for the di-rect scheme is:
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 138--142
+Underfull \hbox (badness 10000) in paragraph at lines 146--150
 
  []
 
 LaTeX Font Info:    Font shape `OT1/pcr/bx/n' in size <10> not available
-(Font)              Font shape `OT1/pcr/b/n' tried instead on input line 143.
-(C:\parallelFGT\pfgt\pFGT\doc\sweep.tex
+(Font)              Font shape `OT1/pcr/b/n' tried instead on input line 151.
+(C:\Users\e7q\Desktop\pfgt\pFGT\doc\sweep.tex
 Underfull \hbox (badness 1371) in paragraph at lines 2--4
  \OT1/ptm/m/it/10 d) Ac-cel-er-at-ing the plane-wave trans-la-tion step: [][] \
 OT1/ptm/m/n/10 The
@@ -815,50 +843,50 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 
 ) [2]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 182.
+put line 190.
 
-Underfull \hbox (badness 10000) in paragraph at lines 188--190
+Underfull \hbox (badness 10000) in paragraph at lines 196--198
 [] []\OT1/pcr/m/n/10 assign $\OML/cmm/m/it/10 `$ \OT1/pcr/m/n/10 to $\OML/cmm/m
 /it/10 T[]$ \OT1/pcr/m/n/10 (direct or truncation
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 207--208
+Underfull \hbox (badness 10000) in paragraph at lines 215--216
 [] []\OT1/pcr/m/n/10 (S2W) Add contribution of point in $\OML/cmm/m/it/10 `$ \O
 T1/pcr/m/n/10 to
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 210--211
+Underfull \hbox (badness 10000) in paragraph at lines 218--219
 [] []\OT1/pcr/m/n/10 (W2L) Form local expansions using
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 216--217
+Underfull \hbox (badness 10000) in paragraph at lines 224--225
 [] []\OT1/pcr/m/n/10 Add contribution of $\OML/cmm/m/it/10 x$ \OT1/pcr/m/n/10 t
 o all the
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 216--217
+Underfull \hbox (badness 10000) in paragraph at lines 224--225
 \OT1/pcr/m/n/10 target boxes (in $\OML/cmm/m/it/10 T[]$\OT1/pcr/m/n/10 ) and ta
 rget points
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 223--224
+Underfull \hbox (badness 10000) in paragraph at lines 231--232
 [] []\OT1/pcr/m/n/10 Use local expansion for target points
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 225--226
+Underfull \hbox (badness 10000) in paragraph at lines 233--234
 [] []\OT1/pcr/m/n/10 Use wave expansion for target points in
  []
 
 ! Extra }, or forgotten \endgroup.
 \@endfloatbox ...pagefalse \outer@nobreak \egroup 
                                                   \color@endbox 
-l.257 \end{table}
+l.265 \end{table}
                  
 I've deleted a group-closing symbol because it seems to be
 spurious, as in `$x}$'. But perhaps the } is legitimate and
@@ -869,7 +897,7 @@ deleted material, e.g., by typing `I$}'.
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[3] (C:\parallelFGT\pfgt\pFGT\doc\sc10.bbl)
+[3] (C:\Users\e7q\Desktop\pfgt\pFGT\doc\sc10.bbl)
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -883,41 +911,41 @@ Before submitting the final camera ready copy, remember to:
 
 [4
 
-] (C:\parallelFGT\pfgt\pFGT\doc\sc10.aux) ) 
+] (C:\Users\e7q\Desktop\pfgt\pFGT\doc\sc10.aux) ) 
 Here is how much of TeX's memory you used:
  15308 strings out of 495285
- 282327 string characters out of 3180333
+ 284697 string characters out of 3180400
  399896 words of memory out of 3000000
  18045 multiletter control sequences out of 15000+200000
  45426 words of font info for 97 fonts, out of 3000000 for 9000
  14 hyphenation exceptions out of 8191
- 47i,9n,65p,683b,546s stack positions out of 5000i,500n,10000p,200000b,50000s
-{C:/Program Files/MiKTeX 2.8/fonts/e
-nc/dvips/fontname/8r.enc}<C:/Program Files/MiKTeX 2.8/fonts/type1/public/amsfon
-ts/cm/cmex10.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/public/amsfonts/cmext
-ra/cmex9.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/public/amsfonts/cm/cmmi10
-.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/public/amsfonts/cm/cmmi5.pfb><C:/
-Program Files/MiKTeX 2.8/fonts/type1/public/amsfonts/cm/cmmi6.pfb><C:/Program F
-iles/MiKTeX 2.8/fonts/type1/public/amsfonts/cm/cmmi7.pfb><C:/Program Files/MiKT
-eX 2.8/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Program Files/MiKTeX 2.8/fo
-nts/type1/public/amsfonts/cm/cmmi9.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1
-/public/amsfonts/cm/cmr10.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/public/a
-msfonts/cm/cmr5.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/public/amsfonts/cm
-/cmr6.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/public/amsfonts/cm/cmr7.pfb>
-<C:/Program Files/MiKTeX 2.8/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Progra
-m Files/MiKTeX 2.8/fonts/type1/public/amsfonts/cm/cmr9.pfb><C:/Program Files/Mi
-KTeX 2.8/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Program Files/MiKTeX 2.8
-/fonts/type1/public/amsfonts/cm/cmsy5.pfb><C:/Program Files/MiKTeX 2.8/fonts/ty
-pe1/public/amsfonts/cm/cmsy6.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/publi
-c/amsfonts/cm/cmsy7.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/public/amsfont
-s/cm/cmsy8.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/public/amsfonts/cm/cmsy
-9.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/public/amsfonts/symbols/msbm10.p
-fb><C:/Program Files/MiKTeX 2.8/fonts/type1/urw/courier/ucrb8a.pfb><C:/Program 
-Files/MiKTeX 2.8/fonts/type1/urw/courier/ucrr8a.pfb><C:/Program Files/MiKTeX 2.
-8/fonts/type1/urw/times/utmb8a.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/urw
-/times/utmbi8a.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/urw/times/utmr8a.pf
-b><C:/Program Files/MiKTeX 2.8/fonts/type1/urw/times/utmri8a.pfb>
-Output written on sc10.pdf (4 pages, 304775 bytes).
+ 47i,9n,65p,689b,582s stack positions out of 5000i,500n,10000p,200000b,50000s
+{C:/Program Files/MiKTeX 2.8/f
+onts/enc/dvips/fontname/8r.enc}<C:/Program Files/MiKTeX 2.8/fonts/type1/public/
+amsfonts/cm/cmex10.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/public/amsfonts
+/cmextra/cmex9.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/public/amsfonts/cm/
+cmmi10.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/public/amsfonts/cm/cmmi5.pf
+b><C:/Program Files/MiKTeX 2.8/fonts/type1/public/amsfonts/cm/cmmi6.pfb><C:/Pro
+gram Files/MiKTeX 2.8/fonts/type1/public/amsfonts/cm/cmmi7.pfb><C:/Program File
+s/MiKTeX 2.8/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Program Files/MiKTeX 
+2.8/fonts/type1/public/amsfonts/cm/cmmi9.pfb><C:/Program Files/MiKTeX 2.8/fonts
+/type1/public/amsfonts/cm/cmr10.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/pu
+blic/amsfonts/cm/cmr5.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/public/amsfo
+nts/cm/cmr6.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/public/amsfonts/cm/cmr
+7.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/
+Program Files/MiKTeX 2.8/fonts/type1/public/amsfonts/cm/cmr9.pfb><C:/Program Fi
+les/MiKTeX 2.8/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Program Files/MiKT
+eX 2.8/fonts/type1/public/amsfonts/cm/cmsy5.pfb><C:/Program Files/MiKTeX 2.8/fo
+nts/type1/public/amsfonts/cm/cmsy6.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1
+/public/amsfonts/cm/cmsy7.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/public/a
+msfonts/cm/cmsy8.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/public/amsfonts/c
+m/cmsy9.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/public/amsfonts/symbols/ms
+bm10.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/urw/courier/ucrb8a.pfb><C:/Pr
+ogram Files/MiKTeX 2.8/fonts/type1/urw/courier/ucrr8a.pfb><C:/Program Files/MiK
+TeX 2.8/fonts/type1/urw/times/utmb8a.pfb><C:/Program Files/MiKTeX 2.8/fonts/typ
+e1/urw/times/utmbi8a.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/urw/times/utm
+r8a.pfb><C:/Program Files/MiKTeX 2.8/fonts/type1/urw/times/utmri8a.pfb>
+Output written on sc10.pdf (4 pages, 305728 bytes).
 PDF statistics:
  279 PDF objects out of 1000 (max. 8388607)
  84 named destinations out of 1000 (max. 500000)
