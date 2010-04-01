@@ -21,8 +21,8 @@ extern PetscLogEvent l2tEvent;
 
 #define __PI__ 3.14159265
 
-#define __COMP_MUL_RE(a, ai, b, bi) ( a*b - ai*bi )
-#define __COMP_MUL_IM(a, ai, b, bi) ( a*bi + ai*b )
+#define __COMP_MUL_RE(a, ai, b, bi) ( ((a)*(b)) - ((ai)*(bi)) )
+#define __COMP_MUL_IM(a, ai, b, bi) ( ((a)*(bi)) + ((ai)*(b)) )
 
 PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     double delta, double fMag, unsigned int ptGridSizeWithinBox, 
@@ -95,7 +95,9 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   //Loop over local expand octants and execute S2W in each octant
 
-  const double lambda = static_cast<double>(L)/(static_cast<double>(P)*sqrt(delta));
+  const double LbyP = static_cast<double>(L)/static_cast<double>(P);
+  const double ReExpZfactor = -0.25*LbyP*LbyP;
+  const double ImExpZfactor = LbyP/sqrt(delta); 
 
   std::vector<std::vector<std::vector<double> > > tmp1R;
   std::vector<std::vector<std::vector<double> > > tmp1C;
@@ -163,7 +165,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
           for(int j1 = 0; j1 < ptGridSizeWithinBox; j1++) {
             double px = aOx + ptGridOff + (ptGridH*(static_cast<double>(j1)));
 
-            double theta = lambda*(static_cast<double>(k1)*(cx - px));
+            double theta = ImExpZfactor*(static_cast<double>(k1)*(cx - px));
 
             //Replace fMag by drand48() if you want
             tmp1R[shiftK1][j3][j2] += (fMag*cos(theta));
@@ -197,7 +199,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
           for(int j2 = 0; j2 < ptGridSizeWithinBox; j2++) {
             double py = aOy + ptGridOff + (ptGridH*(static_cast<double>(j2)));
 
-            double theta = lambda*(static_cast<double>(k2)*(cy - py));
+            double theta = ImExpZfactor*(static_cast<double>(k2)*(cy - py));
 
             double rVal = tmp1R[shiftK1][j3][j2];
             double cVal = tmp1C[shiftK1][j3][j2];
@@ -227,7 +229,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
           for(int j3 = 0; j3 < ptGridSizeWithinBox; j3++) {
             double pz = aOz + ptGridOff + (ptGridH*(static_cast<double>(j3)));
 
-            double theta = lambda*(static_cast<double>(k3)*(cz - pz));
+            double theta = ImExpZfactor*(static_cast<double>(k3)*(cz - pz));
 
             double rVal = tmp2R[shiftK2][shiftK1][j3];
             double cVal = tmp2C[shiftK2][shiftK1][j3];
@@ -717,9 +719,9 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
                   for(int k3 = -P, di = 0; k3 < P; k3++) {
                     for(int k2 = -P; k2 < P; k2++) {
                       for(int k1 = -P; k1 < P; k1++, di++) {
-                        double factor = exp(-lambda*lambda*static_cast<double>( (k1*k1) + (k2*k2) + (k3*k3) )/4.0);
+                        double factor = exp(ReExpZfactor*static_cast<double>( (k1*k1) + (k2*k2) + (k3*k3) ));
 
-                        double theta = lambda*( (static_cast<double>(k1)*(px - cx)) +
+                        double theta = ImExpZfactor*( (static_cast<double>(k1)*(px - cx)) +
                             (static_cast<double>(k2)*(py - cy)) + (static_cast<double>(k3)*(pz - cz)) );
 
                         double a = WgArr[zid][yid][xid][2*di];
@@ -735,9 +737,9 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
                   for(int k3 = -P, di = 0; k3 < P; k3++) {
                     for(int k2 = -P; k2 < P; k2++) {
                       for(int k1 = -P; k1 < P; k1++, di++) {
-                        double factor = exp(-lambda*lambda*static_cast<double>( (k1*k1) + (k2*k2) + (k3*k3) )/4.0);
+                        double factor = exp(ReExpZfactor*static_cast<double>( (k1*k1) + (k2*k2) + (k3*k3) ));
 
-                        double theta = lambda*( (static_cast<double>(k1)*(px - cx)) +
+                        double theta = ImExpZfactor*( (static_cast<double>(k1)*(px - cx)) +
                             (static_cast<double>(k2)*(py - cy)) + (static_cast<double>(k3)*(pz - cz)) );
 
                         double a = w2dRecvFgtVals[ (Ndofs*w2dCommMap[foundIdx]) + (2*di) ];
@@ -1126,8 +1128,8 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   VecZeroEntries(Wglobal);
   DAVecGetArrayDOF(da, Wglobal, &WgArr);
 
-  // directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, lambda);
-  sweepW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, hRg, K, P, lambda);
+  // directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, ImExpZfactor);
+  sweepW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, hRg, K, P, ImExpZfactor);
 
   DAVecRestoreArrayDOF(da, Wlocal, &WlArr);
 
@@ -1257,13 +1259,13 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
           double cSum = 0.0;
 
           for(int j1 = -P; j1 < P; j1++, di++) {
-            double theta = lambda*(static_cast<double>(j1)*(px - cx)) ;
+            double theta = ImExpZfactor*(static_cast<double>(j1)*(px - cx)) ;
 
             double a = Wfgt[fgtIndex][2*di];
             double b = Wfgt[fgtIndex][(2*di) + 1];
             double c = cos(theta);
             double d = sin(theta);
-            double factor = exp(-lambda*lambda*static_cast<double>( (j1*j1) + (j2*j2) + (j3*j3) )/4.0);
+            double factor = exp(ReExpZfactor*static_cast<double>( (j1*j1) + (j2*j2) + (j3*j3) ));
 
             rSum += (factor*( (a*c) - (b*d) ));
             cSum += (factor*( (a*d) + (b*c) ));
@@ -1298,7 +1300,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
           for(int j2 = -P; j2 < P; j2++) {
             int shiftJ2 = (j2 + P);
 
-            double theta = lambda*(static_cast<double>(j2)*(py - cy)) ;
+            double theta = ImExpZfactor*(static_cast<double>(j2)*(py - cy)) ;
 
             double a = tmp1R[k1][shiftJ3][shiftJ2];
             double b = tmp1C[k1][shiftJ3][shiftJ2];
@@ -1327,7 +1329,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
           for(int j3 = -P; j3 < P; j3++) {
             int shiftJ3 = (j3 + P);
 
-            double theta = lambda*(static_cast<double>(j3)*(pz - cz)) ;
+            double theta = ImExpZfactor*(static_cast<double>(j3)*(pz - cz)) ;
 
             double a = tmp2R[k2][k1][shiftJ3];
             double b = tmp2C[k2][k1][shiftJ3];
@@ -1407,7 +1409,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
 void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, 
     int xs, int ys, int zs, int nx, int ny, int nz, 
-    int Ne, double h, const int StencilWidth, const int P, const double lambda) {
+    int Ne, double h, const int StencilWidth, const int P, const double ImExpZfactor) {
   //Loop over local boxes and their Interaction lists and do a direct translation
 
   for(PetscInt zi = 0; zi < nz; zi++) {
@@ -1467,7 +1469,7 @@ void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
                 for(int k2 = -P; k2 < P; k2++) {
                   for(int k1 = -P; k1 < P; k1++, di++) {
 
-                    double theta = lambda*h*( static_cast<double>(k1*(xx - xj) + k2*(yy - yj) + k3*(zz - zj) ) );
+                    double theta = ImExpZfactor*h*( static_cast<double>(k1*(xx - xj) + k2*(yy - yj) + k3*(zz - zj) ) );
                     double ct = cos(theta);
                     double st = sin(theta);
 
@@ -1491,15 +1493,15 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
     int xs, int ys, int zs, 
     int nx, int ny, int nz, 
     int Ne, double h, const int K, 
-    const int P, const double lambda) {
+    const int P, const double ImExpZfactor) {
 
   // compute the first layer directly ...  
   /*
-     directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, 1, Ne, h, K, P, lambda); // XY Plane
-     directW2L(WlArr, WgArr, xs, ys+1, zs, 1, ny-1, nz, Ne, h, K, P, lambda); // YZ Plane
-     directW2L(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, lambda); // ZX Plane 
+     directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, 1, Ne, h, K, P, ImExpZfactor); // XY Plane
+     directW2L(WlArr, WgArr, xs, ys+1, zs, 1, ny-1, nz, Ne, h, K, P, ImExpZfactor); // YZ Plane
+     directW2L(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, ImExpZfactor); // ZX Plane 
      */
-  directLayer(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, lambda); // ZX Plane 
+  directLayer(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, ImExpZfactor); // ZX Plane 
 
   // return;
 
@@ -1512,31 +1514,31 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
     for(int k2 = -P; k2 < P; k2++) {
       for(int k1 = -P; k1 < P; k1++, di++) {
         // i,j,k
-        theta = lambda*h* ( (static_cast<double>(k1 + k2 + k3) ) );
+        theta = ImExpZfactor*h* ( (static_cast<double>(k1 + k2 + k3) ) );
         fac[14*di]     = cos(theta);
         fac[14*di + 1] = sin(theta);
 
-        theta = lambda*h* ( (static_cast<double>(k1) ) );
+        theta = ImExpZfactor*h* ( (static_cast<double>(k1) ) );
         fac[14*di + 2] = cos(theta);
         fac[14*di + 3] = sin(theta);
 
-        theta = lambda*h* ( (static_cast<double>(k2) ) );
+        theta = ImExpZfactor*h* ( (static_cast<double>(k2) ) );
         fac[14*di + 4] = cos(theta);
         fac[14*di + 5] = sin(theta);
 
-        theta = lambda*h* ( (static_cast<double>(k3) ) );
+        theta = ImExpZfactor*h* ( (static_cast<double>(k3) ) );
         fac[14*di + 6] = cos(theta);
         fac[14*di + 7] = sin(theta);
 
-        theta = lambda*h* ( (static_cast<double>(k2 + k3) ) );
+        theta = ImExpZfactor*h* ( (static_cast<double>(k2 + k3) ) );
         fac[14*di + 8] = cos(theta);
         fac[14*di + 9] = sin(theta);
 
-        theta = lambda*h* ( (static_cast<double>(k1 + k3) ) );
+        theta = ImExpZfactor*h* ( (static_cast<double>(k1 + k3) ) );
         fac[14*di + 10] = cos(theta);
         fac[14*di + 11] = sin(theta);
 
-        theta = lambda*h* ( (static_cast<double>(k1 + k2) ) );
+        theta = ImExpZfactor*h* ( (static_cast<double>(k1 + k2) ) );
         fac[14*di + 12] = cos(theta);
         fac[14*di + 13] = sin(theta);
       }
@@ -1586,7 +1588,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
             for(int k1 = -P; k1 < P; k1++, di++) {
               // corner 000
               if ( ( (k-K-1) >=0) && ((j-K-1) >=0) && ((i-K-1) >=0) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)*(k1 + k2 + k3)) ) );
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k1 + k2 + k3)) ) );
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k-K-1][j-K-1][i-K-1][2*di], WlArr[k-K-1][j-K-1][i-K-1][2*di+1],  ct, st );
@@ -1594,7 +1596,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 110
               if ( ( (k-K-1) >=0) && ((j+K) < Ne) && ((i+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)* k3 -K*(k1 + k2))) ) ;
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)* k3 -K*(k1 + k2))) ) ;
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k-K-1][j+K][i+K][2*di], WlArr[k-K-1][j+K][i+K][2*di+1],  ct, st );
@@ -1602,7 +1604,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 011
               if ( ( (i-K-1) >=0) && ((j+K) < Ne) && ((k+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)* k1 -K*(k2 + k3))) ) ;
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)* k1 -K*(k2 + k3))) ) ;
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+K][j+K][i-K-1][2*di], WlArr[k+K][j+K][i-K-1][2*di+1],  ct, st );
@@ -1610,7 +1612,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 101
               if ( ( (j-K-1) >=0) && ((k+K) < Ne) && ((i+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)* k2 -K*(k1 + k3))) ) ;
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)* k2 -K*(k1 + k3))) ) ;
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+K][j-K-1][i+K][2*di], WlArr[k+K][j-K-1][i+K][2*di+1],  ct, st );
@@ -1618,7 +1620,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 100
               if ( ( (k-K-1) >=0) && ((j-K-1) >= 0) && ((i+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)*(k2 + k3) -K*k1) ) );
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k2 + k3) -K*k1) ) );
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k-K-1][j-K-1][i+K][2*di], WlArr[k-K-1][j-K-1][i+K][2*di+1],  ct, st );
@@ -1626,7 +1628,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 010
               if ( ( (k-K-1) >=0) && ((i-K-1) >= 0) && ((j+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)*(k1 + k3) - K*k2) ) );
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k1 + k3) - K*k2) ) );
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k-K-1][j+K][i-K-1][2*di], WlArr[k-K-1][j+K][i-K-1][2*di+1],  ct, st );
@@ -1634,7 +1636,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 001
               if ( ( (i-K-1) >=0) && ((j-K-1) >= 0) && ((k+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)*(k1 + k2) - K*k3) ) );
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k1 + k2) - K*k3) ) );
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k+K][j-K-1][i-K-1][2*di], WlArr[k+K][j-K-1][i-K-1][2*di+1],  ct, st );
@@ -1642,7 +1644,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 111
               if ( ( (j+K) < Ne) && ((k+K) < Ne) && ((i+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((-K)*(k1 + k2 + k3)) ) );
+                theta = ImExpZfactor*h* ( (static_cast<double>((-K)*(k1 + k2 + k3)) ) );
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k+K][j+K][i+K][2*di], WlArr[k+K][j+K][i+K][2*di+1],  ct, st );
@@ -1687,7 +1689,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
             for(int k1 = -P; k1 < P; k1++, di++) {
               // corner 000
               if ( ( (k-K-1) >=0) && ((j-K-1) >=0) && ((i-K-1) >=0) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)*(k1 + k2 + k3)) ) );
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k1 + k2 + k3)) ) );
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k-K-1][j-K-1][i-K-1][2*di], WlArr[k-K-1][j-K-1][i-K-1][2*di+1],  ct, st );
@@ -1695,7 +1697,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 110
               if ( ( (k-K-1) >=0) && ((j+K) < Ne) && ((i+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)* k3 -K*(k1 + k2))) ) ;
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)* k3 -K*(k1 + k2))) ) ;
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k-K-1][j+K][i+K][2*di], WlArr[k-K-1][j+K][i+K][2*di+1],  ct, st );
@@ -1703,7 +1705,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 011
               if ( ( (i-K-1) >=0) && ((j+K) < Ne) && ((k+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)* k1 -K*(k2 + k3))) ) ;
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)* k1 -K*(k2 + k3))) ) ;
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+K][j+K][i-K-1][2*di], WlArr[k+K][j+K][i-K-1][2*di+1],  ct, st );
@@ -1711,7 +1713,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 101
               if ( ( (j-K-1) >=0) && ((k+K) < Ne) && ((i+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)* k2 -K*(k1 + k3))) ) ;
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)* k2 -K*(k1 + k3))) ) ;
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+K][j-K-1][i+K][2*di], WlArr[k+K][j-K-1][i+K][2*di+1],  ct, st );
@@ -1719,7 +1721,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 100
               if ( ( (k-K-1) >=0) && ((j-K-1) >= 0) && ((i+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)*(k2 + k3) -K*k1) ) );
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k2 + k3) -K*k1) ) );
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k-K-1][j-K-1][i+K][2*di], WlArr[k-K-1][j-K-1][i+K][2*di+1],  ct, st );
@@ -1727,7 +1729,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 010
               if ( ( (k-K-1) >=0) && ((i-K-1) >= 0) && ((j+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)*(k1 + k3) - K*k2) ) );
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k1 + k3) - K*k2) ) );
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k-K-1][j+K][i-K-1][2*di], WlArr[k-K-1][j+K][i-K-1][2*di+1],  ct, st );
@@ -1735,7 +1737,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 001
               if ( ( (i-K-1) >=0) && ((j-K-1) >= 0) && ((k+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)*(k1 + k2) - K*k3) ) );
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k1 + k2) - K*k3) ) );
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k+K][j-K-1][i-K-1][2*di], WlArr[k+K][j-K-1][i-K-1][2*di+1],  ct, st );
@@ -1743,7 +1745,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 111
               if ( ( (j+K) < Ne) && ((k+K) < Ne) && ((i+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((-K)*(k1 + k2 + k3)) ) );
+                theta = ImExpZfactor*h* ( (static_cast<double>((-K)*(k1 + k2 + k3)) ) );
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k+K][j+K][i+K][2*di], WlArr[k+K][j+K][i+K][2*di+1],  ct, st );
@@ -1788,7 +1790,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
             for(int k1 = -P; k1 < P; k1++, di++) {
               // corner 000
               if ( ( (k-K-1) >=0) && ((j-K-1) >=0) && ((i-K-1) >=0) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)*(k1 + k2 + k3)) ) );
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k1 + k2 + k3)) ) );
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k-K-1][j-K-1][i-K-1][2*di], WlArr[k-K-1][j-K-1][i-K-1][2*di+1],  ct, st );
@@ -1796,7 +1798,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 110
               if ( ( (k-K-1) >=0) && ((j+K) < Ne) && ((i+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)* k3 -K*(k1 + k2))) ) ;
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)* k3 -K*(k1 + k2))) ) ;
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k-K-1][j+K][i+K][2*di], WlArr[k-K-1][j+K][i+K][2*di+1],  ct, st );
@@ -1804,7 +1806,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 011
               if ( ( (i-K-1) >=0) && ((j+K) < Ne) && ((k+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)* k1 -K*(k2 + k3))) ) ;
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)* k1 -K*(k2 + k3))) ) ;
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+K][j+K][i-K-1][2*di], WlArr[k+K][j+K][i-K-1][2*di+1],  ct, st );
@@ -1812,7 +1814,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 101
               if ( ( (j-K-1) >=0) && ((k+K) < Ne) && ((i+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)* k2 -K*(k1 + k3))) ) ;
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)* k2 -K*(k1 + k3))) ) ;
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+K][j-K-1][i+K][2*di], WlArr[k+K][j-K-1][i+K][2*di+1],  ct, st );
@@ -1820,7 +1822,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 100
               if ( ( (k-K-1) >=0) && ((j-K-1) >= 0) && ((i+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)*(k2 + k3) -K*k1) ) );
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k2 + k3) -K*k1) ) );
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k-K-1][j-K-1][i+K][2*di], WlArr[k-K-1][j-K-1][i+K][2*di+1],  ct, st );
@@ -1828,7 +1830,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 010
               if ( ( (k-K-1) >=0) && ((i-K-1) >= 0) && ((j+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)*(k1 + k3) - K*k2) ) );
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k1 + k3) - K*k2) ) );
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k-K-1][j+K][i-K-1][2*di], WlArr[k-K-1][j+K][i-K-1][2*di+1],  ct, st );
@@ -1836,7 +1838,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 001
               if ( ( (i-K-1) >=0) && ((j-K-1) >= 0) && ((k+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((K+1)*(k1 + k2) - K*k3) ) );
+                theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k1 + k2) - K*k3) ) );
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k+K][j-K-1][i-K-1][2*di], WlArr[k+K][j-K-1][i-K-1][2*di+1],  ct, st );
@@ -1844,7 +1846,7 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
               }
               // corner 111
               if ( ( (j+K) < Ne) && ((k+K) < Ne) && ((i+K) < Ne) ) {  
-                theta = lambda*h* ( (static_cast<double>((-K)*(k1 + k2 + k3)) ) );
+                theta = ImExpZfactor*h* ( (static_cast<double>((-K)*(k1 + k2 + k3)) ) );
                 ct = cos(theta);
                 st = sin(theta);
                 WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k+K][j+K][i+K][2*di], WlArr[k+K][j+K][i+K][2*di+1],  ct, st );
@@ -1866,29 +1868,29 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
     int xs, int ys, int zs, 
     int nx, int ny, int nz, 
     int Ne, double h, 
-    const int K, const int P, const double lambda) {
+    const int K, const int P, const double ImExpZfactor) {
 
   int i,j,k;
   int p,q,r;
   double theta, ct, st;
 
   // 0. compute directly for first box ... xs, ys, zs
-  directW2L(WlArr, WgArr, xs, ys, zs, 1, 1, 1, Ne, h, K, P, lambda); 
+  directW2L(WlArr, WgArr, xs, ys, zs, 1, 1, 1, Ne, h, K, P, ImExpZfactor); 
 
   // 1. Precompute the factors ...
   double *fac = new double [3*2*8*P*P*P]; // 3* (2P)^3 complex terms ... one for X,Y and Z shifts, 
   for(int k3 = -P, di = 0; k3 < P; k3++) {
     for(int k2 = -P; k2 < P; k2++) {
       for(int k1 = -P; k1 < P; k1++, di++) {
-        theta = lambda*h* ( (static_cast<double>(k1) ) );
+        theta = ImExpZfactor*h* ( (static_cast<double>(k1) ) );
         fac[6*di]     = cos(theta);
         fac[6*di + 1] = sin(theta);
 
-        theta = lambda*h* ( (static_cast<double>(k2) ) );
+        theta = ImExpZfactor*h* ( (static_cast<double>(k2) ) );
         fac[6*di + 2] = cos(theta);
         fac[6*di + 3] = sin(theta);
 
-        theta = lambda*h* ( (static_cast<double>(k3) ) );
+        theta = ImExpZfactor*h* ( (static_cast<double>(k3) ) );
         fac[6*di + 4] = cos(theta);
         fac[6*di + 5] = sin(theta);
       }
@@ -1923,7 +1925,7 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
                   // add the layer ...
                   q = j+K;
                   if ( ( (j+K) < Ne) && ((i+p) >= 0) && ((i+p) < Ne) && ((k+r) >= 0) && ((k+r) < Ne) ) {  
-                    theta = lambda*h* ( (static_cast<double>( -K*k2 - p*k1 - r*k3 ) ) );
+                    theta = ImExpZfactor*h* ( (static_cast<double>( -K*k2 - p*k1 - r*k3 ) ) );
                     ct = cos(theta);
                     st = sin(theta);
                     WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+r][j+K][i+p][2*di], WlArr[k+r][j+K][i+p][2*di+1],  ct, st );
@@ -1932,7 +1934,7 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
                   // remove the layer 
                   q = j-K-1;
                   if ( ( (j-K-1) >= 0) && ((i+p) >= 0) && ((i+p) < Ne) && ((k+r) >= 0) && ((k+r) < Ne) ) {  
-                    theta = lambda*h* ( (static_cast<double>( (K+1)*k2 - p*k1 - r*k3 ) ) );
+                    theta = ImExpZfactor*h* ( (static_cast<double>( (K+1)*k2 - p*k1 - r*k3 ) ) );
                     ct = cos(theta);
                     st = sin(theta);
                     WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k+r][j-K-1][i+p][2*di], WlArr[k+r][j-K-1][i+p][2*di+1],  ct, st );
@@ -1962,7 +1964,7 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
                   // add the layer ...
                   p = i+K;
                   if ( ( (i+K) < Ne) && ((j+q) >= 0) && ((j+q) < Ne) && ((k+r) >= 0) && ((k+r) < Ne) ) {  
-                    theta = lambda*h* ( (static_cast<double>( -K*k1 - q*k2 - r*k3 ) ) );
+                    theta = ImExpZfactor*h* ( (static_cast<double>( -K*k1 - q*k2 - r*k3 ) ) );
                     ct = cos(theta);
                     st = sin(theta);
                     WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+r][j+q][i+K][2*di], WlArr[k+r][j+q][i+K][2*di+1],  ct, st );
@@ -1971,7 +1973,7 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
                   // remove the layer 
                   p = i-K-1;
                   if ( ( (i-K-1) >= 0) && ((j+q) >= 0) && ((j+q) < Ne) && ((k+r) >= 0) && ((k+r) < Ne) ) {  
-                    theta = lambda*h* ( (static_cast<double>( (K+1)*k1 - q*k2 - r*k3 ) ) );
+                    theta = ImExpZfactor*h* ( (static_cast<double>( (K+1)*k1 - q*k2 - r*k3 ) ) );
                     ct = cos(theta);
                     st = sin(theta);
                     WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k+r][j+q][i-K-1][2*di], WlArr[k+r][j+q][i-K-1][2*di+1],  ct, st );
@@ -2011,7 +2013,7 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
                 // add the layer ...
                 r = k+K;
                 if ( ( (k+K) < Ne) && ((j+q) >= 0) && ((j+q) < Ne) && ((i+p) >= 0) && ((i+r) < Ne) ) {  
-                  theta = lambda*h* ( (static_cast<double>( -p*k1 - q*k2 - K*k3 ) ) );
+                  theta = ImExpZfactor*h* ( (static_cast<double>( -p*k1 - q*k2 - K*k3 ) ) );
                   ct = cos(theta);
                   st = sin(theta);
                   WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+K][j+q][i+p][2*di], WlArr[k+K][j+q][i+p][2*di+1],  ct, st );
@@ -2020,7 +2022,7 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
                 // remove the layer 
                 r = k-K-1;
                 if ( ( (k-K-1) >= 0) && ((j+q) >= 0) && ((j+q) < Ne) && ((i+p) >= 0) && ((i+p) < Ne) ) {  
-                  theta = lambda*h* ( (static_cast<double>( -p*k1 - q*k2 + (K+1)*k3 ) ) );
+                  theta = ImExpZfactor*h* ( (static_cast<double>( -p*k1 - q*k2 + (K+1)*k3 ) ) );
                   ct = cos(theta);
                   st = sin(theta);
                   WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k-K-1][j+q][i+p][2*di], WlArr[k-K-1][j+q][i+p][2*di+1],  ct, st );
@@ -2061,7 +2063,7 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
                 // add the layer ...
                 r = k+K;
                 if ( ( (k+K) < Ne) && ((j+q) >= 0) && ((j+q) < Ne) && ((i+p) >= 0) && ((i+r) < Ne) ) {  
-                  theta = lambda*h* ( (static_cast<double>( -p*k1 - q*k2 - K*k3 ) ) );
+                  theta = ImExpZfactor*h* ( (static_cast<double>( -p*k1 - q*k2 - K*k3 ) ) );
                   ct = cos(theta);
                   st = sin(theta);
                   WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+K][j+q][i+p][2*di], WlArr[k+K][j+q][i+p][2*di+1],  ct, st );
@@ -2070,7 +2072,7 @@ void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr,
                 // remove the layer 
                 r = k-K-1;
                 if ( ( (k-K-1) >= 0) && ((j+q) >= 0) && ((j+q) < Ne) && ((i+p) >= 0) && ((i+p) < Ne) ) {  
-                  theta = lambda*h* ( (static_cast<double>( -p*k1 - q*k2 + (K+1)*k3 ) ) );
+                  theta = ImExpZfactor*h* ( (static_cast<double>( -p*k1 - q*k2 + (K+1)*k3 ) ) );
                   ct = cos(theta);
                   st = sin(theta);
                   WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k-K-1][j+q][i+p][2*di], WlArr[k-K-1][j+q][i+p][2*di+1],  ct, st );
