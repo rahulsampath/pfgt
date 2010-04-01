@@ -269,8 +269,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     unsigned int fgtIndex;
     bool idxFound = seq::BinarySearch<unsigned int>( (&(*(uniqueOct2fgtIdmap.begin()))), 
         uniqueOct2fgtIdmap.size(), fgtId, &fgtIndex);
-    assert(idxFound);
-    assert(uniqueOct2fgtIdmap[fgtIndex] == fgtId);
 
     //Reset map value  
     oct2fgtIdmap[i] = fgtIndex;
@@ -446,7 +444,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   //W2D
   PetscLogEventBegin(w2dEvent, 0, 0, 0, 0);
 
-  std::vector<unsigned int> requiredFgtIds; 
+  std::vector<unsigned int> w2dRequiredFgtIds; 
 
   for(unsigned int i = 0; i < numLocalDirectOcts; i++) {
     unsigned int lev = directTree[i].getLevel();
@@ -512,28 +510,14 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
                 unsigned int fgtId = ( (zid*Ne*Ne) + (yid*Ne) + xid );
 
                 unsigned int foundIdx;
-                bool foundIt = seq::maxLowerBound<unsigned int>(requiredFgtIds, fgtId, foundIdx, 0, 0);
+                bool foundIt = seq::maxLowerBound<unsigned int>(w2dRequiredFgtIds, fgtId, foundIdx, 0, 0);
 
                 if(foundIt) {
-                  assert( requiredFgtIds[foundIdx] <= fgtId );
-                  if( (foundIdx + 1) < (requiredFgtIds.size()) ) {
-                    assert( requiredFgtIds[foundIdx + 1] > fgtId );
+                  if( w2dRequiredFgtIds[foundIdx] != fgtId ) {
+                    w2dRequiredFgtIds.insert( (w2dRequiredFgtIds.begin() + foundIdx + 1), fgtId );
                   }
-
-                  if( requiredFgtIds[foundIdx] != fgtId ) {
-                    requiredFgtIds.insert( (requiredFgtIds.begin() + foundIdx + 1), fgtId );
-                  }
-
-                  assert( (foundIdx + 1) < (requiredFgtIds.size()) );
-                  assert( requiredFgtIds[foundIdx + 1] == fgtId );
                 } else {
-                  if( !(requiredFgtIds.empty()) ) {
-                    assert( requiredFgtIds[0] > fgtId );
-                  }
-
-                  requiredFgtIds.insert( requiredFgtIds.begin(), fgtId );
-
-                  assert( requiredFgtIds[0] == fgtId );
+                  w2dRequiredFgtIds.insert( w2dRequiredFgtIds.begin(), fgtId );
                 }
 
               }//end for xid
@@ -551,9 +535,9 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     w2dSendCnts[i] = 0;
   }//end for i
 
-  std::vector<int> w2dPart(requiredFgtIds.size());
-  for(unsigned int i = 0; i < requiredFgtIds.size(); i++) {
-    unsigned int fgtId = requiredFgtIds[i];
+  std::vector<int> w2dPart(w2dRequiredFgtIds.size());
+  for(unsigned int i = 0; i < w2dRequiredFgtIds.size(); i++) {
+    unsigned int fgtId = w2dRequiredFgtIds[i];
     unsigned int fgtzid = (fgtId/(Ne*Ne));
     unsigned int fgtyid = ((fgtId%(Ne*Ne))/Ne);
     unsigned int fgtxid = ((fgtId%(Ne*Ne))%Ne);
@@ -591,10 +575,10 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     w2dSendCnts[i] = 0;
   }//end for i
 
-  std::vector<unsigned int> w2dCommMap(requiredFgtIds.size());
-  for(unsigned int i = 0; i < requiredFgtIds.size(); i++) {
+  std::vector<unsigned int> w2dCommMap(w2dRequiredFgtIds.size());
+  for(unsigned int i = 0; i < w2dRequiredFgtIds.size(); i++) {
     if(w2dPart[i] != rank) {
-      w2dSendFgtIds[ w2dSendDisps[w2dPart[i]] + w2dSendCnts[w2dPart[i]] ] = requiredFgtIds[i];
+      w2dSendFgtIds[ w2dSendDisps[w2dPart[i]] + w2dSendCnts[w2dPart[i]] ] = w2dRequiredFgtIds[i];
       w2dCommMap[i] = ( w2dSendDisps[w2dPart[i]] + w2dSendCnts[w2dPart[i]] );
       w2dSendCnts[w2dPart[i]]++;
     }
@@ -709,10 +693,8 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
                 double cz = hRg*(0.5 + static_cast<double>(zid));
 
                 unsigned int foundIdx;
-                bool foundIt = seq::BinarySearch<unsigned int>( (&(*(requiredFgtIds.begin()))),
-                    requiredFgtIds.size(), fgtId, &foundIdx);
-                assert(foundIt);
-                assert(requiredFgtIds[foundIdx] == fgtId);
+                bool foundIt = seq::BinarySearch<unsigned int>( (&(*(w2dRequiredFgtIds.begin()))),
+                    w2dRequiredFgtIds.size(), fgtId, &foundIdx);
 
                 double sum = 0.0;
                 if(w2dPart[foundIdx] == rank) {
@@ -1141,6 +1123,224 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   //D2L
   PetscLogEventBegin(d2lEvent, 0, 0, 0, 0);
+
+  std::vector<unsigned int> d2lInitialFgtIds; 
+
+  std::vector<std::vector<double> > d2lInitialFgtVals;
+
+  for(unsigned int i = 0; i < numLocalDirectOcts; i++) {
+    unsigned int lev = directTree[i].getLevel();
+    double hCurrOct = hOctFac*static_cast<double>(1u << (maxDepth - lev));
+
+    double ptGridOff = 0.1*hCurrOct;
+    double ptGridH = 0.8*hCurrOct/(static_cast<double>(ptGridSizeWithinBox) - 1.0);
+
+    //Anchor of the octant
+    unsigned int anchX = directTree[i].getX();
+    unsigned int anchY = directTree[i].getY();
+    unsigned int anchZ = directTree[i].getZ();
+
+    double aOx =  hOctFac*(static_cast<double>(anchX));
+    double aOy =  hOctFac*(static_cast<double>(anchY));
+    double aOz =  hOctFac*(static_cast<double>(anchZ));
+
+    for(int j3 = 0; j3 < ptGridSizeWithinBox; j3++) {
+      double pz = aOz + ptGridOff + (ptGridH*(static_cast<double>(j3)));
+
+      int stZid = static_cast<int>(floor((pz - (hRg*static_cast<double>(K)))/hRg));
+      int endZid = static_cast<int>(ceil((pz + (hRg*static_cast<double>(K)))/hRg));
+
+      if(stZid < 0) {
+        stZid = 0;
+      }
+
+      if(endZid > Ne) {
+        endZid = Ne;
+      }
+
+      for(int j2 = 0; j2 < ptGridSizeWithinBox; j2++) {
+        double py = aOy + ptGridOff + (ptGridH*(static_cast<double>(j2)));
+
+        int stYid = static_cast<int>(floor((py - (hRg*static_cast<double>(K)))/hRg));
+        int endYid = static_cast<int>(ceil((py + (hRg*static_cast<double>(K)))/hRg));
+
+        if(stYid < 0) {
+          stYid = 0;
+        }
+
+        if(endYid > Ne) {
+          endYid = Ne;
+        }
+
+        for(int j1 = 0; j1 < ptGridSizeWithinBox; j1++) {
+          double px = aOx + ptGridOff + (ptGridH*(static_cast<double>(j1)));
+
+          int stXid = static_cast<int>(floor((px - (hRg*static_cast<double>(K)))/hRg));
+          int endXid = static_cast<int>(ceil((px + (hRg*static_cast<double>(K)))/hRg));
+
+          if(stXid < 0) {
+            stXid = 0;
+          }
+
+          if(endXid > Ne) {
+            endXid = Ne;
+          }
+
+          for(int zid = stZid; zid < endZid; zid++) {
+            for(int yid = stYid; yid < endYid; yid++) {
+              for(int xid = stXid; xid < endXid; xid++) {
+                unsigned int fgtId = ( (zid*Ne*Ne) + (yid*Ne) + xid );
+
+                //Anchor of the FGT box
+                double aFx = hRg*static_cast<double>(xid);
+                double aFy = hRg*static_cast<double>(yid);
+                double aFz = hRg*static_cast<double>(zid);
+
+                //Center of the FGT box
+                double halfH = (0.5*hRg);
+                double cx =  aFx + halfH;
+                double cy =  aFy + halfH;
+                double cz =  aFz + halfH;
+
+                std::vector<double> currBoxFgtVals(Ndofs);
+
+                for(int k3 = -P, di = 0; k3 < P; k3++) {
+                  for(int k2 = -P; k2 < P; k2++) {
+                    for(int k1 = -P; k1 < P; k1++, di++) {
+                      double theta = ImExpZfactor*( (static_cast<double>(k1)*(cx - px)) +
+                          (static_cast<double>(k2)*(cy - py)) + (static_cast<double>(k3)*(cz - pz)) );
+
+                      //replace fMag by drand48() if you want
+                      currBoxFgtVals[2*di] = fMag*cos(theta);
+                      currBoxFgtVals[(2*di) + 1] = fMag*sin(theta);
+                    }//end for k1
+                  }//end for k2
+                }//end for k3
+
+                unsigned int foundIdx;
+                bool foundIt = seq::maxLowerBound<unsigned int>(d2lInitialFgtIds, fgtId, foundIdx, 0, 0);
+
+                if(foundIt) {
+                  if( d2lInitialFgtIds[foundIdx] != fgtId ) {
+                    d2lInitialFgtIds.insert( (d2lInitialFgtIds.begin() + foundIdx + 1), fgtId );
+                    d2lInitialFgtVals.insert( (d2lInitialFgtVals.begin() + foundIdx + 1), currBoxFgtVals );
+                  } else {
+                    for(int li = 0; li < Ndofs; li++) {
+                      d2lInitialFgtVals[foundIdx][li] += currBoxFgtVals[li];
+                    }//end for li
+                  }
+                } else {
+                  d2lInitialFgtIds.insert( d2lInitialFgtIds.begin(), fgtId );
+                  d2lInitialFgtVals.insert( d2lInitialFgtVals.begin(), currBoxFgtVals );
+                }
+
+              }//end for xid
+            }//end for yid
+          }//end for zid
+
+        }//end for j1
+      }//end for j2
+    }//end for j3
+
+  }//end for i
+
+  std::vector<int> d2lSendCnts(npes); 
+  for(int i = 0; i < npes; i++) {
+    d2lSendCnts[i] = 0;
+  }//end for i
+
+  std::vector<int> d2lPart(d2lInitialFgtIds.size());
+  for(unsigned int i = 0; i < d2lInitialFgtIds.size(); i++) {
+    unsigned int fgtId = d2lInitialFgtIds[i];
+    unsigned int fgtzid = (fgtId/(Ne*Ne));
+    unsigned int fgtyid = ((fgtId%(Ne*Ne))/Ne);
+    unsigned int fgtxid = ((fgtId%(Ne*Ne))%Ne);
+
+    unsigned int xRes, yRes, zRes;
+    seq::maxLowerBound<unsigned int>(scanLx, fgtxid, xRes, 0, 0);
+    seq::maxLowerBound<unsigned int>(scanLy, fgtyid, yRes, 0, 0);
+    seq::maxLowerBound<unsigned int>(scanLz, fgtzid, zRes, 0, 0);
+
+    //Processor that owns the FGT box
+    d2lPart[i] = (((zRes*npy) + yRes)*npx) + xRes;
+
+    if(d2lPart[i] == rank) {
+      for(int j = 0; j < Ndofs; j++) {
+        WgArr[fgtzid][fgtyid][fgtxid][j] += d2lInitialFgtVals[i][j];
+      }//end for j
+    } else {
+      d2lSendCnts[d2lPart[i]]++;
+    }
+  }//end for i
+
+  std::vector<int> d2lRecvCnts(npes); 
+
+  MPI_Alltoall( (&(*(d2lSendCnts.begin()))), 1, MPI_INT,
+      (&(*(d2lRecvCnts.begin()))), 1, MPI_INT, comm );
+
+  std::vector<int> d2lSendDisps(npes);
+  std::vector<int> d2lRecvDisps(npes);
+  d2lSendDisps[0] = 0;
+  d2lRecvDisps[0] = 0;
+  for(int i = 1; i < npes; i++) {
+    d2lSendDisps[i] = d2lSendDisps[i - 1] + d2lSendCnts[i - 1];
+    d2lRecvDisps[i] = d2lRecvDisps[i - 1] + d2lRecvCnts[i - 1];
+  }//end for i
+
+  std::vector<unsigned int> d2lSendFgtIds(d2lSendDisps[npes - 1] + d2lSendCnts[npes - 1]);
+
+  for(int i = 0; i < npes; i++) {
+    d2lSendCnts[i] = 0;
+  }//end for i
+
+  for(unsigned int i = 0; i < d2lInitialFgtIds.size(); i++) {
+    if(d2lPart[i] != rank) {
+      d2lSendFgtIds[ d2lSendDisps[d2lPart[i]] + d2lSendCnts[d2lPart[i]] ] = d2lInitialFgtIds[i];
+      d2lSendCnts[d2lPart[i]]++;
+    }
+  }//end for i
+
+  std::vector<unsigned int> d2lRecvFgtIds(d2lRecvDisps[npes - 1] + d2lRecvCnts[npes - 1]);
+
+  MPI_Alltoallv( (&(*(d2lSendFgtIds.begin()))), (&(*(d2lSendCnts.begin()))), (&(*(d2lSendDisps.begin()))), MPI_UNSIGNED, 
+      (&(*(d2lRecvFgtIds.begin()))), (&(*(d2lRecvCnts.begin()))), (&(*(d2lRecvDisps.begin()))), MPI_UNSIGNED, comm );
+
+  for(unsigned int i = 0; i < npes; i++) {
+    d2lSendDisps[i] *= Ndofs;
+    d2lRecvCnts[i] *= Ndofs;
+    d2lRecvDisps[i] *= Ndofs;
+  }//end for i
+
+  std::vector<double> d2lSendFgtVals((Ndofs*(d2lSendFgtIds.size())));
+
+  for(int i = 0; i < npes; i++) {
+    d2lSendCnts[i] = 0;
+  }//end for i
+
+  for(unsigned int i = 0; i < d2lInitialFgtVals.size(); i++) {
+    if(d2lPart[i] != rank) {
+      for(unsigned int j = 0; j < Ndofs; j++) {
+        d2lSendFgtVals[ d2lSendDisps[d2lPart[i]] + d2lSendCnts[d2lPart[i]] + j ] = d2lInitialFgtVals[i][j];
+      }//end for j
+      d2lSendCnts[d2lPart[i]] += Ndofs;
+    }
+  }//end for i
+
+  std::vector<double> d2lRecvFgtVals(d2lRecvDisps[npes - 1] + d2lRecvCnts[npes - 1]);
+
+  MPI_Alltoallv( (&(*(d2lSendFgtVals.begin()))), (&(*(d2lSendCnts.begin()))), (&(*(d2lSendDisps.begin()))), MPI_DOUBLE, 
+      (&(*(d2lRecvFgtVals.begin()))), (&(*(d2lRecvCnts.begin()))), (&(*(d2lRecvDisps.begin()))), MPI_DOUBLE, comm );
+
+  for(unsigned int i = 0; i < d2lRecvFgtIds.size(); i++) {
+    unsigned int fgtId = d2lRecvFgtIds[i];
+    unsigned int fgtzid = (fgtId/(Ne*Ne));
+    unsigned int fgtyid = ((fgtId%(Ne*Ne))/Ne);
+    unsigned int fgtxid = ((fgtId%(Ne*Ne))%Ne);
+
+    for(unsigned int j = 0; j < Ndofs; j++) {
+      WgArr[fgtzid][fgtyid][fgtxid][j] += d2lRecvFgtVals[(i*Ndofs) + j];
+    }//end for j
+  }//end for i
 
   PetscLogEventEnd(d2lEvent, 0, 0, 0, 0);
 
