@@ -1,8 +1,5 @@
 \begin{thebibliography}{1}
 
-\bibitem{fggt}
-{\em The fast generalized {G}auss transform}, Xxxx,  (2010).
-
 \bibitem{fgt}
 {\sc L.~Greengard and J.~Strain}, {\em The fast {G}auss transform}, SIAM
   Journal on Scientific and Statistical Computing, 12 (1991), pp.~79--94.
@@ -10,6 +7,10 @@
 \bibitem{greengard98}
 {\sc Leslie Greengard and Xiaobai Sun}, {\em A new version of the fast {G}auss
   transform}, Documenta Mathematica, III (1998), pp.~575--584.
+
+\bibitem{fggt}
+{\sc Marina Spivak, Shravan~K. Veerapaneni, and Leslie Greengard}, {\em The
+  fast generalized {G}auss transform}, Xxxx,  (2010).
 
 \bibitem{veerapaneni08}
 {\sc Shravan~K. Veerapaneni and George Biros}, {\em The {C}hebyshev fast

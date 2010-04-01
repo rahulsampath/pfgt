@@ -51,16 +51,12 @@ citecolor = {blue}
 \maketitle
 
 \begin{abstract}
-We present two fast parallel algorithms to compute the sum of $N$ Gaussians at $N$ points; 
-one for uniform point distributions and the other for non-uniform point distributions. The 
-parallel time complexity of the algorithm for the uniform case is $\bigO(\frac{N}{n_p})$, 
-where $n_p$ is the number of CPUs. The paralell time complexity of the algorithm for the
-non-uniform case is $ $. 
-Our implementation is based on the
-plane-wave representation of the kernels which permits diagonal translation. We present a 
-new algorithm for translation that reduces the computation and storage costs compared to 
-previous schemes. Computing the transform to six-digit accuracy at 120 billion points 
-took 185 seconds on 4096 cores on the Jaguar supercomputer at the Oak Ridge National Laboratory. 
+We present fast adaptive parallel algorithms to compute the sum of $N$ Gaussians at $N$ points.  
+Our algorithms scale as $ \bigO \left(\frac{N}{n_p} \right)$ for uniform point distributions and as $ \bigO\left(\frac{N}{n_p}\log \frac{N}{n_p} + n_p \log n_p\right)$ for nonuniform distributions on $n_p$ CPUs. 
+We use our parallel octree construction paradigm (Sundar et al. ACM/IEEE SC `07) to efficiently handle nonuniform disrtibutions. We incorporate a plane-wave representation of the kernel which permits diagonal translation. 
+We introduce a novel scheme for translating the plane-waves to reduce the computation and storage costs in the case of nonuniform distributions. Computing the transform to six-digit accuracy at 120 billion points took 185 seconds on 4096 cores on the Jaguar supercomputer at the Oak Ridge National Laboratory. 
+
+Our implementation is {\em kernel-independent} as it can handle other numerous ``Gaussian-type'' kernels even when an analytic expression is lacking. These algorithms form a new class of core computational machinery for solving parabolic PDEs on massively parallel architectures. 
 \end{abstract}
 
 \section{Introduction}  \label{s:intro}
@@ -236,54 +232,6 @@ We assume sources and targets are the same for simplicity. We also assume that t
 {\em [In the parallel case, the interaction between $T_d$ and $T_e$ can be done while processors are communicating other info.] }
 
 
-\begin{figure}
-\begin{center}
-  \subfigure[]{\label{fig:Grid1}\includegraphics[scale=0.32]{Grid1}}
-  \subfigure[]{\label{fig:Grid2}\includegraphics[scale=0.32]{Grid2}}  
- \end{center}
-\caption{
- \label{fig:Grid} 
- \em Here we illustrate one of the main steps involved in FGT.  (a) The leaf nodes (shown in black) of the given quadtree 
-  are assigned to regular boxes (shown in red). The size of the boxes
-  is chosen so that each box corresponds to a node at some level of
-  the quadtree. (b) At a source box $B$, the influence of all  
-  the constituent leaf nodes is encoded in the wave expansion
-  ${\mb{w}}^B$. The translation operator ${\mb{t}}^{BC}$ transfers the
-   wave expansion of $B$ to the target box $C$. At $C$, the influence of all the source
-  boxes in $\mci[C]$ is encoded in the local expansion ${\mb{l}}^C$.
-  Finally, $\gausst f$ at a target that belongs to $C$ is given by 
-  $<{\mb{l}}^C, {\mb{v}}^C(\mbx)>$. }
-\end{figure}
-
-\begin{figure}
-\begin{center}
-  \subfigure[$Q$]{\label{fig:Qtree0}\includegraphics[scale=0.3]{Qtree0}}
-  \subfigure[$Q_{\text{Direct}}$]{\label{fig:Qtree1}\includegraphics[scale=0.3]{Qtree2}}
-  \subfigure[$Q_{\text{Expand}}$]{\label{fig:Qtree2}\includegraphics[scale=0.3]{Qtree1}}
-  \end{center}
-  \caption{
-  \label{fig:qtree_split}
-  \em In this figure we illustrate the tree
-  splitting that we use in CFGT to obtain an algorithmic complexity
-  that is independent of the value of $\delta$.  Subfigure (a) shows
-  the quadtree, a target $\mbx$, and the support of the Gaussian
-  centered at $\mbx$ (blue box). For this $\delta$, we can observe
-  that a direct evaluation would be expensive because we have to loop
-  through all the leaf nodes within the support. A kernel expansion
-  based approach would also be expensive because it generates too many
-  boxes. Hence, for optimal complexity, we split the tree into
-  two parts. Subfigure (b) shows the tree with the size of leaf nodes
-  being greater than $r_b$. To evaluate the Gauss transform at a point
-  $\mbx$, we just need to visit the leaf nodes in the support of the
-  Gaussian (the shaded ones). There can be a maximum of $(2n+1)^2$ of
-  such leaf nodes. Subfigure (c) show the tree with the size of leaf
-  nodes being smaller or equal than $r_b$. In this tree we use the
-  kernel expansion-based algorithm. Instead of visiting all the leaf
-  nodes within the support, we only have to gather the wave expansion
-  of the source boxes (red boxes) that are within the support. The
-  number of these source boxes is bounded from above by
-  $(2n+1)^2$. }
-\end{figure}
 
 \section{Results}
 
