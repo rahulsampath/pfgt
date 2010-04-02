@@ -5,28 +5,28 @@
   Journal on Scientific and Statistical Computing, 12 (1991), pp.~79--94.
 
 \bibitem{greengard98}
-{\sc Leslie Greengard and Xiaobai Sun}, {\em A new version of the fast {G}auss
+{\sc L.~Greengard and X.~Sun}, {\em A new version of the fast {G}auss
   transform}, Documenta Mathematica, III (1998), pp.~575--584.
 
 \bibitem{fggt}
-{\sc Marina Spivak, Shravan~K. Veerapaneni, and Leslie Greengard}, {\em The
-  fast generalized {G}auss transform}, Preprint,  (2010).
+{\sc M.~Spivak, S.~K. Veerapaneni, and L.~Greengard}, {\em The fast generalized
+  {G}auss transform}, Preprint,  (2010).
 
 \bibitem{tausch09}
-{\sc Johannes Tausch and Alexander Weckiewicz}, {\em Multidimensional fast
-  gauss transforms by chebyshev expansions}, SIAM Journal on Scientific
-  Computing, 31 (2009), pp.~3547--3565.
+{\sc J.~Tausch and A.~Weckiewicz}, {\em Multidimensional fast gauss transforms
+  by chebyshev expansions}, SIAM Journal on Scientific Computing, 31 (2009),
+  pp.~3547--3565.
 
 \bibitem{veerapaneni08}
-{\sc Shravan~K. Veerapaneni and George Biros}, {\em The {C}hebyshev fast
-  {G}auss and nonuniform fast fourier transforms and their application to the
-  evaluation of distributed heat potentials}, Journal of Computational Physics,
-  227 (2008), pp.~7768--7790.
+{\sc S.~K. Veerapaneni and G.~Biros}, {\em The {C}hebyshev fast {G}auss and
+  nonuniform fast fourier transforms and their application to the evaluation of
+  distributed heat potentials}, Journal of Computational Physics, 227 (2008),
+  pp.~7768--7790.
 
 \bibitem{duraiswami03}
-{\sc Changjiang Yang, Ramani Duraiswami, Nail Gumerov, and Larry~S. Davis},
-  {\em Improved fast {G}auss transform and efficient kernel density
-  estimation}, Proceedings of Ninth IEEE International Conference on Computer
-  Vision,  (2003), pp.~664--671.
+{\sc C.~Yang, R.~Duraiswami, N.~Gumerov, and L.~S. Davis}, {\em Improved fast
+  {G}auss transform and efficient kernel density estimation}, Proceedings of
+  Ninth IEEE International Conference on Computer Vision,  (2003),
+  pp.~664--671.
 
 \end{thebibliography}
