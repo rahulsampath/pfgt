@@ -1,0 +1,63 @@
+For simplicity, we assume that the points are uniformly distributed and that they reside within a unit cube.
+The design of fast algorithms for (\ref{gt}) is strongly dependent on three independent parameter viz., number of sources $N$, the bandwidth $\delta$ and desired accuracy $\epsilon$. A Gaussian centered at a source location interacts with targets that are within its support. If there are fewer targets than a threshold value $n^*$, we use a simple {\em truncation algorithm}, otherwise, we use a {\em expansion algorithm}. The threshold  value depends on all three independent parameters and we will discuss its choice after introducing both algorithms. 
+
+\subsection{Truncation algorithm} 
+Since the kernel in (\ref{gt}) decays exponentially, we can simply truncate the sum to
+%
+\beq F(x_j) = \sum_{y_k \in \mathcal{I}[x_j]} \kernel f_k \eeq
+%
+where $\mathcal{I}[x_j]$ is the interaction list which includes all the sources that are within a distance $\sqrt{\delta \ln (1/\epsilon)}$. Beyond this distance, a Gaussian centered at $x_j$ decays below $\epsilon$. The complexity of this algorithm is $\bigO(N \sqrt{\delta \ln(1/\epsilon)})$. This is a common technique used in the graphics community. When $\delta$ is large and/or high accuracy is required, the cost of this algorithm grows quadratically.  
+
+\subsection{Expansion algorithm}
+There are two variations of FGT: one based on hermite expansion \cite{fgt} and another based on plane-wave expansion \cite{greengard98}. The former has lower expansion costs while the latter has lower translation costs. The latter version is further improved in \cite{fggt} for volumetric data. Our implementation is based on \cite{fggt} and we summarize it here. 
+
+The central is the finite-term plane-wave representation of the kernel,
+\beq G_\delta(\norm{x_j - y_k}) \approx \sum_{|k| \leq p} \hat{G}(k) e^{i \lambda k \cdot (x_j - y_k)}, \quad \lambda = \frac{L}{p\sqrt{\delta}}\eeq
+where $k = (k_1, k_2, k_3)$ and the parameters $p$ and $L$ are determined by the required precision. $\hat{G}$ is the discrete Fourier transform of the kernel. For the Gaussian kernel, we have 
+\beq \hat{G}(k) = \left(\frac{L }{2p\sqrt{\pi}}\right)^3 e^{-\frac{\lambda^2 |k|^2 \delta}{4}}.\eeq
+
+The algorithm begins by partitioning the domain into uniform boxes of size $\sqrt{\delta}$ each. A Gaussian located at the center of a box $B$ decays below $\epsilon$ beyond a fixed number of boxes. We call these boxes the interaction list of $B$, denoted by $\mathcal{I}[B]$. 
+
+In the fast algorithm, a target point $x$ receives information from a source point $y$ via 
+\begin{enumerate}
+\item{S2W:} The influence of all the sources in a box $B$ is condensed into a plane wave expansion.
+            \beq w_k = \eeq
+\item{W2L:} The plane wave expansion of each box is transmitted to all the boxes in its interaction list. 
+            \beq v_k = \eeq
+\item{L2T:} The local plane wave expansion is evaluated at the target locations. 
+\end{enumerate} 
+
+When there are significantly more number of sources in each box, it is easy see why we
+
+
+%
+
+\subsection{A novel scheme for translation} 
+Once the wave expansions are formed at all the FGT boxes, the next step is to form each of their local expansions. Since the FGT boxes are of size $\bigO(\sqrt{\delta})$, only a fixed number of surrounding boxes contribute to the local expansion of a box $B$. We shall call these set of boxes as its {\em interaction list}, denoted by $\mathcal{I} [B]$. A {\em direct scheme} forms the local expansion by simply visiting all the boxes in $\mathcal{I}[B]$ and translating their wave expansions. After initializing the local expansions $\{ v_k \quad \forall \quad |k| \leq p \}$ to zero, the pseudo-code for the direct scheme is:
+%
+{\tt
+\begin{algorithmic}
+\STATE {\sc Direct scheme}
+  \FOR {each $C \in \mathcal{I}[B]$}
+           \STATE $ v_k^B \quad += e^{i z_k \cdot(c^B - c^C)/\sqrt{\delta}} w_k^C \quad \forall \quad |k| \leq p$
+       \ENDFOR
+\STATE
+\end{algorithmic}
+}
+%
+Assuming the size of $\mathcal{I}[B]$ is $K^3 - 1$, this algorithm requires $\bigO(K^3 p^3 N_B)$ work to form local expansions at all the boxes. 
+
+Based on the cost of the expansion based algorithm, we 
+
+{\tt
+\begin{algorithmic}
+\STATE
+  \IF {$N \sqrt{\delta \ln \left( \frac{1}{\epsilon} \right)} < \frac{1}{2}(2p)^3 $}
+     \STATE Use truncation algorithm 
+  \ELSE 
+     \STATE Use expansion based algorithm
+  \ENDIF
+\STATE
+\end{algorithmic}
+}
+

@@ -1,0 +1,62 @@
+{\bf MOTIVATION}
+
+In the uniform distribution case, we can precisely estimate the threshold $n_{th}$ that decides whether one should use the truncation algorithm or the expansion based algorithm. However, when the source and target distributions are highly nonuniform, as is the case in most practical applications, it is not straightforward. For example, when we superimpose a regular grid structure of FGT on a nonuniform distribution, some boxes will have lot of points while some are almost empty. 
+
+%
+
+{\bf OCTREES}
+We assume sources and targets are the same for simplicity. We also assume that the octree is constructed so that there are no more than a fixed number of points in each leaf node. 
+
+\begin{algorithm}[!h]
+\caption{{\em Tree Splitting}}
+{\tt
+\begin{algorithmic}
+\STATE
+  \FOR {each leaf node $\ell$}
+      \IF {$|\ell| > \sqrt{\delta}$}
+          \STATE assign $\ell$ to $T_d$ (direct or truncation based)
+      \ELSE
+          \STATE assign $\ell$ to $T_e$ (expansion based)
+      \ENDIF
+  \ENDFOR
+\STATE
+\end{algorithmic}
+}
+\end{algorithm}
+
+
+\begin{algorithm}[!h]
+\caption{\em FGT on a split tree}
+%\label{a:ofgt}
+{\tt
+\begin{algorithmic}
+\STATE
+%\STATE {\sc FGT on a split Octree}
+  \FOR {each $\ell \in T_e$}
+      \STATE (S2W) Add contribution of point in $\ell$ to the FGT box it belongs
+  \ENDFOR
+  \STATE
+  \STATE (W2L) Form local expansions using sweeping
+  \STATE 
+
+  \STATE {\sc Evaluate the effect of all sources in $T_d$}
+  \FOR {each $\ell \in T_d$}
+       \FOR {$x \in \ell$}
+          \STATE Add contribution of $x$ to all the target boxes (in $T_e$) and target points (in $T_d$)     
+       \ENDFOR  
+  \ENDFOR
+  
+  \STATE 
+  \STATE {\sc Evaluate the effect of all sources in $T_e$}
+     \FOR {each FGT box $B \in T_e$}
+        \STATE Use local expansion for target points within $B$ 
+        \STATE
+        \STATE Use wave expansion for target points in $T_e$ that are within its interaction list
+     \ENDFOR  
+\STATE
+\end{algorithmic}
+}
+\end{algorithm}
+
+{\em [In the parallel case, the interaction between $T_d$ and $T_e$ can be done while processors are communicating other info.] }
+
