@@ -74,17 +74,22 @@ cost to an optimal $\bigO(N+M)$. However, to our knowledge, there have been no p
 \paragraph{Contributions} Our a
 The main contributions of this work are given below.
 \begin{itemize} 
-\item We present a parallel algorithm to compute the fast gauss transform for an 
-uniform distribution of points. To our knowledge, this is the first parallel 
-implementation of the fast gauss transform algorithm. 
-\item We also present a novel scheme for the translation of plane wave expansions; this is one
+%
+\item We present a first ever parallel implementation of the fast gauss transform for an 
+uniform distribution of points. We incorporate the accelerations introduced in \cite{fggt} for tensor product grids. 
+Thereby, the complexity constants in our scheme scale linearly with the number of dimensions 
+as opposed to exponential growth. 
+%
+\item We present a novel scheme for the translation of plane wave expansions; this is one
 of the steps in the sequential fast gauss transform algorithm. This new scheme reduces the 
 computation and storage costs compared to the previous implementations, especially for highly
 non-uniform point distributions.
-\item We present another parallel algorithm to compute (\ref{gt}) when the sources are distributed
-on arbitrarily adaptive grids. To our knowledge, even the sequential algorithm for the non-uniform case
- is new. This algorithm is an extension of the tree-splitting scheme proposed in \cite{veerapaneni08} 
- for computing continuous Gauss transforms. 
+%
+\item We extend our schemes to nonuniform distributions. OCTREES.
+
+\item The cost FGT grows for smaller values of $\delta$. In the nonuniform case, 
+We present a scheme that scales well in all ranges of the parameters. It is an extension of the tree-splitting scheme proposed in \cite{veerapaneni08} for computing continuous Gauss transforms. 
+%
 \end{itemize}
 
 The rest of the paper is organized as follows. In Section \ref{sc:fgt}, we give a high-level description of the sequential FGT algorithm for uniform point distributions. We introduce a novel translation scheme in Section \ref{sc:sweep}. In the uniform distribution case, our scheme is slightly (nearly twice) more expensive compared to sweeping algorithm introduced in \cite{greengard98}. In the nonuniform case, our scheme significantly improves the storage and computational costs. We also discuss its parallel implementation. In Section \ref{sc:nonuniform}, we will present our sequential and parallel algorithms for nonuniform distributions. Finally, in Section \ref{sc:results}, we will present scalability results of our algorithm using a variety of test cases. 
@@ -285,6 +290,8 @@ A few assumptions to simplify our implementation:
 \end{enumerate}
 }
 
+\section*{Acknowledgments}
+\input acknowledge.tex
 
 \bibliography{sc10}
 \bibliographystyle{siam}
