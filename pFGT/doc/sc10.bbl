@@ -10,7 +10,12 @@
 
 \bibitem{fggt}
 {\sc Marina Spivak, Shravan~K. Veerapaneni, and Leslie Greengard}, {\em The
-  fast generalized {G}auss transform}, Xxxx,  (2010).
+  fast generalized {G}auss transform}, Preprint,  (2010).
+
+\bibitem{tausch09}
+{\sc Johannes Tausch and Alexander Weckiewicz}, {\em Multidimensional fast
+  gauss transforms by chebyshev expansions}, SIAM Journal on Scientific
+  Computing, 31 (2009), pp.~3547--3565.
 
 \bibitem{veerapaneni08}
 {\sc Shravan~K. Veerapaneni and George Biros}, {\em The {C}hebyshev fast
