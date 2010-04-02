@@ -60,22 +60,18 @@ Gauss transform is one of several discrete spatial transforms of the form
 \beq F(x_j) = \sum_{k=1}^N \kernel f_k \quad \text{at} \quad \{ x_j \, | \, j = 1,...,M \} \, , \label{gt} \eeq
 \[\text{where} \quad x_j, y_k \in \mathbb{R}^d. \]
 %
-where the kernel $G_\delta$ is a smooth exponentially decaying function in both the physical
+The kernel $G_\delta$ is a smooth exponentially decaying function in both the physical
 and Fourier domains. The parameter $\delta$ controls how rapidly the kernel decays.  
 In the Gauss transform case, $\kernel = e^{-\frac{\|x_j - y_k\|^2}{\delta}}$.  We call the
 points $x$ as targets and $y$ as sources.  
 
-Discrete sums of the form (\ref{gt}) are encountered in a variety of disciplines 
-including computational physics, machine learning, computational finance and computer 
-graphics. Computing these sums directly takes $\bigO(NM)$ time and is not feasible
-for large scale problems. 
+Discrete sums of the form (\ref{gt}) are encountered in a variety of disciplines including computational physics, machine learning, computational finance and computer graphics. If the kernel decays rapidly, one can simply truncate the sum to a few neighboring sources at each target. However, in many important applications, this is not the case and computing these sums directly takes $\bigO(NM)$ time. 
 
-\paragraph{Related work}
 Starting from the earlier work of Greengard and Strain \cite{fgt}, several sequential algorithms have 
-been proposed (e.g.,  \cite{greengard98, duraiswami03, fggt}) to reduced the 
-cost to an optimal $\bigO(N+M)$. 
+been proposed (e.g.,  \cite{greengard98, duraiswami03, tausch09, fggt}) to reduce the 
+cost to an optimal $\bigO(N+M)$. However, to our knowledge, there have been no parallel implementations to date. 
 
-\paragraph{Contributions}
+\paragraph{Contributions} Our a
 The main contributions of this work are given below.
 \begin{itemize} 
 \item We present a parallel algorithm to compute the fast gauss transform for an 
@@ -91,7 +87,7 @@ on arbitrarily adaptive grids. To our knowledge, even the sequential algorithm f
  for computing continuous Gauss transforms. 
 \end{itemize}
 
-The rest of the paper is organized as follows. In Section \ref{sc:fgt}, we give a high-level overview of the sequential FGT algorithm for uniform point distributions. We introduce a novel translation scheme in Section \ref{sc:sweep}. In the uniform distribution case, our scheme is slightly (nearly twice) more expensive compared to sweeping algorithm introduced in \cite{greengard98}. In the nonuniform case, our scheme significantly improves the storage and computational costs. We also discuss its parallel implementation. In Section \ref{sc:nonuniform}, we will present our sequential and parallel algorithms for nonuniform distributions. Finally, in Section \ref{sc:results}, we will present scalability results of our algorithm using a variety of test cases. 
+The rest of the paper is organized as follows. In Section \ref{sc:fgt}, we give a high-level description of the sequential FGT algorithm for uniform point distributions. We introduce a novel translation scheme in Section \ref{sc:sweep}. In the uniform distribution case, our scheme is slightly (nearly twice) more expensive compared to sweeping algorithm introduced in \cite{greengard98}. In the nonuniform case, our scheme significantly improves the storage and computational costs. We also discuss its parallel implementation. In Section \ref{sc:nonuniform}, we will present our sequential and parallel algorithms for nonuniform distributions. Finally, in Section \ref{sc:results}, we will present scalability results of our algorithm using a variety of test cases. 
 
 \section{Overview of FGT} 
 \label{sc:fgt}
