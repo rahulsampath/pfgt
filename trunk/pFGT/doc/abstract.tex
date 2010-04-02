@@ -3,12 +3,12 @@ Computing these sums directly on a single CPU would take $\bigO(N^2)$ time and i
 for large scale problems. The parallel time complexity estimates for our algorithms are $ \bigO \left(\frac{N}{n_p} \right)$ 
 for uniform point distributions and $ \bigO\left(\frac{N}{n_p}\log \frac{N}{n_p} + n_p \log n_p\right)$ 
 for nonuniform distributions using $n_p$ CPUs. We use our parallel octree implementation (Sundar et al. 
-SIAM J. SCI. COMPUT. Vol. 30, No. 5, 2008) to efficiently handle nonuniform disrtibutions. We incorporate
+SIAM J. SCI. COMPUT. Vol. 30, No. 5, 2008) to efficiently handle non-uniform distributions. We incorporate
  a plane-wave representation of the Gaussian kernel which permits diagonal translation. We introduce a 
  novel scheme for translating the plane-waves to reduce the computation and storage costs in the case of 
  nonuniform distributions. Computing the transform to six-digit accuracy at 120 billion points took
  185 seconds using 4096 cores on the Jaguar supercomputer at the Oak Ridge National Laboratory. 
 
-Our implementation is {\em kernel-independent} as it can handle other numerous ``Gaussian-type'' kernels even
+Our implementation is {\em kernel-independent} as it can handle other ``Gaussian-type'' kernels even
  when an analytic expression is lacking. These algorithms form a new class of core computational machinery 
  for solving parabolic PDEs on massively parallel architectures. 
