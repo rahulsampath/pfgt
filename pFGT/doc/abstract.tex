@@ -1,13 +1,5 @@
 We present fast adaptive parallel algorithms to compute the sum of $N$ Gaussians at $N$ points. 
-Computing these sums directly on a single CPU would take $\bigO(N^2)$ time and is not feasible
-for large scale problems. The parallel time complexity estimates for our algorithms are $ \bigO \left(\frac{N}{n_p} \right)$ 
-for uniform point distributions and $ \bigO\left(\frac{N}{n_p}\log \frac{N}{n_p} + n_p \log n_p\right)$ 
-for nonuniform distributions using $n_p$ CPUs. We use our parallel octree implementation (Sundar et al. 
-SIAM J. SCI. COMPUT. Vol. 30, No. 5, 2008) to efficiently handle non-uniform distributions. We incorporate
- a plane-wave representation of the Gaussian kernel which permits diagonal translation. We introduce a 
- novel scheme for translating the plane-waves to reduce the computation and storage costs in the case of 
- nonuniform distributions. Computing the transform to six-digit accuracy at 120 billion points took
- 185 seconds using 4096 cores on the Jaguar supercomputer at the Oak Ridge National Laboratory. 
+Direct sequential computation of this sum would take $\mathcal{O}(N^2)$ time. The parallel time complexity estimates for our algorithms are $ \mathcal{O} \left(\frac{N}{n_p} \right)$ for uniform point distributions and $ \mathcal{O} \left(\frac{N}{n_p}\log \frac{N}{n_p} + n_p \log n_p\right)$ for nonuniform distributions using $n_p$ CPUs. We incorporate a plane-wave representation of the Gaussian kernel which permits ``diagonal translation''. We use parallel octrees and a new scheme for translating the plane-waves to efficiently handle nonuniform distributions. Computing the transform to six-digit accuracy at 120 billion points took approximately 140 seconds using 4096 cores on the Jaguar supercomputer at the Oak Ridge National Laboratory. 
 
 Our implementation is {\em kernel-independent} and can handle other ``Gaussian-type'' kernels even
- when explicit analytic expression for the kernel is not known. These algorithms form a new class of core computational machinery for solving parabolic PDEs on massively parallel architectures. 
+ when an explicit analytic expression for the kernel is not known. These algorithms form a new class of core computational machinery for solving parabolic PDEs on massively parallel architectures. 
