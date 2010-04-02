@@ -148,7 +148,9 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
     tmp1R.resize(2*P);
     tmp1C.resize(2*P);
-    for(int k1 = -P; k1 < P; k1++) {
+
+    //First Half
+    for(int k1 = -P; k1 < 1; k1++) {
       int shiftK1 = (k1 + P);
 
       tmp1R[shiftK1].resize(ptGridSizeWithinBox);
@@ -170,8 +172,26 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
             //Replace fMag by drand48() if you want
             tmp1R[shiftK1][j3][j2] += (fMag*cos(theta));
             tmp1C[shiftK1][j3][j2] += (fMag*sin(theta));
-
           }//end for j1
+        }//end for j2
+      }//end for j3
+    }//end for k1
+
+    //Second Half (Complex conjugate) 
+    for(int k1 = 1; k1 < P; k1++) {
+      int shiftK1 = (k1 + P);
+      int shiftMinusK1 = (-k1 + P);
+
+      tmp1R[shiftK1].resize(ptGridSizeWithinBox);
+      tmp1C[shiftK1].resize(ptGridSizeWithinBox);
+
+      for(int j3 = 0; j3 < ptGridSizeWithinBox; j3++) {
+        tmp1R[shiftK1][j3].resize(ptGridSizeWithinBox);
+        tmp1C[shiftK1][j3].resize(ptGridSizeWithinBox);
+
+        for(int j2 = 0; j2 < ptGridSizeWithinBox; j2++) {
+          tmp1R[shiftK1][j3][j2] = tmp1R[shiftMinusK1][j3][j2];
+          tmp1C[shiftK1][j3][j2] = -tmp1C[shiftMinusK1][j3][j2];
         }//end for j2
       }//end for j3
     }//end for k1
