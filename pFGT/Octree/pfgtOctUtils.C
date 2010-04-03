@@ -886,13 +886,204 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
           for(unsigned int idx = minPtIdx; idx <= maxPtIdx; idx++) {
             unsigned procId = directTreeMins[idx].getWeight();
 
-            d2dSendPts[procId].push_back(px);
-            d2dSendPts[procId].push_back(py);
-            d2dSendPts[procId].push_back(pz);
+            if(procId != rank) {
+              d2dSendPts[procId].push_back(px);
+              d2dSendPts[procId].push_back(py);
+              d2dSendPts[procId].push_back(pz);
 
-            //Use drand48() instead if you want
-            d2dSendPts[procId].push_back(fMag);
+              //Use drand48() instead if you want
+              d2dSendPts[procId].push_back(fMag);
+            }
+
           }//end idx
+
+        }//end for j1
+      }//end for j2
+    }//end for j3
+
+  }//end for i
+
+  const double IlistWidthSquare = (hRg*hRg*static_cast<double>(K*K));
+
+  for(unsigned int i = 0; i < numLocalDirectOcts; i++) {
+    unsigned int s_lev = directTree[i].getLevel();
+    double s_hCurrOct = hOctFac*static_cast<double>(1u << (maxDepth - s_lev));
+
+    double s_ptGridOff = 0.1*s_hCurrOct;
+    double s_ptGridH = 0.8*s_hCurrOct/(static_cast<double>(ptGridSizeWithinBox) - 1.0);
+
+    //Anchor of the octant
+    unsigned int s_anchX = directTree[i].getX();
+    unsigned int s_anchY = directTree[i].getY();
+    unsigned int s_anchZ = directTree[i].getZ();
+
+    double s_aOx =  hOctFac*(static_cast<double>(s_anchX));
+    double s_aOy =  hOctFac*(static_cast<double>(s_anchY));
+    double s_aOz =  hOctFac*(static_cast<double>(s_anchZ));
+
+    for(int j3 = 0; j3 < ptGridSizeWithinBox; j3++) {
+      double sz = s_aOz + s_ptGridOff + (s_ptGridH*(static_cast<double>(j3)));
+
+      double IminZ = sz - (static_cast<double>(K)*hRg);
+      double ImaxZ = sz + (static_cast<double>(K)*hRg);
+
+      if(IminZ < 0.0) {
+        IminZ = 0.0;
+      }
+
+      if(ImaxZ > 1.0) {
+        ImaxZ = 1.0;
+      }
+
+      unsigned int uiMinZ = static_cast<unsigned int>(floor(IminZ*static_cast<double>(1u << maxDepth)));
+      unsigned int uiMaxZ = static_cast<unsigned int>(ceil(ImaxZ*static_cast<double>(1u << maxDepth)));
+
+      for(int j2 = 0; j2 < ptGridSizeWithinBox; j2++) {
+        double sy = s_aOy + s_ptGridOff + (s_ptGridH*(static_cast<double>(j2)));
+
+        double IminY = sy - (static_cast<double>(K)*hRg);
+        double ImaxY = sy + (static_cast<double>(K)*hRg);
+
+        if(IminY < 0.0) {
+          IminY = 0.0;
+        }
+
+        if(ImaxY > 1.0) {
+          ImaxY = 1.0;
+        }
+
+        unsigned int uiMinY = static_cast<unsigned int>(floor(IminY*static_cast<double>(1u << maxDepth)));
+        unsigned int uiMaxY = static_cast<unsigned int>(ceil(ImaxY*static_cast<double>(1u << maxDepth)));
+
+        for(int j1 = 0; j1 < ptGridSizeWithinBox; j1++) {
+          double sx = s_aOx + s_ptGridOff + (s_ptGridH*(static_cast<double>(j1)));
+          double sf = fMag;
+
+          double IminX = sx - (static_cast<double>(K)*hRg);
+          double ImaxX = sx + (static_cast<double>(K)*hRg);
+
+          if(IminX < 0.0) {
+            IminX = 0.0;
+          }
+
+          if(ImaxX > 1.0) {
+            ImaxX = 1.0;
+          }
+
+          unsigned int uiMinX = static_cast<unsigned int>(floor(IminX*static_cast<double>(1u << maxDepth)));
+          unsigned int uiMaxX = static_cast<unsigned int>(ceil(ImaxX*static_cast<double>(1u << maxDepth)));
+
+          ot::TreeNode minPt(uiMinX, uiMinY, uiMinZ, maxDepth, 3, maxDepth);
+          ot::TreeNode maxPt( (uiMaxX - 1), (uiMaxY - 1), (uiMaxZ - 1), maxDepth, 3, maxDepth);
+
+          unsigned int minPtIdx;
+          bool foundMin = seq::maxLowerBound<ot::TreeNode>(directTree, minPt, minPtIdx, 0, 0);
+
+          if(!foundMin) {
+            minPtIdx = 0;
+          }
+
+          unsigned int maxPtIdx;
+          bool foundMax = seq::maxLowerBound<ot::TreeNode>(directTree, maxPt, maxPtIdx, 0, 0);
+
+          //This source point belongs to this processor
+          assert(foundMax);
+
+          for(unsigned int idx = minPtIdx; idx <= maxPtIdx; idx++) {
+            unsigned int t_lev = directTree[idx].getLevel();
+            double t_hCurrOct = hOctFac*static_cast<double>(1u << (maxDepth - t_lev));
+
+            double t_ptGridOff = 0.1*t_hCurrOct;
+            double t_ptGridH = 0.8*t_hCurrOct/(static_cast<double>(ptGridSizeWithinBox) - 1.0);
+
+            //Anchor of the target octant
+            unsigned int t_anchX = directTree[idx].getX();
+            unsigned int t_anchY = directTree[idx].getY();
+            unsigned int t_anchZ = directTree[idx].getZ();
+
+            double t_aOx =  hOctFac*(static_cast<double>(t_anchX));
+            double t_aOy =  hOctFac*(static_cast<double>(t_anchY));
+            double t_aOz =  hOctFac*(static_cast<double>(t_anchZ));
+
+            unsigned int stXid, stYid, stZid;
+
+            if( IminX >= (t_aOx + t_ptGridOff) ) {
+              stXid = static_cast<unsigned int>(ceil((IminX - (t_aOx + t_ptGridOff))/t_ptGridH));
+            } else {
+              stXid = 0; 
+            }
+
+            if( IminY >= (t_aOy + t_ptGridOff) ) {
+              stYid = static_cast<unsigned int>(ceil((IminY - (t_aOy + t_ptGridOff))/t_ptGridH));
+            } else {
+              stYid = 0; 
+            }
+
+            if( IminZ >= (t_aOz + t_ptGridOff) ) {
+              stZid = static_cast<unsigned int>(ceil((IminZ - (t_aOz + t_ptGridOff))/t_ptGridH));
+            } else {
+              stZid = 0; 
+            }
+
+            unsigned int endXid, endYid, endZid;
+
+            if( ImaxX >= (t_aOx + t_ptGridOff) ) {
+              endXid = static_cast<unsigned int>(ceil((ImaxX - (t_aOx + t_ptGridOff))/t_ptGridH));
+            } else {
+              endXid = 0;
+            }
+
+            if( ImaxY >= (t_aOy + t_ptGridOff) ) {
+              endYid = static_cast<unsigned int>(ceil((ImaxY - (t_aOy + t_ptGridOff))/t_ptGridH));
+            } else {
+              endYid = 0;
+            }
+
+            if( ImaxZ >= (t_aOz + t_ptGridOff) ) {
+              endZid = static_cast<unsigned int>(ceil((ImaxZ - (t_aOz + t_ptGridOff))/t_ptGridH));
+            } else {
+              endZid = 0;
+            }
+
+            if(endXid > ptGridSizeWithinBox) {
+              endXid = ptGridSizeWithinBox;
+            }
+
+            if(endYid > ptGridSizeWithinBox) {
+              endYid = ptGridSizeWithinBox;
+            }
+
+            if(endZid > ptGridSizeWithinBox) {
+              endZid = ptGridSizeWithinBox;
+            }
+
+            for(unsigned int zid = stZid; zid < endZid; zid++) {
+              double tz = t_aOz + t_ptGridOff + (t_ptGridH*(static_cast<double>(zid)));
+
+              double distZsqr = (tz - sz)*(tz - sz);
+
+              for(unsigned int yid = stYid; yid < endYid; yid++) {
+                double ty = t_aOy + t_ptGridOff + (t_ptGridH*(static_cast<double>(yid)));
+
+                double distYsqr = (ty - sy)*(ty - sy);
+
+                for(unsigned int xid = stXid; xid < endXid; xid++) {
+                  double tx = t_aOx + t_ptGridOff + (t_ptGridH*(static_cast<double>(xid)));
+
+                  double distXsqr = (tx - sx)*(tx - sx);
+
+                  unsigned int ptId = ( (zid*ptGridSizeWithinBox*ptGridSizeWithinBox) + (yid*ptGridSizeWithinBox) + xid );
+
+                  double distSqr = (distXsqr + distYsqr + distZsqr);
+
+                  if( distSqr < IlistWidthSquare ) {
+                    directResults[idx][ptId] += (sf*exp(-distSqr/delta));
+                  }
+                }//end for xid
+              }//end for yid
+            }//end for zid
+
+          }//end for idx
 
         }//end for j1
       }//end for j2
@@ -940,8 +1131,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   d2dRecvDisps.clear();
 
   const unsigned int numRecvSourcePts = d2dRecvVals.size()/4;
-
-  const double IlistWidthSquare = (hRg*hRg*static_cast<double>(K*K));
 
   for(unsigned int i = 0; i < numRecvSourcePts; i++) {
     //Source point
