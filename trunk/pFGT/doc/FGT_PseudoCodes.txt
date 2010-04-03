@@ -1,6 +1,9 @@
 Octree Overall Algorithm
-Input: Sorted (Morton order) distributed linear octree with a tensor product grid of source and target points inside each leaf. Sources = Targets
-1. Construct a regular grid of FGT boxes partitioned across processors. Each processor owns a sub-grid of boxes. Each box is owned by an unique processor. Note, the FGT partitioning is different from the octree partitoning. 
+Input: Sorted (Morton order) distributed linear octree with a tensor
+product grid of source and target points inside each leaf. Sources = Targets
+1. Construct a regular grid of FGT boxes partitioned across processors. Each 
+processor owns a sub-grid of boxes. Each box is owned by an unique processor. 
+Note, the FGT partitioning is different from the octree partitoning. 
 2. Mark each leaf as either Expand or Direct depending on its size.
 3. Do S2W
 4. Do S2W-Comm
@@ -12,26 +15,89 @@ Input: Sorted (Morton order) distributed linear octree with a tensor product gri
 10. Do L2T
 
 S2W Algorithm
-1. Loop over leaves that are marked as Expand
-2. 
+For each leaf that is marked as Expand do the following:
+  1. Figure out the FGT box that contains this octant
+  2. Do the same computation as in the uniform case for
+  all points within this octant
+  3. Add the result of step 2 to the FGT box computed in step 1.
 
 S2W-Comm Algorithm
-1.
+1. For each FGT box computed in the S2W algorithm above, figure out the
+processor that owns it.
+2. Send the values for that FGT box to the processor computed above.
+3. On the recieving end, add the incoming values to the FGT box.
 
 W2D Algorithm
-1.
+1. For each point within each leaf marked as Direct, figure out the set of
+FGT boxes whose interaction list contains this point.
+2. For each FGT box computed above, figure out the processor that owns
+it.
+3. Send these FGT boxes to their respective owners.
+4. The owner of an FGT box will return the source expansion for that box
+to the processors that requested them in step 3. This communication is
+like the reverse of the communication in step 3. Note, if an FGT box is
+within a Direct octant then its source expansion can simply be set to
+zero for this step. If we want to avoid communicating zero source 
+expansions for FGT boxes within a Direct octant, then we require an extra 
+communication for communicating which of the requested FGT boxes are empty and which are
+not.  
+5. For each point within each leaf marked as Direct, figure out the set
+of FGT boxes whose interaction list contains this point and use the
+corresponding values received in step 4 and compute the Gauss transform for this
+point.
 
 D2D Algorithm
-1.
+1. For each point (p) within each octant marked as Direct, compute the
+point (A) in the -ve corner and the point (B) in the +ve corner of p's
+interaction list. Note, the Morton ids of all points in the interaction
+list of point p will be >= that of point A and <= that of point B.
+2. Gather the Morton id of the first (in the Morton sorted list) direct
+octant on each processor. This will give the smallest Morton id of
+direct octants on each processor. Handle the case where some processors
+do not contain any direct octants.
+3. Figure out the processor with the greatest value <= A in the list
+computed in step 2.
+4. Figure out the processor with the greatest value <= B in the list
+computed in step 2.
+5. Send point p and the corresponding source f to all processors that
+lie between the processors computed in step 3 and step 4. Note, we are 
+using the property that if the Morton id of Octant C < Morton id of 
+Octant D then the Morton id of any point within Octant C is >  Morton
+id of Octant C and is < Morton id of Octant D.
+6. For each point p recieved in step 5, compute the
+point (A) in the -ve corner and the point (B) in the +ve corner of p's
+interaction list. Find the direct octant O1 with the maximum Morton id that
+is <= A and the direct octant O2 with the maximum Morton id that is <=
+B. Loop over the set of Direct octants O with Morton ids >= that of O1
+and <= that of O2. Loop over the set of points within O that lie in the
+interaction list of p. For each of these points, add the contribution to
+the Gauss transform from p.
 
 W2L Algorithm
-1.
+1. Exchange ghost values for source expansions.
+2. Use sweep algorithm to compute target expansions from source
+expansions.
 
 D2L Algorithm
-1.
+1. For each point within each octant marked as Direct, loop over the set 
+of FGT boxes that lie within this point's interaction list. For each of
+these FGT boxes, add the contribution from this point.
+2. Figure out the processors that own the FGT boxes computed in step 1.
+3. Send the values computed in step 1 to the owner of the respective FGT
+boxes.
+4. On the recieving end, add the incoming values to the target
+expansions for the corresponding FGT boxes. 
 
 L2T-Comm Algorithm
-1.
+1. Send the target expansions for each FGT box owned by this processor
+to the processors that own octants that are contained within this FGT
+box. This communication is like a reverse of the communication in
+S2W-Comm.  
 
 L2T Algorithm
-1.
+For each leaf that is marked as Expand do the following:
+  1. Do the same computation as in the uniform case for
+  all points within this octant using the target expansion for the
+  FGT box that contains this octant. 
+
+
