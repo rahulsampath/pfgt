@@ -795,7 +795,7 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
 
               results[boxId][pt] = 0.0;
 
-              for(int j3 = -P; j3 < P; j3++) {
+              for(int j3 = -P; j3 < 0; j3++) {
                 int shiftJ3 = (j3 + P);
 
                 double theta = ImExpZfactor*(static_cast<double>(j3)*(pz - cz)) ;
@@ -807,6 +807,11 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
 
                 results[boxId][pt] += ( (a*c) - (b*d) );
               }//end for j3
+
+              results[boxId][pt] *= 2.0;
+
+              results[boxId][pt] += tmp2R[k2][k1][P];
+
             }//end for k1
           }//end for k2
         }//end for k3
