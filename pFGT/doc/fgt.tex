@@ -4,35 +4,54 @@ The design of fast algorithms for (\ref{gt}) is strongly dependent on three inde
 \subsection{Truncation algorithm} 
 Since the kernel in (\ref{gt}) decays exponentially, we can simply truncate the sum to
 %
-\beq F(x_j) = \sum_{y_k \in \mathcal{I}[x_j]} \kernel f_k \eeq
+\beq F(x_j) = \sum_{y_k \in \mathcal{I}[x_j]} \kernel f(y_k) \eeq
 %
 where $\mathcal{I}[x_j]$ is the interaction list which includes all the sources that are within a distance $\sqrt{\delta \ln (1/\epsilon)}$. Beyond this distance, a Gaussian centered at $x_j$ decays below $\epsilon$. The complexity of this algorithm is $\bigO(N \sqrt{\delta \ln(1/\epsilon)})$. This is a common technique used in the graphics community. When $\delta$ is large and/or high accuracy is required, the cost of this algorithm grows quadratically.  
 
 \subsection{Expansion algorithm}
-There are two variations of FGT: one based on hermite expansion \cite{fgt} and another based on plane-wave expansion \cite{greengard98}. The former has lower expansion costs while the latter has lower translation costs. The latter version is further improved in \cite{fggt} for volumetric data. Our implementation is based on \cite{fggt} and we summarize it here. 
+There are several variations of FGT based on hermite expansions \cite{fgt}, plane-wave expansions \cite{greengard98}, and Chebyshev expansions \cite{}. Broadly speaking, all these algorithms partition the domain into there are three main steps in all these variations: (i) compress the influence of sources into a few multipole-type moments, (ii) translate the moments across the domain and (iii) evaluate the moments at the targets. Typically, the translation costs tend to dominate in 
+The plane-wave expansion version has certain advantages for problems in three or lower dimensions as the traslational cost is minimized to a large extent . The latter version is further improved in \cite{fggt} for volumetric data. Our implementation is based on \cite{fggt} and we summarize it here. 
 
-The central is the finite-term plane-wave representation of the kernel,
+Central to the expansion algorithm is the finite-term plane-wave representation of the kernel,
 \beq G_\delta(\norm{x_j - y_k}) \approx \sum_{|k| \leq p} \hat{G}(k) e^{i \lambda k \cdot (x_j - y_k)}, \quad \lambda = \frac{L}{p\sqrt{\delta}}\eeq
 where $k = (k_1, k_2, k_3)$ and the parameters $p$ and $L$ are determined by the required precision. $\hat{G}$ is the discrete Fourier transform of the kernel. For the Gaussian kernel, we have 
 \beq \hat{G}(k) = \left(\frac{L }{2p\sqrt{\pi}}\right)^3 e^{-\frac{\lambda^2 |k|^2 \delta}{4}}.\eeq
 
 The algorithm begins by partitioning the domain into uniform boxes of size $\sqrt{\delta}$ each. A Gaussian located at the center of a box $B$ decays below $\epsilon$ beyond a fixed number of boxes. We call these boxes the interaction list of $B$, denoted by $\mathcal{I}[B]$. 
 
-In the fast algorithm, a target point $x$ receives information from a source point $y$ via 
-\begin{enumerate}
-\item{S2W:} The influence of all the sources in a box $B$ is condensed into a plane wave expansion.
-            \beq w_k = \eeq
-\item{W2L:} The plane wave expansion of each box is transmitted to all the boxes in its interaction list. 
-            \beq v_k = \eeq
-\item{L2T:} The local plane wave expansion is evaluated at the target locations. 
-\end{enumerate} 
+In the fast algorithm, a target point $x$ receives information from a source point $y$ via three stages:
+\begin{description}
+\item[\textbf{S2W}] The influence of all the sources in a box $B$ is condensed into a plane-wave expansion.
+            \beq w_k = \sum_{y \in B} f(y) e^{i\lambda k \cdot (c^B - y)} \quad \forall |k| \leq p \eeq
+\item[\textbf{W2L}] The plane-wave expansion of each box is transmitted to all the boxes in its interaction list. 
+            \beq v_k = w_k e^{i\lambda k \cdot (c^D - c^B)}\eeq
+\item[\textbf{L2T}] The local plane-wave expansion is evaluated at the target locations.
+            \beq F(x) = \sum_{|k| \leq p} \hat{G}(k) v_k e^{i\lambda k \cdot (x - c^D)}\eeq
+\end{description} 
 
-When there are significantly more number of sources in each box, it is easy see why we
+The first step takes $\bigO(p^d )$
 
+{\em Parallel implementation.} For simplicity, let us assume that $n_p = n^3$ for some positive integer $n$. Then, each processor gets has a regular grid of FGT boxes. Then, the S2W and L2T steps are embarassingly parallel. In S2W stage, each processor loops through its constituent boxes and forms the plane-wave expansions. Similarly each processor executes the L2T step independently. The cost for each step, therefore, is simply $\bigO(p^d N/n_p)$. The W2L step, on the other hand, requires translating the plane-wave expansions of $\bigO(K^d)$ boundary boxes across processors and hence the cost of this step is $\bigO(p^d K^d |B|/n_p + K^d n_p)$ where the second term is the communication cost. 
 
-%
+\subsection{Overall algorithm} 
+	
+The cost 
+When combined with a sweeping algorithm for the W2L step, the translation step computational cost of the expansion algorithm is dominated by the  
+Based on the cost of the expansion based algorithm, we 
 
-\subsection{A novel scheme for translation} 
+{\tt
+\begin{algorithmic}
+\STATE
+  \IF {$N \sqrt{\delta \ln \left( \frac{1}{\epsilon} \right)} < (2p)^3 $}
+     \STATE Use truncation algorithm 
+  \ELSE 
+     \STATE Use expansion based algorithm
+  \ENDIF
+\STATE
+\end{algorithmic}
+}
+
+----------------------
 Once the wave expansions are formed at all the FGT boxes, the next step is to form each of their local expansions. Since the FGT boxes are of size $\bigO(\sqrt{\delta})$, only a fixed number of surrounding boxes contribute to the local expansion of a box $B$. We shall call these set of boxes as its {\em interaction list}, denoted by $\mathcal{I} [B]$. A {\em direct scheme} forms the local expansion by simply visiting all the boxes in $\mathcal{I}[B]$ and translating their wave expansions. After initializing the local expansions $\{ v_k \quad \forall \quad |k| \leq p \}$ to zero, the pseudo-code for the direct scheme is:
 %
 {\tt
@@ -46,18 +65,3 @@ Once the wave expansions are formed at all the FGT boxes, the next step is to fo
 }
 %
 Assuming the size of $\mathcal{I}[B]$ is $K^3 - 1$, this algorithm requires $\bigO(K^3 p^3 N_B)$ work to form local expansions at all the boxes. 
-
-Based on the cost of the expansion based algorithm, we 
-
-{\tt
-\begin{algorithmic}
-\STATE
-  \IF {$N \sqrt{\delta \ln \left( \frac{1}{\epsilon} \right)} < \frac{1}{2}(2p)^3 $}
-     \STATE Use truncation algorithm 
-  \ELSE 
-     \STATE Use expansion based algorithm
-  \ENDIF
-\STATE
-\end{algorithmic}
-}
-
