@@ -1,11 +1,15 @@
-{\bf MOTIVATION}
+In the uniform distribution case, one can precisely estimate the threshold $n^*$ that determines whether one should use the truncation or the expansion algorithm. However, when the source and target distributions are highly nonuniform, as is the case in most practical applications, it is not straightforward. For example, when we superimpose a regular grid structure of FGT on a nonuniform distribution, some boxes will have lot of points while some are almost empty. 
 
-In the uniform distribution case, we can precisely estimate the threshold $n_{th}$ that decides whether one should use the truncation algorithm or the expansion based algorithm. However, when the source and target distributions are highly nonuniform, as is the case in most practical applications, it is not straightforward. For example, when we superimpose a regular grid structure of FGT on a nonuniform distribution, some boxes will have lot of points while some are almost empty. 
-
+In this section, we present a scalable algorithm for nonuniform distributions based on the ideas introduced in \cite{veerapaneni08}. A main ingredient of our alogirithm is building an \emph{octree} from the given set of points% 
 %
-
-{\bf OCTREES}
+\footnote{The original FGT \cite{fgt} handles nonuniform distributions without using any sort of hierarchical data-structures. In principle, one can extend these ideas to the present context. However there are certain advantages of using octrees both at the implementational and algorithmic levels. [NEED TO EXPAND]}. 
+%
+We discuss this next.
+%
+\subsection{Parallel octrees}
 We assume sources and targets are the same for simplicity. We also assume that the octree is constructed so that there are no more than a fixed number of points in each leaf node. 
+
+\subsection{FGT on octrees}
 
 \begin{algorithm}[!h]
 \caption{{\em Tree Splitting}}
@@ -57,6 +61,8 @@ We assume sources and targets are the same for simplicity. We also assume that t
 \end{algorithmic}
 }
 \end{algorithm}
+
+\subsection{Overlapping communication with computation} 
 
 {\em [In the parallel case, the interaction between $T_d$ and $T_e$ can be done while processors are communicating other info.] }
 
