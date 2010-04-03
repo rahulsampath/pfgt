@@ -1546,7 +1546,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
           expandResults[i][pt] = 0.0;
 
-          for(int j3 = -P; j3 < P; j3++) {
+          for(int j3 = -P; j3 < 0; j3++) {
             int shiftJ3 = (j3 + P);
 
             double theta = ImExpZfactor*(static_cast<double>(j3)*(pz - cz)) ;
@@ -1558,6 +1558,11 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
             expandResults[i][pt] += ( (a*c) - (b*d) );
           }//end for j3
+
+          expandResults[i][pt] *= 2.0;
+
+          expandResults[i][pt] += tmp2R[k2][k1][P];
+
         }//end for k1
       }//end for k2
     }//end for k3
