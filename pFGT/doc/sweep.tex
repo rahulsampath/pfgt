@@ -31,7 +31,7 @@ from $6\rightarrow7$ for $d=2$ and from $9\rightarrow15$ for $d=3$.
 
 The algorithm is illustrated in Figure \ref{fig:w2l}. The steps involved in the
 algorithm are as follows, 
-\begin{itemize} 
+\begin{enumerate}    
   \item First compute the local expansions at the outermost layer of the FGT
     boxes. Full computation ($K^dp^d$) is only required for the first box, as
     the local expansions for the other boxes can be computed by adding and
@@ -46,7 +46,7 @@ algorithm are as follows,
     local expansions of the $2^d -1$ neighbours $B(i,j), B(i+1,j)$ and
     $B(i,j+1)$, along with corrections terms from the $2^d$ corners.
     These are marked in Figure \ref{fig:w2l} assuming $K=3, n=1$. 
-    The local expansion is given by, 
+    The local expansion can therefore be computed as,
     \begin{eqnarray*} 
     v_k^{i+1,j+1} &=& \sum_{\eta_{i,j} = 0,1} (-1)^{1 + d + |\eta|_1} e^{iz_k\eta s/\sqrt{\delta}} v_k^{i+\eta_i, j+\eta_j} \\
     & +& \sum_{\eta_{i,j}= 0,1} (-1)^{1 + d + |\eta|_1} e^{iz_k\eta ns/\sqrt{\delta}} w_k^{i+\eta_i, j+\eta_j}.
@@ -56,10 +56,10 @@ algorithm are as follows,
   
   \item The propagation can then be used to propagate to the remaining boxes in
     the new propagation layer. At any given stage only the values of the
-    propagation layer needs to be stored. The values of any non-zero FGT boxes
-    doesn't need to be remembered.
+    propagation layer needs to be stored. The values at any box with zero
+    coefficient can therefore be ignored and need not be stored.
 
-\end{itemize}
+\end{enumerate}
 
 
 %\begin{figure}[h]
