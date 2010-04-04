@@ -1,4 +1,23 @@
-\paragraph{Accelerating the plane-wave translation step}
+
+Once the plane-wave expansions are formed for each of the FGT boxes, step (ii)
+involves translating the information to its interaction list to obtain the
+local expansions. A direct scheme forms the local expansions by simply visiting
+all the boxes in $\mathcal{I}|B|$ for each box $B$ and translating the wave
+expansions according to (\ref{e:w2l}). Since the size of the interaction list
+is $K^d$, this algorithm requires $\mathcal{O}(K^dp^d|B|)$ work to form all
+local expansions, where $|B|$ is the total number of boxes. By using the
+sweeping algorithm proposed in \cite{fggt}, the complexity of this step can be
+reduced to $\mathcal{O}(3dp^d|B|)$. This algorithm is optimal in terms of work,
+but is not ideal in terms of storage. In cases where we have non-uniform
+distributions (resulting in several empty boxes), the sweep algorithm requires
+storage at all boxes $B_i$, till the sweeps in all $d$ dimensions are
+completed. We propose a new algorithm for accelerating the plane-wave
+translations, which only needs $\mathcal{O}(|B|^\frac{d-1}{d})$ storage instead
+of $\mathcal{O}(|B|)$ storage as required by the sweeping algorithm from
+\cite{fggt}. In addition, the algorithm is work optimal for distributions with
+\ul{distribution density} less than $60\%$ (for $d=3$).
+
+\subsection{Accelerating the plane-wave translation step}
 The sweeping algorithm discussed in \cite{fggt} reduces this cost to $\bigO(9 p^3 N_B)$. 
 This algorithm is however not memory efficient when there are ``holes'' in the domain. We propose the following modification which has a much smaller memory footprint.
 
@@ -55,9 +74,6 @@ This algorithm is however not memory efficient when there are ``holes'' in the d
 	\draw (1,7) node {$+$};
 	\draw (3,7) node {$+$};
 	\draw (5,7) node {$+$};
-	
-	% \draw (7,7) node {$+$};
-			
 \end{tikzpicture}
 \caption{\small The Contributions. 
 }
