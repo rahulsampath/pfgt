@@ -3,6 +3,7 @@
 #include "petscda.h"
 #include "pfgtOctUtils.h"
 #include "seqUtils.h"
+#include "parUtils.h"
 #include <cmath>
 #include <cstdlib>
 #include <cassert>
@@ -63,11 +64,9 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   std::vector<ot::TreeNode> expandTree;
   std::vector<ot::TreeNode> directTree;
 
-  const unsigned int numLocalOcts = linOct.size();
-
   const double hOctFac = 1.0/static_cast<double>(1u << maxDepth);
 
-  for(unsigned int i = 0; i < numLocalOcts; i++) {
+  for(unsigned int i = 0; i < linOct.size(); i++) {
     unsigned int lev = linOct[i].getLevel();
     double hCurrOct = hOctFac*static_cast<double>(1u << (maxDepth - lev));
 
@@ -77,18 +76,13 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
       directTree.push_back(linOct[i]);
     }
   }//end for i
+  linOct.clear();
 
-  if(!rank) {
-    std::cout<<"Marked Octants"<<std::endl;
-  }
+  par::partitionW<ot::TreeNode>(directTree, NULL, comm);
+  par::partitionW<ot::TreeNode>(expandTree, NULL, comm);
 
   long long numLocalExpandOcts = expandTree.size();
   long long numLocalDirectOcts = directTree.size();
-
-  //Tensor-Product grid on each octant
-
-  //Tensor-Product Grid
-  long long trueLocalNumPts = ptGridSizeWithinBox*ptGridSizeWithinBox*ptGridSizeWithinBox*numLocalOcts;
 
   //S2W
   PetscLogEventBegin(s2wEvent, 0, 0, 0, 0);
@@ -1795,13 +1789,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
       }//end for j
     }//end for i
     fclose(fp);
-  }
-
-  long long trueTotalPts;
-  MPI_Reduce(&trueLocalNumPts, &trueTotalPts, 1, MPI_LONG_LONG_INT, MPI_SUM, 0, comm);
-
-  if(!rank) {
-    std::cout<<"True Total NumPts: "<<trueTotalPts<<std::endl; 
   }
 
   long long totalNumExpandOcts;
