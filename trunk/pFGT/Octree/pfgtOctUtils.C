@@ -20,8 +20,6 @@ extern PetscLogEvent d2lEvent;
 extern PetscLogEvent l2tCommEvent;
 extern PetscLogEvent l2tEvent;
 
-#define __PI__ 3.14159265
-
 #define __COMP_MUL_RE(a, ai, b, bi) ( ((a)*(b)) - ((ai)*(bi)) )
 #define __COMP_MUL_IM(a, ai, b, bi) ( ((a)*(bi)) + ((ai)*(b)) )
 
@@ -633,6 +631,8 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
       (&(*(w2dRecvFgtVals.begin()))), (&(*(w2dSendCnts.begin()))), (&(*(w2dSendDisps.begin()))), MPI_DOUBLE, comm );
 
   const double ReExpZfactor = -0.25*LbyP*LbyP;
+
+  const double  __PI__ = 3.14159265;
 
   const double C0 = ( pow((0.5/sqrt(__PI__)), 3.0)*LbyP*LbyP*LbyP );
 
