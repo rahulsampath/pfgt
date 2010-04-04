@@ -8,7 +8,7 @@ and Fourier domains. The parameter $\delta$ controls how rapidly the kernel deca
 In the Gauss transform case, $\kernel = e^{-\frac{\|x_j - y_k\|^2}{\delta}}$.  We call the
 points $x$ as targets and $y$ as sources.  
 
-Discrete sums of the form (\ref{gt}) are encountered in a variety of disciplines including computational physics, machine learning, computational finance and computer graphics. If the kernel decays rapidly, one can simply truncate the sum to a few neighboring sources at each target. However, in many important applications, this is not the case and computing these sums directly takes $\bigO(NM)$ time. 
+Discrete sums of the form (\ref{gt}) are encountered in a variety of disciplines including computational physics, machine learning, computational finance and computer graphics \ul{CITE}. If the kernel decays rapidly, one can simply truncate the sum to a few neighboring sources at each target. However, in many important applications, this is not the case and computing these sums directly takes $\bigO(NM)$ time. 
 
 Starting from the earlier work of Greengard and Strain \cite{fgt}, several sequential algorithms have 
 been proposed (e.g.,  \cite{greengard98, duraiswami03, tausch09, fggt}) to reduce the 
@@ -27,7 +27,7 @@ of the steps in the sequential fast gauss transform algorithm. This new scheme r
 computation and storage costs compared to the previous implementations, especially for highly
 non-uniform point distributions.
 %
-\item We extend our schemes to nonuniform distributions. OCTREES.
+\item We extend our schemes to nonuniform distributions. \ul{OCTREES}.
 
 \item The cost FGT grows for smaller values of $\delta$. In the nonuniform case, 
 We present a scheme that scales well in all ranges of the parameters. It is an extension of the tree-splitting scheme proposed in \cite{veerapaneni08} for computing continuous Gauss transforms. 

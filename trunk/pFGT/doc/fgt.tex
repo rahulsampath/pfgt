@@ -6,10 +6,10 @@ Since the kernel in (\ref{gt}) decays exponentially, we can simply truncate the 
 %
 \beq F(x_j) = \sum_{y_k \in \mathcal{I}[x_j]} \kernel f(y_k) \eeq
 %
-where $\mathcal{I}[x_j]$ is the interaction list which includes all the sources that are within a distance $\sqrt{\delta \ln (1/\epsilon)}$. Beyond this distance, a Gaussian centered at $x_j$ decays below $\epsilon$. The complexity of this algorithm is $\bigO(N \sqrt{\delta \ln(1/\epsilon)})$. This is a common technique used in the graphics community. When $\delta$ is large and/or high accuracy is required, the cost of this algorithm grows quadratically.  
+where $\mathcal{I}[x_j]$ is the interaction list which includes all the sources that are within a distance $\sqrt{\delta \ln (1/\epsilon)}$. Beyond this distance, a Gaussian centered at $x_j$ decays below $\epsilon$. The complexity of this algorithm is $\bigO(N \sqrt{\delta \ln(1/\epsilon)})$. This is a common technique used in the graphics community \ul{CITE}. When $\delta$ is large and/or high accuracy is required, the cost of this algorithm grows quadratically.  
 
 \subsection{Expansion algorithm}
-Broadly speaking, FGT algorithms partition the domain into boxes of uniform size and proceed in three main steps: (i) compress the influence of sources into a few multipole-type moments, (ii) translate the moments across the domain and (iii) evaluate the moments at the targets. In the original FGT \cite{fgt}, the translation costs tend to dominate (see \cite{fggt}). The plane-wave expansion version \cite{fggt} minimized the translation costs to a large extent but at the expense of higher computational cost for steps (i) and (iii). This problem is alleviated in \cite{fggt} to some extent. Our implementation is based on \cite{fggt} and we summarize it here. 
+Broadly speaking, FGT algorithms partition the domain into boxes of uniform size and proceed in three main steps: (i) compress the influence of sources into a few multipole-type moments, (ii) translate the moments across the domain and (iii) evaluate the moments at the targets. In the original FGT \cite{fgt}, the translation costs tend to dominate\cite{fggt}. The plane-wave expansion version \cite{fggt} minimized the translation costs to a large extent but at the expense of higher computational cost for steps (i) and (iii). This problem is alleviated in \cite{fggt} to some extent. Our implementation is based on \cite{fggt} and we summarize it here. 
 
 Central to the expansion algorithm is the finite-term plane-wave representation of the kernel,
 \beq G_\delta(\norm{x_j - y_k}) \approx \sum_{|k| \leq p} \hat{G}(k) e^{i \lambda k \cdot (x_j - y_k)}, \quad \lambda = \frac{L}{p\sqrt{\delta}}\eeq
@@ -23,7 +23,7 @@ In the fast algorithm, a target point $x \in D$ receives information from a sour
 \item[\textbf{S2W}] The influence of all the sources in the box $B$ is condensed into a plane-wave expansion.
             \beq w_k = \sum_{y \in B} f(y) e^{i\lambda k \cdot (c^B - y)} \quad \forall\quad |k| \leq p \eeq
 \item[\textbf{W2L}] The plane-wave expansion of each box $B$ is transmitted to every box $D$ in $\mathcal{I}[B]$. By superposition, the ``local'' plane-wave expansion of $D$ gets modified as
-            \beq v_k += w_k e^{i\lambda k \cdot (c^D - c^B)}\eeq
+            \beq v_k += w_k e^{i\lambda k \cdot (c^D - c^B)} \label{e:w2l}\eeq
 \item[\textbf{L2T}] The transform (\ref{gt}) is computed at each target by evaluating the local expansion of the box it is                          contained in.
             \beq F(x) = \sum_{|k| \leq p} \hat{G}(k) v_k e^{i\lambda k \cdot (x - c^D)}\eeq
 \end{description} 
