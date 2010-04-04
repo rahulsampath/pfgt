@@ -27,9 +27,9 @@ PetscLogEvent d2lEvent;
 PetscLogEvent l2tCommEvent;
 PetscLogEvent l2tEvent;
 
-#define SEEDA 0x12345678 
+void genGaussPts(int rank, unsigned int numOctPtsPerProc, std::vector<double> & pts);
 
-#define SEEDB 76543
+void rescalePts(std::vector<double> & pts);
 
 double gaussian(double mean, double std_deviation);
 
@@ -53,19 +53,20 @@ int main(int argc, char** argv) {
   MPI_Comm_size(MPI_COMM_WORLD, &npes);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  if(argc < 7) {
+  if(argc < 8) {
     if(!rank) {
-      std::cout<<"Usage: exe numOctPtsPerProc numFgtPtsPerDimPerOct fMag epsilon delta writeOut"<<std::endl;
+      std::cout<<"Usage: exe octPtsType numOctPtsPerProc numFgtPtsPerDimPerOct fMag epsilon delta writeOut"<<std::endl;
     }
     PetscFinalize();
   }
 
-  unsigned int numOctPtsPerProc = atoi(argv[1]);
-  unsigned int numFgtPtsPerDimPerOct = atoi(argv[2]);
-  double fMag = atof(argv[3]);
-  double epsilon = atof(argv[4]);  
-  double delta = atof(argv[5]);
-  int writeOut = atoi(argv[6]);
+  unsigned int octPtsType = atoi(argv[1]);
+  unsigned int numOctPtsPerProc = atoi(argv[2]);
+  unsigned int numFgtPtsPerDimPerOct = atoi(argv[3]);
+  double fMag = atof(argv[4]);
+  double epsilon = atof(argv[5]);  
+  double delta = atof(argv[6]);
+  int writeOut = atoi(argv[7]);
 
   int P, L, K;
 
@@ -93,33 +94,28 @@ int main(int argc, char** argv) {
     PetscFinalize();
   }
 
-  const unsigned int seed = (SEEDA + (SEEDB*rank));
-  srand48(seed);
-
   //Generate gaussian distribution for the octree
   std::vector<double> pts;
-  pts.resize(3*numOctPtsPerProc);
-  for(unsigned int i = 0; i < (3*numOctPtsPerProc); i++) {
-    pts[i]= gaussian(0.5, 0.16);
+
+  if(octPtsType == 0) {
+    genGaussPts(rank, numOctPtsPerProc, pts);
+  } else {
+    assert(false);
   }
+
+  rescalePts(pts);
 
   unsigned int ptsLen = pts.size();
   unsigned int dim = 3;
   unsigned int maxDepth = 30;
 
   std::vector<ot::TreeNode> linOct;
-  for(unsigned int i = 0; i < ptsLen; i+=3) {
-    if( (pts[i] > 0.0) && (pts[i+1] > 0.0) && (pts[i+2] > 0.0) &&
-        ( ((unsigned int)(pts[i]*((double)(1u << maxDepth)))) < (1u << maxDepth))  &&
-        ( ((unsigned int)(pts[i+1]*((double)(1u << maxDepth)))) < (1u << maxDepth))  &&
-        ( ((unsigned int)(pts[i+2]*((double)(1u << maxDepth)))) < (1u << maxDepth)) ) 
-    {
-      linOct.push_back( ot::TreeNode((unsigned int)(pts[i]*(double)(1u << maxDepth)),
-            (unsigned int)(pts[i+1]*(double)(1u << maxDepth)),
-            (unsigned int)(pts[i+2]*(double)(1u << maxDepth)),
-            maxDepth, dim, maxDepth) );
-    }
-  }
+  for(unsigned int i = 0; i < ptsLen; i += 3) {
+    linOct.push_back( ot::TreeNode((unsigned int)(pts[i]*(double)(1u << maxDepth)),
+          (unsigned int)(pts[i+1]*(double)(1u << maxDepth)),
+          (unsigned int)(pts[i+2]*(double)(1u << maxDepth)),
+          maxDepth, dim, maxDepth) );
+  }//end for i
 
   par::removeDuplicates<ot::TreeNode>(linOct, false, MPI_COMM_WORLD);
 
@@ -148,6 +144,17 @@ int main(int argc, char** argv) {
 
   PetscFinalize();
 
+}
+
+void genGaussPts(int rank, unsigned int numOctPtsPerProc, std::vector<double> & pts)
+{
+  const unsigned int seed = (0x12345678  + (76543*rank));
+  srand48(seed);
+
+  pts.resize(3*numOctPtsPerProc);
+  for(unsigned int i = 0; i < (3*numOctPtsPerProc); i++) {
+    pts[i]= gaussian(0.5, 0.16);
+  }
 }
 
 double gaussian(double mean, double std_deviation) {
@@ -185,5 +192,62 @@ double gaussian(double mean, double std_deviation) {
 
   return mean + (std_deviation * r * x1);
 }//end gaussian
+
+void rescalePts(std::vector<double> & pts) 
+{
+  double minX = pts[0];
+  double maxX = pts[0];
+
+  double minY = pts[1];
+  double maxY = pts[1];
+
+  double minZ = pts[2];
+  double maxZ = pts[2];
+
+  for(unsigned int i = 0; i < pts.size(); i += 3) {
+    double xPt = pts[i];
+    double yPt = pts[i + 1];
+    double zPt = pts[i + 2];
+
+    if(xPt < minX) {
+      minX = xPt;
+    }
+
+    if(xPt > maxX) {
+      maxX = xPt;
+    }
+
+    if(yPt < minY) {
+      minY = yPt;
+    }
+
+    if(yPt > maxY) {
+      maxY = yPt;
+    }
+
+    if(zPt < minZ) {
+      minZ = zPt;
+    }
+
+    if(zPt > maxZ) {
+      maxZ = zPt;
+    }
+  }//end for i
+
+  double xRange = (maxX - minX);
+  double yRange = (maxY - minY);
+  double zRange = (maxZ - minZ);
+
+  for(unsigned int i = 0; i < pts.size();  i += 3) {
+    double xPt = pts[i];
+    double yPt = pts[i + 1];
+    double zPt = pts[i + 2];
+
+    pts[i] = 0.05 + (0.925*(xPt - minX)/xRange);
+    pts[i + 1] = 0.05 + (0.925*(yPt - minY)/yRange);
+    pts[i + 2] = 0.05 + (0.925*(zPt - minZ)/zRange);
+  }//end for i
+
+}
 
 
