@@ -35,4 +35,4 @@ We present a scheme that scales well in all ranges of the parameters. It is an e
 \end{itemize}
 
 The rest of the paper is organized as follows. In Section \ref{sc:fgt}, we give a high-level description of FGT for uniform point distributions and discuss its parallelization. We introduce a novel translation scheme in Section \ref{sc:sweep}. This scheme is slightly (nearly twice) more expensive compared to the {\em sweeping algorithm} introduced in \cite{greengard98} but it significantly improves the storage cost for nonuniform distributions. We also discuss its parallel implementation. In Section \ref{sc:nonuniform}, we will present our octree-based sequential and parallel algorithms for nonuniform distributions. Finally, in Section \ref{sc:results}, we will present scalability results of our algorithm using a variety of test cases. 
-
+In the rest of the paper, we stick to the case where $G_\delta$ is a Gaussian. This is purely for ease of exposition, all the concepts are valid in the general case too unless stated otherwise. 
