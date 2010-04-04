@@ -10,6 +10,8 @@ export writeOut=0
 export fMag=10.0 
 export epsilon=1.0e-3
 
+export forceType=0
+
 export numPtsPerProc=1000000
 export numPtsStr=1M
 
@@ -17,5 +19,5 @@ export delta=0.01
 
 export numProcStr=1
 
-${MPIEXEC} -n ${numProcStr} ./runUniform ${numPtsPerProc} ${fMag} ${epsilon} ${delta} ${writeOut} -log_summary >& upfgt.${numPtsStr}.${numProcStr}.txt
+${MPIEXEC} -n ${numProcStr} ./runUniform ${numPtsPerProc} ${fMag} ${epsilon} ${delta} ${writeOut} ${forceType} -log_summary >& upfgt.${numPtsStr}.${numProcStr}.${forceType}.txt
 

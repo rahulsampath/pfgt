@@ -5,14 +5,18 @@ product grid of source and target points inside each leaf. Sources = Targets
 processor owns a sub-grid of boxes. Each box is owned by an unique processor. 
 Note, the FGT partitioning is different from the octree partitoning. 
 2. Mark each leaf as either Expand or Direct depending on its size.
-3. Do S2W
-4. Do S2W-Comm
-5. Do W2D
-6. Do D2D
-7. Do W2L
-8. Do D2L
-9. Do L2T-Comm
-10. Do L2T
+3. Partition the Direct octants across processors; Preserve the
+sorted ordering.
+4. Partition the Expand octants across processors. It is not necessary
+to preserve the sorted ordering for the Expand octants.
+5. Do S2W
+6. Do S2W-Comm
+7. Do W2D
+8. Do D2D
+9. Do W2L
+10. Do D2L
+11. Do L2T-Comm
+12. Do L2T
 
 S2W Algorithm
 For each leaf that is marked as Expand do the following:

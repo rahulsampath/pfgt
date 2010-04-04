@@ -39,9 +39,9 @@ int main(int argc, char ** argv ) {
   MPI_Comm_size(MPI_COMM_WORLD, &npes);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  if(argc < 6) {
+  if(argc < 7) {
     if(!rank) {
-      std::cout<<"Usage: exe numPtsPerProc fMag epsilon delta writeOut"<<std::endl;
+      std::cout<<"Usage: exe numPtsPerProc fMag epsilon delta writeOut forceType"<<std::endl;
     }
     PetscFinalize();
   }
@@ -54,6 +54,7 @@ int main(int argc, char ** argv ) {
   double epsilon = atof(argv[3]);  
   double delta = atof(argv[4]);
   int writeOut = atoi(argv[5]);
+  int forceType = atoi(argv[6]);
 
   int P;
   int L;
@@ -83,17 +84,27 @@ int main(int argc, char ** argv ) {
     PetscFinalize();
   }
 
-  if( (static_cast<double>(npes)*static_cast<double>(numPtsPerProc)*sqrt(delta*log(1.0/epsilon))) <
-      (4.0*static_cast<double>(P*P*P)) ) {
+  if( forceType == 0 ) {
+    if( (static_cast<double>(npes)*static_cast<double>(numPtsPerProc)*sqrt(delta*log(1.0/epsilon))) <
+        (4.0*static_cast<double>(P*P*P)) ) {
+      forceType = 1;
+    } else {
+      forceType = 2;
+    }
+  }
+
+  if( forceType == 1 ) {
     if(!rank) {
       std::cout<<"Using Type-1"<<std::endl;
     }
     pfgtType1(delta, K, fMag, numPtsPerProc, writeOut);
-  } else {
+  } else if( forceType == 2 ) {
     if(!rank) {
       std::cout<<"Using Type-2"<<std::endl;
     }
     pfgtType2(delta, fMag, numPtsPerProc, P, L, K, writeOut);
+  } else {
+    assert(false);
   }
 
   PetscFinalize();
