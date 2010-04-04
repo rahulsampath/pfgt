@@ -90,7 +90,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   //Loop over local expand octants and execute S2W in each octant
 
   const double LbyP = static_cast<double>(L)/static_cast<double>(P);
-  const double ReExpZfactor = -0.25*LbyP*LbyP;
   const double ImExpZfactor = LbyP/sqrt(delta); 
 
   std::vector<std::vector<std::vector<double> > > tmp1R;
@@ -99,9 +98,11 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   std::vector<std::vector<std::vector<double> > > tmp2R;
   std::vector<std::vector<std::vector<double> > > tmp2C;
 
-  std::vector<std::vector<double> > Woct(numLocalExpandOcts);
-
   std::vector<unsigned int> oct2fgtIdmap(numLocalExpandOcts);
+
+  std::vector<unsigned int> uniqueOct2fgtIdmap;
+
+  std::vector<std::vector<double> > Wfgt;
 
   for(unsigned int i = 0; i < numLocalExpandOcts; i++) {
     unsigned int lev = expandTree[i].getLevel();
@@ -124,7 +125,9 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     unsigned int fgtyid = static_cast<unsigned int>(floor(aOy/hRg));
     unsigned int fgtzid = static_cast<unsigned int>(floor(aOz/hRg));
 
-    oct2fgtIdmap[i] = ( (fgtzid*Ne*Ne) + (fgtyid*Ne) + fgtxid );
+    unsigned int fgtId = ( (fgtzid*Ne*Ne) + (fgtyid*Ne) + fgtxid );
+
+    oct2fgtIdmap[i] = fgtId;
 
     double aFx = hRg*static_cast<double>(fgtxid);
     double aFy = hRg*static_cast<double>(fgtyid);
@@ -228,7 +231,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
     //Stage-3
 
-    Woct[i].resize(Ndofs);
+    std::vector<double> octWvals(Ndofs);
 
     for(int k3 = -P, di = 0; k3 < P; k3++) {
       for(int k2 = -P; k2 < P; k2++) {
@@ -237,8 +240,8 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
         for(int k1 = -P; k1 < P; k1++, di++) {
           int shiftK1 = (k1 + P);
 
-          Woct[i][2*di] = 0.0;
-          Woct[i][(2*di) + 1] = 0.0;
+          octWvals[2*di] = 0.0;
+          octWvals[(2*di) + 1] = 0.0;
 
           for(int j3 = 0; j3 < ptGridSizeWithinBox; j3++) {
             double pz = aOz + ptGridOff + (ptGridH*(static_cast<double>(j3)));
@@ -248,14 +251,41 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
             double rVal = tmp2R[shiftK2][shiftK1][j3];
             double cVal = tmp2C[shiftK2][shiftK1][j3];
 
-            Woct[i][2*di] += ( (rVal*cos(theta)) - (cVal*sin(theta)) );
-            Woct[i][(2*di) + 1] += ( (rVal*sin(theta)) + (cVal*cos(theta)) );
+            octWvals[2*di] += ( (rVal*cos(theta)) - (cVal*sin(theta)) );
+            octWvals[(2*di) + 1] += ( (rVal*sin(theta)) + (cVal*cos(theta)) );
 
           }//end for j3
         }//end for k1
       }//end for k2
     }//end for k3
 
+    unsigned int foundIdx;
+    bool foundIt = seq::maxLowerBound<unsigned int>(uniqueOct2fgtIdmap, fgtId, foundIdx, 0, 0);
+
+    if(foundIt) {
+      if( uniqueOct2fgtIdmap[foundIdx] != fgtId ) {
+        uniqueOct2fgtIdmap.insert( (uniqueOct2fgtIdmap.begin() + foundIdx + 1), fgtId );
+        Wfgt.insert( (Wfgt.begin() + foundIdx + 1), octWvals );
+      } else {
+        for(int li = 0; li < Ndofs; li++) {
+          Wfgt[foundIdx][li] += octWvals[li];
+        }//end for li
+      }
+    } else {
+      uniqueOct2fgtIdmap.insert( uniqueOct2fgtIdmap.begin(), fgtId );
+      Wfgt.insert( Wfgt.begin(), octWvals );
+    }
+
+  }//end for i
+
+  for(unsigned int i = 0; i < numLocalExpandOcts; i++) {
+    unsigned int fgtId = oct2fgtIdmap[i];
+    unsigned int fgtIndex;
+
+    bool foundIt = seq::BinarySearch<unsigned int>( (&(*(uniqueOct2fgtIdmap.begin()))),
+        uniqueOct2fgtIdmap.size(), fgtId, &fgtIndex);
+
+    oct2fgtIdmap[i] = fgtIndex;
   }//end for i
 
   PetscLogEventEnd(s2wEvent, 0, 0, 0, 0);
@@ -266,33 +296,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   //S2W-Comm
   PetscLogEventBegin(s2wCommEvent, 0, 0, 0, 0);
-
-  std::vector<unsigned int> uniqueOct2fgtIdmap = oct2fgtIdmap;
-  seq::makeVectorUnique<unsigned int>(uniqueOct2fgtIdmap, false);
-
-  std::vector<std::vector<double> > Wfgt(uniqueOct2fgtIdmap.size());
-  for(unsigned int i = 0; i < Wfgt.size(); i++) {
-    Wfgt[i].resize(Ndofs);
-    for(unsigned int j = 0; j < Ndofs; j++) {
-      Wfgt[i][j] = 0.0;
-    }//end for j
-  }//end for i
-
-  for(unsigned int i = 0; i < numLocalExpandOcts; i++) {
-    unsigned int fgtId = oct2fgtIdmap[i];
-    unsigned int fgtIndex;
-    bool idxFound = seq::BinarySearch<unsigned int>( (&(*(uniqueOct2fgtIdmap.begin()))), 
-        uniqueOct2fgtIdmap.size(), fgtId, &fgtIndex);
-
-    //Reset map value  
-    oct2fgtIdmap[i] = fgtIndex;
-
-    for(unsigned int j = 0; j < Ndofs; j++) {
-      Wfgt[fgtIndex][j] += Woct[i][j];
-    }//end for j
-  }//end for i
-
-  Woct.clear();
 
   DA da;
   DACreate3d(comm, DA_NONPERIODIC, DA_STENCIL_BOX, Ne, Ne, Ne,
@@ -629,8 +632,9 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   MPI_Alltoallv( (&(*(w2dSendFgtVals.begin()))), (&(*(w2dRecvCnts.begin()))), (&(*(w2dRecvDisps.begin()))), MPI_DOUBLE,
       (&(*(w2dRecvFgtVals.begin()))), (&(*(w2dSendCnts.begin()))), (&(*(w2dSendDisps.begin()))), MPI_DOUBLE, comm );
 
-  const double C0 = ( pow((0.5/sqrt(__PI__)), 3.0)*
-      pow((static_cast<double>(L)/static_cast<double>(P)), 3.0) );
+  const double ReExpZfactor = -0.25*LbyP*LbyP;
+
+  const double C0 = ( pow((0.5/sqrt(__PI__)), 3.0)*LbyP*LbyP*LbyP );
 
   std::vector<std::vector<double> > directResults(numLocalDirectOcts);
 
