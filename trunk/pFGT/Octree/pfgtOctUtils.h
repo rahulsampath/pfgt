@@ -6,9 +6,9 @@
 #include "TreeNode.h"
 #include <vector>
 
-PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
-    double delta, double fMag, unsigned int numFgtPtsPerDimPerProc,
-    int P, int L, int K, int DirectHfactor, int writeOut);
+PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
+    const double delta, const double fMag, const unsigned int numFgtPtsPerDimPerProc,
+    const int P, const int L, const int K, const int DirectHfactor, const int writeOut);
 
 void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, int xs, int ys, int zs,
     int nx, int ny, int nz, int Ne, double h, const int StencilWidth,
