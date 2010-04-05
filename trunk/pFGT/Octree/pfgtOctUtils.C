@@ -288,10 +288,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   PetscLogEventEnd(s2wEvent, 0, 0, 0, 0);
 
-  if(!rank) {
-    std::cout<<"Finished S2W"<<std::endl;
-  }
-
   //S2W-Comm
   PetscLogEventBegin(s2wCommEvent, 0, 0, 0, 0);
 
@@ -299,10 +295,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   DACreate3d(comm, DA_NONPERIODIC, DA_STENCIL_BOX, Ne, Ne, Ne,
       PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, Ndofs, K,
       PETSC_NULL, PETSC_NULL, PETSC_NULL, &da);
-
-  if(!rank) {
-    std::cout<<"Created DA"<<std::endl;
-  }
 
   //Do Not Free lx, ly, lz. They are managed by DA
   const PetscInt* lx = NULL;
@@ -451,10 +443,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   }//end for i
 
   PetscLogEventEnd(s2wCommEvent, 0, 0, 0, 0);
-
-  if(!rank) {
-    std::cout<<"Finished S2Wcomm"<<std::endl;
-  }
 
   //W2D
   PetscLogEventBegin(w2dEvent, 0, 0, 0, 0);
@@ -768,10 +756,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   DAVecRestoreArrayDOF(da, Wglobal, &WgArr);
 
   PetscLogEventEnd(w2dEvent, 0, 0, 0, 0);
-
-  if(!rank) {
-    std::cout<<"Finished W2D"<<std::endl;
-  }
 
   //D2D
   PetscLogEventBegin(d2dEvent, 0, 0, 0, 0);
@@ -1297,10 +1281,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   PetscLogEventEnd(d2dEvent, 0, 0, 0, 0);
 
-  if(!rank) {
-    std::cout<<"Finished D2D"<<std::endl;
-  }
-
   //W2L
   PetscLogEventBegin(w2lEvent, 0, 0, 0, 0);
 
@@ -1323,10 +1303,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   DAVecRestoreArrayDOF(da, Wlocal, &WlArr);
 
   PetscLogEventEnd(w2lEvent, 0, 0, 0, 0);
-
-  if(!rank) {
-    std::cout<<"Finished W2L"<<std::endl;
-  }
 
   //D2L
   PetscLogEventBegin(d2lEvent, 0, 0, 0, 0);
@@ -1551,10 +1527,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
 
   PetscLogEventEnd(d2lEvent, 0, 0, 0, 0);
 
-  if(!rank) {
-    std::cout<<"Finished D2L"<<std::endl;
-  }
-
   //L2T-Comm
   PetscLogEventBegin(l2tCommEvent, 0, 0, 0, 0);
 
@@ -1598,10 +1570,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   DAVecRestoreArrayDOF(da, Wglobal, &WgArr);
 
   PetscLogEventEnd(l2tCommEvent, 0, 0, 0, 0);
-
-  if(!rank) {
-    std::cout<<"Finished L2Tcomm"<<std::endl;
-  }
 
   //L2T
   PetscLogEventBegin(l2tEvent, 0, 0, 0, 0);
@@ -1757,10 +1725,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   }//end for i
 
   PetscLogEventEnd(l2tEvent, 0, 0, 0, 0);
-
-  if(!rank) {
-    std::cout<<"Finished L2T"<<std::endl;
-  }
 
   VecDestroy(Wlocal);
   VecDestroy(Wglobal);

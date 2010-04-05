@@ -70,6 +70,14 @@ int main(int argc, char** argv) {
   double delta = atof(argv[6]);
   int writeOut = atoi(argv[7]);
 
+  if(!rank) {
+    std::cout<<"octPtsType = "<<octPtsType<<std::endl;
+    std::cout<<"numOctPtsPerProc = "<<numOctPtsPerProc<<std::endl;
+    std::cout<<"numFgtPtsPerDimPerOct = "<<numFgtPtsPerDimPerOct<<std::endl;
+    std::cout<<"epsilon = "<<epsilon<<std::endl;
+    std::cout<<"delta = "<<delta<<std::endl;
+  }
+
   int P, L, K;
 
   if(epsilon == 1.0e-3) {
@@ -171,7 +179,7 @@ void genSpherePts(int rank, int npes, unsigned int numOctPtsPerProc, std::vector
 
     pts[3*i] = cos(u)*cos(v);
     pts[(3*i) + 1] = cos(u)*sin(v);
-    pts[(3*i) + 2] = sin(u);
+    pts[(3*i) + 2] = 6.0*sin(u);
   }//end for i
 }
 
