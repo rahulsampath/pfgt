@@ -55,9 +55,9 @@ int main(int argc, char** argv) {
   MPI_Comm_size(MPI_COMM_WORLD, &npes);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  if(argc < 8) {
+  if(argc < 9) {
     if(!rank) {
-      std::cout<<"Usage: exe octPtsType numOctPtsPerProc numFgtPtsPerDimPerOct fMag epsilon delta writeOut"<<std::endl;
+      std::cout<<"Usage: exe octPtsType numOctPtsPerProc numFgtPtsPerDimPerOct fMag epsilon delta writeOut DirectHfactor"<<std::endl;
     }
     PetscFinalize();
   }
@@ -69,6 +69,7 @@ int main(int argc, char** argv) {
   double epsilon = atof(argv[5]);  
   double delta = atof(argv[6]);
   int writeOut = atoi(argv[7]);
+  int DirectHfactor = atoi(argv[8]);
 
   if(!rank) {
     std::cout<<"octPtsType = "<<octPtsType<<std::endl;
@@ -76,6 +77,7 @@ int main(int argc, char** argv) {
     std::cout<<"numFgtPtsPerDimPerOct = "<<numFgtPtsPerDimPerOct<<std::endl;
     std::cout<<"epsilon = "<<epsilon<<std::endl;
     std::cout<<"delta = "<<delta<<std::endl;
+    std::cout<<"DirectHfactor = "<<DirectHfactor<<std::endl;
   }
 
   int P, L, K;
@@ -152,7 +154,7 @@ int main(int argc, char** argv) {
   pts.clear();
 
   //FGT
-  pfgt(linOct, maxDepth, delta, fMag, numFgtPtsPerDimPerOct, P, L, K, writeOut);
+  pfgt(linOct, maxDepth, delta, fMag, numFgtPtsPerDimPerOct, P, L, K, DirectHfactor, writeOut);
 
   PetscFinalize();
 
