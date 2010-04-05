@@ -23,9 +23,9 @@ extern PetscLogEvent l2tEvent;
 #define __COMP_MUL_RE(a, ai, b, bi) ( ((a)*(b)) - ((ai)*(bi)) )
 #define __COMP_MUL_IM(a, ai, b, bi) ( ((a)*(bi)) + ((ai)*(b)) )
 
-PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
-    double delta, double fMag, unsigned int ptGridSizeWithinBox, 
-    int P, int L, int K, int DirectHfactor, int writeOut)
+PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
+    const double delta, const double fMag, const unsigned int ptGridSizeWithinBox, 
+    const int P, const int L, const int K, const int DirectHfactor, const int writeOut)
 {
   PetscFunctionBegin;
 
@@ -107,7 +107,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   std::vector<std::vector<std::vector<double> > > tmp2R;
   std::vector<std::vector<std::vector<double> > > tmp2C;
 
-  std::vector<unsigned int> oct2fgtIdmap(numLocalExpandOcts);
+  std::vector<std::vector<unsigned int> > oct2fgtIdmap(numLocalExpandOcts);
 
   std::vector<unsigned int> uniqueOct2fgtIdmap;
 
@@ -116,9 +116,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   for(unsigned int i = 0; i < numLocalExpandOcts; i++) {
     unsigned int lev = expandTree[i].getLevel();
     double hCurrOct = hOctFac*static_cast<double>(1u << (maxDepth - lev));
-
-    double ptGridOff = 0.1*hCurrOct;
-    double ptGridH = 0.8*hCurrOct/(static_cast<double>(ptGridSizeWithinBox) - 1.0);
 
     //Anchor of the octant
     unsigned int anchX = expandTree[i].getX();
@@ -129,172 +126,216 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     double aOy =  hOctFac*(static_cast<double>(anchY));
     double aOz =  hOctFac*(static_cast<double>(anchZ));
 
-    //Anchor of the FGT box
-    unsigned int fgtxid = static_cast<unsigned int>(floor(aOx/hRg));
-    unsigned int fgtyid = static_cast<unsigned int>(floor(aOy/hRg));
-    unsigned int fgtzid = static_cast<unsigned int>(floor(aOz/hRg));
+    bool fgtContainsOct = true;
+    unsigned int numFgtPerDim = 1;
 
-    unsigned int fgtId = ( (fgtzid*Ne*Ne) + (fgtyid*Ne) + fgtxid );
-
-    oct2fgtIdmap[i] = fgtId;
-
-    double aFx = hRg*static_cast<double>(fgtxid);
-    double aFy = hRg*static_cast<double>(fgtyid);
-    double aFz = hRg*static_cast<double>(fgtzid);
-
-    //Center of the FGT box
-    double halfH = (0.5*hRg);
-    double cx =  aFx + halfH;
-    double cy =  aFy + halfH;
-    double cz =  aFz + halfH;
-
-    //Tensor-Product Acceleration 
-
-    //Stage-1
-
-    tmp1R.resize(2*P);
-    tmp1C.resize(2*P);
-
-    //First Half
-    for(int k1 = -P; k1 < 1; k1++) {
-      int shiftK1 = (k1 + P);
-
-      tmp1R[shiftK1].resize(ptGridSizeWithinBox);
-      tmp1C[shiftK1].resize(ptGridSizeWithinBox);
-
-      for(int j3 = 0; j3 < ptGridSizeWithinBox; j3++) {
-        tmp1R[shiftK1][j3].resize(ptGridSizeWithinBox);
-        tmp1C[shiftK1][j3].resize(ptGridSizeWithinBox);
-
-        for(int j2 = 0; j2 < ptGridSizeWithinBox; j2++) {
-          tmp1R[shiftK1][j3][j2] = 0.0;
-          tmp1C[shiftK1][j3][j2] = 0.0;
-
-          for(int j1 = 0; j1 < ptGridSizeWithinBox; j1++) {
-            double px = aOx + ptGridOff + (ptGridH*(static_cast<double>(j1)));
-
-            double theta = ImExpZfactor*(static_cast<double>(k1)*(cx - px));
-
-            //Replace fMag by drand48() if you want
-            tmp1R[shiftK1][j3][j2] += (fMag*cos(theta));
-            tmp1C[shiftK1][j3][j2] += (fMag*sin(theta));
-          }//end for j1
-        }//end for j2
-      }//end for j3
-    }//end for k1
-
-    //Second Half (Complex conjugate) 
-    for(int k1 = 1; k1 < P; k1++) {
-      int shiftK1 = (k1 + P);
-      int shiftMinusK1 = (-k1 + P);
-
-      tmp1R[shiftK1].resize(ptGridSizeWithinBox);
-      tmp1C[shiftK1].resize(ptGridSizeWithinBox);
-
-      for(int j3 = 0; j3 < ptGridSizeWithinBox; j3++) {
-        tmp1R[shiftK1][j3].resize(ptGridSizeWithinBox);
-        tmp1C[shiftK1][j3].resize(ptGridSizeWithinBox);
-
-        for(int j2 = 0; j2 < ptGridSizeWithinBox; j2++) {
-          tmp1R[shiftK1][j3][j2] = tmp1R[shiftMinusK1][j3][j2];
-          tmp1C[shiftK1][j3][j2] = -tmp1C[shiftMinusK1][j3][j2];
-        }//end for j2
-      }//end for j3
-    }//end for k1
-
-    //Stage-2
-
-    tmp2R.resize(2*P);
-    tmp2C.resize(2*P);
-    for(int k2 = -P; k2 < P; k2++) {
-      int shiftK2 = (k2 + P);
-
-      tmp2R[shiftK2].resize(2*P);
-      tmp2C[shiftK2].resize(2*P);
-
-      for(int k1 = -P; k1 < P; k1++) {
-        int shiftK1 = (k1 + P);
-
-        tmp2R[shiftK2][shiftK1].resize(ptGridSizeWithinBox);
-        tmp2C[shiftK2][shiftK1].resize(ptGridSizeWithinBox);
-
-        for(int j3 = 0; j3 < ptGridSizeWithinBox; j3++) {
-          tmp2R[shiftK2][shiftK1][j3] = 0.0;
-          tmp2C[shiftK2][shiftK1][j3] = 0.0;
-
-          for(int j2 = 0; j2 < ptGridSizeWithinBox; j2++) {
-            double py = aOy + ptGridOff + (ptGridH*(static_cast<double>(j2)));
-
-            double theta = ImExpZfactor*(static_cast<double>(k2)*(cy - py));
-
-            double rVal = tmp1R[shiftK1][j3][j2];
-            double cVal = tmp1C[shiftK1][j3][j2];
-
-            tmp2R[shiftK2][shiftK1][j3] += ( (rVal*cos(theta)) - (cVal*sin(theta)) );
-            tmp2C[shiftK2][shiftK1][j3] += ( (rVal*sin(theta)) + (cVal*cos(theta)) );
-
-          }//end for j2
-        }//end for j3
-      }//end for k1
-    }//end for k2
-
-    //Stage-3
-
-    std::vector<double> octWvals(Ndofs);
-
-    for(int k3 = -P, di = 0; k3 < P; k3++) {
-      for(int k2 = -P; k2 < P; k2++) {
-        int shiftK2 = (k2 + P);
-
-        for(int k1 = -P; k1 < P; k1++, di++) {
-          int shiftK1 = (k1 + P);
-
-          octWvals[2*di] = 0.0;
-          octWvals[(2*di) + 1] = 0.0;
-
-          for(int j3 = 0; j3 < ptGridSizeWithinBox; j3++) {
-            double pz = aOz + ptGridOff + (ptGridH*(static_cast<double>(j3)));
-
-            double theta = ImExpZfactor*(static_cast<double>(k3)*(cz - pz));
-
-            double rVal = tmp2R[shiftK2][shiftK1][j3];
-            double cVal = tmp2C[shiftK2][shiftK1][j3];
-
-            octWvals[2*di] += ( (rVal*cos(theta)) - (cVal*sin(theta)) );
-            octWvals[(2*di) + 1] += ( (rVal*sin(theta)) + (cVal*cos(theta)) );
-
-          }//end for j3
-        }//end for k1
-      }//end for k2
-    }//end for k3
-
-    unsigned int foundIdx;
-    bool foundIt = seq::maxLowerBound<unsigned int>(uniqueOct2fgtIdmap, fgtId, foundIdx, 0, 0);
-
-    if(foundIt) {
-      if( uniqueOct2fgtIdmap[foundIdx] != fgtId ) {
-        uniqueOct2fgtIdmap.insert( (uniqueOct2fgtIdmap.begin() + foundIdx + 1), fgtId );
-        Wfgt.insert( (Wfgt.begin() + foundIdx + 1), octWvals );
-      } else {
-        for(int li = 0; li < Ndofs; li++) {
-          Wfgt[foundIdx][li] += octWvals[li];
-        }//end for li
-      }
-    } else {
-      uniqueOct2fgtIdmap.insert( uniqueOct2fgtIdmap.begin(), fgtId );
-      Wfgt.insert( Wfgt.begin(), octWvals );
+    if(hCurrOct > hRg) {
+      fgtContainsOct = false;
+      numFgtPerDim = static_cast<unsigned int>(hCurrOct/hRg);
     }
+
+    double ptGridOff, ptGridH;
+    unsigned int tmpPtGridSize;
+
+    if(fgtContainsOct) {
+      tmpPtGridSize = ptGridSizeWithinBox;
+      ptGridH = 0.8*hCurrOct/(static_cast<double>(tmpPtGridSize) - 1.0);
+      ptGridOff = 0.1*hCurrOct;
+    } else {
+      tmpPtGridSize = ptGridSizeWithinBox/numFgtPerDim;
+      ptGridH = 0.8*hRg/(static_cast<double>(tmpPtGridSize) - 1.0);
+      ptGridOff = 0.1*hRg;
+    }
+
+    unsigned int fgtStXid = static_cast<unsigned int>(floor(aOx/hRg));
+    unsigned int fgtStYid = static_cast<unsigned int>(floor(aOy/hRg));
+    unsigned int fgtStZid = static_cast<unsigned int>(floor(aOz/hRg));
+
+    for(unsigned int fgtzid = fgtStZid; fgtzid < (fgtStZid + numFgtPerDim); fgtzid++) {
+      for(unsigned int fgtyid = fgtStYid; fgtyid < (fgtStYid + numFgtPerDim); fgtyid++) {
+        for(unsigned int fgtxid = fgtStXid; fgtxid < (fgtStXid + numFgtPerDim); fgtxid++) {
+
+          unsigned int fgtId = ( (fgtzid*Ne*Ne) + (fgtyid*Ne) + fgtxid );
+
+          oct2fgtIdmap[i].push_back(fgtId);
+
+          //Anchor of the FGT box
+          double aFx = hRg*static_cast<double>(fgtxid);
+          double aFy = hRg*static_cast<double>(fgtyid);
+          double aFz = hRg*static_cast<double>(fgtzid);
+
+          //Center of the FGT box
+          double halfH = (0.5*hRg);
+          double cx =  aFx + halfH;
+          double cy =  aFy + halfH;
+          double cz =  aFz + halfH;
+
+          //Anchor for the points
+          double aPx, aPy, aPz;
+
+          if(fgtContainsOct) {
+            aPx = aOx;
+            aPy = aOy;
+            aPz = aOz;
+          } else {
+            aPx = aFx;
+            aPy = aFy;
+            aPz = aFz;
+          }
+
+          //Tensor-Product Acceleration 
+
+          //Stage-1
+
+          tmp1R.resize(2*P);
+          tmp1C.resize(2*P);
+
+          //First Half
+          for(int k1 = -P; k1 < 1; k1++) {
+            int shiftK1 = (k1 + P);
+
+            tmp1R[shiftK1].resize(tmpPtGridSize);
+            tmp1C[shiftK1].resize(tmpPtGridSize);
+
+            for(int j3 = 0; j3 < tmpPtGridSize; j3++) {
+              tmp1R[shiftK1][j3].resize(tmpPtGridSize);
+              tmp1C[shiftK1][j3].resize(tmpPtGridSize);
+
+              for(int j2 = 0; j2 < tmpPtGridSize; j2++) {
+                tmp1R[shiftK1][j3][j2] = 0.0;
+                tmp1C[shiftK1][j3][j2] = 0.0;
+
+                for(int j1 = 0; j1 < tmpPtGridSize; j1++) {
+                  double px = aPx + ptGridOff + (ptGridH*(static_cast<double>(j1)));
+
+                  double theta = ImExpZfactor*(static_cast<double>(k1)*(cx - px));
+
+                  //Replace fMag by drand48() if you want
+                  tmp1R[shiftK1][j3][j2] += (fMag*cos(theta));
+                  tmp1C[shiftK1][j3][j2] += (fMag*sin(theta));
+                }//end for j1
+              }//end for j2
+            }//end for j3
+          }//end for k1
+
+          //Second Half (Complex conjugate) 
+          for(int k1 = 1; k1 < P; k1++) {
+            int shiftK1 = (k1 + P);
+            int shiftMinusK1 = (-k1 + P);
+
+            tmp1R[shiftK1].resize(tmpPtGridSize);
+            tmp1C[shiftK1].resize(tmpPtGridSize);
+
+            for(int j3 = 0; j3 < tmpPtGridSize; j3++) {
+              tmp1R[shiftK1][j3].resize(tmpPtGridSize);
+              tmp1C[shiftK1][j3].resize(tmpPtGridSize);
+
+              for(int j2 = 0; j2 < tmpPtGridSize; j2++) {
+                tmp1R[shiftK1][j3][j2] = tmp1R[shiftMinusK1][j3][j2];
+                tmp1C[shiftK1][j3][j2] = -tmp1C[shiftMinusK1][j3][j2];
+              }//end for j2
+            }//end for j3
+          }//end for k1
+
+          //Stage-2
+
+          tmp2R.resize(2*P);
+          tmp2C.resize(2*P);
+          for(int k2 = -P; k2 < P; k2++) {
+            int shiftK2 = (k2 + P);
+
+            tmp2R[shiftK2].resize(2*P);
+            tmp2C[shiftK2].resize(2*P);
+
+            for(int k1 = -P; k1 < P; k1++) {
+              int shiftK1 = (k1 + P);
+
+              tmp2R[shiftK2][shiftK1].resize(tmpPtGridSize);
+              tmp2C[shiftK2][shiftK1].resize(tmpPtGridSize);
+
+              for(int j3 = 0; j3 < tmpPtGridSize; j3++) {
+                tmp2R[shiftK2][shiftK1][j3] = 0.0;
+                tmp2C[shiftK2][shiftK1][j3] = 0.0;
+
+                for(int j2 = 0; j2 < tmpPtGridSize; j2++) {
+                  double py = aPy + ptGridOff + (ptGridH*(static_cast<double>(j2)));
+
+                  double theta = ImExpZfactor*(static_cast<double>(k2)*(cy - py));
+
+                  double rVal = tmp1R[shiftK1][j3][j2];
+                  double cVal = tmp1C[shiftK1][j3][j2];
+
+                  tmp2R[shiftK2][shiftK1][j3] += ( (rVal*cos(theta)) - (cVal*sin(theta)) );
+                  tmp2C[shiftK2][shiftK1][j3] += ( (rVal*sin(theta)) + (cVal*cos(theta)) );
+
+                }//end for j2
+              }//end for j3
+            }//end for k1
+          }//end for k2
+
+          //Stage-3
+
+          std::vector<double> octWvals(Ndofs);
+
+          for(int k3 = -P, di = 0; k3 < P; k3++) {
+            for(int k2 = -P; k2 < P; k2++) {
+              int shiftK2 = (k2 + P);
+
+              for(int k1 = -P; k1 < P; k1++, di++) {
+                int shiftK1 = (k1 + P);
+
+                octWvals[2*di] = 0.0;
+                octWvals[(2*di) + 1] = 0.0;
+
+                for(int j3 = 0; j3 < tmpPtGridSize; j3++) {
+                  double pz = aPz + ptGridOff + (ptGridH*(static_cast<double>(j3)));
+
+                  double theta = ImExpZfactor*(static_cast<double>(k3)*(cz - pz));
+
+                  double rVal = tmp2R[shiftK2][shiftK1][j3];
+                  double cVal = tmp2C[shiftK2][shiftK1][j3];
+
+                  octWvals[2*di] += ( (rVal*cos(theta)) - (cVal*sin(theta)) );
+                  octWvals[(2*di) + 1] += ( (rVal*sin(theta)) + (cVal*cos(theta)) );
+
+                }//end for j3
+              }//end for k1
+            }//end for k2
+          }//end for k3
+
+          unsigned int foundIdx;
+          bool foundIt = seq::maxLowerBound<unsigned int>(uniqueOct2fgtIdmap, fgtId, foundIdx, 0, 0);
+
+          if(foundIt) {
+            if( uniqueOct2fgtIdmap[foundIdx] != fgtId ) {
+              uniqueOct2fgtIdmap.insert( (uniqueOct2fgtIdmap.begin() + foundIdx + 1), fgtId );
+              Wfgt.insert( (Wfgt.begin() + foundIdx + 1), octWvals );
+            } else {
+              for(int li = 0; li < Ndofs; li++) {
+                Wfgt[foundIdx][li] += octWvals[li];
+              }//end for li
+            }
+          } else {
+            uniqueOct2fgtIdmap.insert( uniqueOct2fgtIdmap.begin(), fgtId );
+            Wfgt.insert( Wfgt.begin(), octWvals );
+          }
+
+        }//end for fgtxid
+      }//end for fgtyid
+    }//end for fgtzid
 
   }//end for i
 
   for(unsigned int i = 0; i < numLocalExpandOcts; i++) {
-    unsigned int fgtId = oct2fgtIdmap[i];
-    unsigned int fgtIndex;
+    for(unsigned int j = 0; j < oct2fgtIdmap[i].size(); j++) {
+      unsigned int fgtId = oct2fgtIdmap[i][j];
+      unsigned int fgtIndex;
 
-    bool foundIt = seq::BinarySearch<unsigned int>( (&(*(uniqueOct2fgtIdmap.begin()))),
-        uniqueOct2fgtIdmap.size(), fgtId, &fgtIndex);
+      bool foundIt = seq::BinarySearch<unsigned int>( (&(*(uniqueOct2fgtIdmap.begin()))),
+          uniqueOct2fgtIdmap.size(), fgtId, &fgtIndex);
 
-    oct2fgtIdmap[i] = fgtIndex;
+      oct2fgtIdmap[i][j] = fgtIndex;
+    }//end for j
   }//end for i
 
   PetscLogEventEnd(s2wEvent, 0, 0, 0, 0);
@@ -1585,14 +1626,11 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
   //L2T
   PetscLogEventBegin(l2tEvent, 0, 0, 0, 0);
 
-  std::vector<std::vector<double> > expandResults(numLocalExpandOcts);
+  std::vector<std::vector<std::vector<double> > > expandResults(numLocalExpandOcts);
 
   for(unsigned int i = 0; i < numLocalExpandOcts; i++) {
     unsigned int lev = expandTree[i].getLevel();
     double hCurrOct = hOctFac*static_cast<double>(1u << (maxDepth - lev));
-
-    double ptGridOff = 0.1*hCurrOct;
-    double ptGridH = 0.8*hCurrOct/(static_cast<double>(ptGridSizeWithinBox) - 1.0);
 
     //Anchor of the octant
     unsigned int anchX = expandTree[i].getX();
@@ -1603,135 +1641,174 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     double aOy =  hOctFac*(static_cast<double>(anchY));
     double aOz =  hOctFac*(static_cast<double>(anchZ));
 
-    unsigned int fgtIndex = oct2fgtIdmap[i];
-    unsigned int fgtId = uniqueOct2fgtIdmap[fgtIndex];
-    unsigned int fgtzid = (fgtId/(Ne*Ne));
-    unsigned int fgtyid = ((fgtId%(Ne*Ne))/Ne);
-    unsigned int fgtxid = ((fgtId%(Ne*Ne))%Ne);
+    bool fgtContainsOct = true;
+    unsigned int numFgtPerDim = 1;
 
-    //Anchor of the FGT box
-    double aFx = hRg*static_cast<double>(fgtxid);
-    double aFy = hRg*static_cast<double>(fgtyid);
-    double aFz = hRg*static_cast<double>(fgtzid);
+    if(hCurrOct > hRg) {
+      fgtContainsOct = false;
+      numFgtPerDim = static_cast<unsigned int>(hCurrOct/hRg);
+    }
 
-    //Center of the FGT box
-    double halfH = (0.5*hRg);
-    double cx =  aFx + halfH;
-    double cy =  aFy + halfH;
-    double cz =  aFz + halfH;
+    double ptGridOff, ptGridH;
+    unsigned int tmpPtGridSize;
 
-    //Tensor Product Acceleration
+    if(fgtContainsOct) {
+      tmpPtGridSize = ptGridSizeWithinBox;
+      ptGridH = 0.8*hCurrOct/(static_cast<double>(tmpPtGridSize) - 1.0);
+      ptGridOff = 0.1*hCurrOct;
+    } else {
+      tmpPtGridSize = ptGridSizeWithinBox/numFgtPerDim;
+      ptGridH = 0.8*hRg/(static_cast<double>(tmpPtGridSize) - 1.0);
+      ptGridOff = 0.1*hRg;
+    }
 
-    //Stage - 1
+    expandResults[i].resize(oct2fgtIdmap[i].size());
 
-    tmp1R.resize(ptGridSizeWithinBox);
-    tmp1C.resize(ptGridSizeWithinBox);
-    for(unsigned int k1 = 0; k1 < ptGridSizeWithinBox; k1++) {
-      tmp1R[k1].resize(2*P);
-      tmp1C[k1].resize(2*P);
+    for(unsigned int l = 0; l < oct2fgtIdmap[i].size(); l++) {
+      unsigned int fgtIndex = oct2fgtIdmap[i][l];
+      unsigned int fgtId = uniqueOct2fgtIdmap[fgtIndex];
+      unsigned int fgtzid = (fgtId/(Ne*Ne));
+      unsigned int fgtyid = ((fgtId%(Ne*Ne))/Ne);
+      unsigned int fgtxid = ((fgtId%(Ne*Ne))%Ne);
 
-      double px = aOx + ptGridOff + (ptGridH*(static_cast<double>(k1)));
+      //Anchor of the FGT box
+      double aFx = hRg*static_cast<double>(fgtxid);
+      double aFy = hRg*static_cast<double>(fgtyid);
+      double aFz = hRg*static_cast<double>(fgtzid);
 
-      for(int j3 = -P, di = 0; j3 < P; j3++) {
-        int shiftJ3 = (j3 + P);
+      //Center of the FGT box
+      double halfH = (0.5*hRg);
+      double cx =  aFx + halfH;
+      double cy =  aFy + halfH;
+      double cz =  aFz + halfH;
 
-        tmp1R[k1][shiftJ3].resize(2*P);
-        tmp1C[k1][shiftJ3].resize(2*P);
+      //Anchor for the points
+      double aPx, aPy, aPz;
 
-        for(int j2 = -P; j2 < P; j2++) {
-          int shiftJ2 = (j2 + P);
+      if(fgtContainsOct) {
+        aPx = aOx;
+        aPy = aOy;
+        aPz = aOz;
+      } else {
+        aPx = aFx;
+        aPy = aFy;
+        aPz = aFz;
+      }
 
-          double rSum = 0.0;
-          double cSum = 0.0;
+      //Tensor Product Acceleration
 
-          for(int j1 = -P; j1 < P; j1++, di++) {
-            double theta = ImExpZfactor*(static_cast<double>(j1)*(px - cx)) ;
+      //Stage - 1
 
-            double a = Wfgt[fgtIndex][2*di];
-            double b = Wfgt[fgtIndex][(2*di) + 1];
-            double c = cos(theta);
-            double d = sin(theta);
-            double factor = exp(ReExpZfactor*static_cast<double>( (j1*j1) + (j2*j2) + (j3*j3) ));
+      tmp1R.resize(tmpPtGridSize);
+      tmp1C.resize(tmpPtGridSize);
+      for(unsigned int k1 = 0; k1 < tmpPtGridSize; k1++) {
+        tmp1R[k1].resize(2*P);
+        tmp1C[k1].resize(2*P);
 
-            rSum += (factor*( (a*c) - (b*d) ));
-            cSum += (factor*( (a*d) + (b*c) ));
-          }//end for j1
+        double px = aPx + ptGridOff + (ptGridH*(static_cast<double>(k1)));
 
-          tmp1R[k1][shiftJ3][shiftJ2] = (C0*rSum);
-          tmp1C[k1][shiftJ3][shiftJ2] = (C0*cSum);
-        }//end for j2
-      }//end for j3
-    }//end for k1
-
-    //Stage - 2
-
-    tmp2R.resize(ptGridSizeWithinBox);
-    tmp2C.resize(ptGridSizeWithinBox);
-    for(unsigned int k2 = 0; k2 < ptGridSizeWithinBox; k2++) {
-      tmp2R[k2].resize(ptGridSizeWithinBox);
-      tmp2C[k2].resize(ptGridSizeWithinBox);
-
-      double py = aOy + ptGridOff + (ptGridH*(static_cast<double>(k2)));
-
-      for(unsigned int k1 = 0; k1 < ptGridSizeWithinBox; k1++) {
-        tmp2R[k2][k1].resize(2*P);
-        tmp2C[k2][k1].resize(2*P);
-
-        for(int j3 = -P; j3 < P; j3++) {
+        for(int j3 = -P, di = 0; j3 < P; j3++) {
           int shiftJ3 = (j3 + P);
 
-          tmp2R[k2][k1][shiftJ3] = 0.0;
-          tmp2C[k2][k1][shiftJ3] = 0.0;
+          tmp1R[k1][shiftJ3].resize(2*P);
+          tmp1C[k1][shiftJ3].resize(2*P);
 
           for(int j2 = -P; j2 < P; j2++) {
             int shiftJ2 = (j2 + P);
 
-            double theta = ImExpZfactor*(static_cast<double>(j2)*(py - cy)) ;
+            double rSum = 0.0;
+            double cSum = 0.0;
 
-            double a = tmp1R[k1][shiftJ3][shiftJ2];
-            double b = tmp1C[k1][shiftJ3][shiftJ2];
-            double c = cos(theta);
-            double d = sin(theta);
+            for(int j1 = -P; j1 < P; j1++, di++) {
+              double theta = ImExpZfactor*(static_cast<double>(j1)*(px - cx)) ;
 
-            tmp2R[k2][k1][shiftJ3] += ( (a*c) - (b*d) );
-            tmp2C[k2][k1][shiftJ3] += ( (a*d) + (b*c) );
+              double a = Wfgt[fgtIndex][2*di];
+              double b = Wfgt[fgtIndex][(2*di) + 1];
+              double c = cos(theta);
+              double d = sin(theta);
+              double factor = exp(ReExpZfactor*static_cast<double>( (j1*j1) + (j2*j2) + (j3*j3) ));
+
+              rSum += (factor*( (a*c) - (b*d) ));
+              cSum += (factor*( (a*d) + (b*c) ));
+            }//end for j1
+
+            tmp1R[k1][shiftJ3][shiftJ2] = (C0*rSum);
+            tmp1C[k1][shiftJ3][shiftJ2] = (C0*cSum);
           }//end for j2
         }//end for j3
       }//end for k1
-    }//end for k2
 
-    //Stage - 3
+      //Stage - 2
 
-    expandResults[i].resize(ptGridSizeWithinBox*ptGridSizeWithinBox*ptGridSizeWithinBox);
+      tmp2R.resize(tmpPtGridSize);
+      tmp2C.resize(tmpPtGridSize);
+      for(unsigned int k2 = 0; k2 < tmpPtGridSize; k2++) {
+        tmp2R[k2].resize(tmpPtGridSize);
+        tmp2C[k2].resize(tmpPtGridSize);
 
-    for(unsigned int k3 = 0, pt = 0; k3 < ptGridSizeWithinBox; k3++) {
-      double pz = aOz + ptGridOff + (ptGridH*(static_cast<double>(k3)));
+        double py = aPy + ptGridOff + (ptGridH*(static_cast<double>(k2)));
 
-      for(unsigned int k2 = 0; k2 < ptGridSizeWithinBox; k2++) {
-        for(unsigned int k1 = 0; k1 < ptGridSizeWithinBox; k1++, pt++) {
+        for(unsigned int k1 = 0; k1 < tmpPtGridSize; k1++) {
+          tmp2R[k2][k1].resize(2*P);
+          tmp2C[k2][k1].resize(2*P);
 
-          expandResults[i][pt] = 0.0;
-
-          for(int j3 = -P; j3 < 0; j3++) {
+          for(int j3 = -P; j3 < P; j3++) {
             int shiftJ3 = (j3 + P);
 
-            double theta = ImExpZfactor*(static_cast<double>(j3)*(pz - cz)) ;
+            tmp2R[k2][k1][shiftJ3] = 0.0;
+            tmp2C[k2][k1][shiftJ3] = 0.0;
 
-            double a = tmp2R[k2][k1][shiftJ3];
-            double b = tmp2C[k2][k1][shiftJ3];
-            double c = cos(theta);
-            double d = sin(theta);
+            for(int j2 = -P; j2 < P; j2++) {
+              int shiftJ2 = (j2 + P);
 
-            expandResults[i][pt] += ( (a*c) - (b*d) );
+              double theta = ImExpZfactor*(static_cast<double>(j2)*(py - cy)) ;
+
+              double a = tmp1R[k1][shiftJ3][shiftJ2];
+              double b = tmp1C[k1][shiftJ3][shiftJ2];
+              double c = cos(theta);
+              double d = sin(theta);
+
+              tmp2R[k2][k1][shiftJ3] += ( (a*c) - (b*d) );
+              tmp2C[k2][k1][shiftJ3] += ( (a*d) + (b*c) );
+            }//end for j2
           }//end for j3
-
-          expandResults[i][pt] *= 2.0;
-
-          expandResults[i][pt] += tmp2R[k2][k1][P];
-
         }//end for k1
       }//end for k2
-    }//end for k3
+
+      //Stage - 3
+
+      expandResults[i][l].resize(tmpPtGridSize*tmpPtGridSize*tmpPtGridSize);
+
+      for(unsigned int k3 = 0, pt = 0; k3 < tmpPtGridSize; k3++) {
+        double pz = aPz + ptGridOff + (ptGridH*(static_cast<double>(k3)));
+
+        for(unsigned int k2 = 0; k2 < tmpPtGridSize; k2++) {
+          for(unsigned int k1 = 0; k1 < tmpPtGridSize; k1++, pt++) {
+
+            expandResults[i][l][pt] = 0.0;
+
+            for(int j3 = -P; j3 < 0; j3++) {
+              int shiftJ3 = (j3 + P);
+
+              double theta = ImExpZfactor*(static_cast<double>(j3)*(pz - cz)) ;
+
+              double a = tmp2R[k2][k1][shiftJ3];
+              double b = tmp2C[k2][k1][shiftJ3];
+              double c = cos(theta);
+              double d = sin(theta);
+
+              expandResults[i][l][pt] += ( (a*c) - (b*d) );
+            }//end for j3
+
+            expandResults[i][l][pt] *= 2.0;
+
+            expandResults[i][l][pt] += tmp2R[k2][k1][P];
+
+          }//end for k1
+        }//end for k2
+      }//end for k3
+
+    }//end for l
 
   }//end for i
 
@@ -1750,7 +1827,10 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, unsigned int maxDepth,
     for(unsigned int i = 0; i < expandResults.size(); i++) {
       fprintf(fp, "%d\n", expandResults[i].size());
       for(unsigned int j = 0; j < expandResults[i].size(); j++) {
-        fprintf(fp, "%lf \n", expandResults[i][j]);
+        fprintf(fp, "%d\n", expandResults[i][j].size());
+        for(unsigned int k = 0; k < expandResults[i][j].size(); k++) {
+          fprintf(fp, "%lf \n", expandResults[i][j][k]);
+        }//end for k
       }//end for j
     }//end for i
     fclose(fp);

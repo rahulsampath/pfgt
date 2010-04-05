@@ -20,10 +20,17 @@ to preserve the sorted ordering for the Expand octants.
 
 S2W Algorithm
 For each leaf that is marked as Expand do the following:
-  1. Figure out the FGT box that contains this octant
-  2. Do the same computation as in the uniform case for
+ 1. If the octant is smaller than the FGT box then
+  A. Figure out the FGT box that contains this octant
+  B. Do the same computation as in the uniform case for
   all points within this octant
-  3. Add the result of step 2 to the FGT box computed in step 1.
+  C. Add the result of step B to the FGT box computed in step A.
+ 2. If the octant is bigger than the FGT box then
+  A. Figure out the FGT boxes within this octant
+  B. Do the same computation as in the uniform case for all points
+  within each of these FGT boxes.
+  C. Add the result of step B to the respective FGT boxes computed in
+  step A.
 
 S2W-Comm Algorithm
 1. For each FGT box computed in the S2W algorithm above, figure out the
@@ -95,13 +102,14 @@ expansions for the corresponding FGT boxes.
 L2T-Comm Algorithm
 1. Send the target expansions for each FGT box owned by this processor
 to the processors that own octants that are contained within this FGT
-box. This communication is like a reverse of the communication in
-S2W-Comm.  
+box or own expand octants that contain these FGT boxes. This communication 
+is like a reverse of the communication in S2W-Comm.  
 
 L2T Algorithm
 For each leaf that is marked as Expand do the following:
   1. Do the same computation as in the uniform case for
   all points within this octant using the target expansion for the
-  FGT box that contains this octant. 
+  FGT box that contains this octant or FGT boxes that are contained
+  within this octant. 
 
 
