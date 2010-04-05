@@ -101,15 +101,13 @@ expansions for the corresponding FGT boxes.
 
 L2T-Comm Algorithm
 1. Send the target expansions for each FGT box owned by this processor
-to the processors that own octants that are contained within this FGT
-box or own expand octants that contain these FGT boxes. This communication 
+to the processors that own octants that need this FGT box. This communication 
 is like a reverse of the communication in S2W-Comm.  
 
 L2T Algorithm
 For each leaf that is marked as Expand do the following:
   1. Do the same computation as in the uniform case for
   all points within this octant using the target expansion for the
-  FGT box that contains this octant or FGT boxes that are contained
-  within this octant. 
+  corresponding FGT box. 
 
 
