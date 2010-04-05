@@ -29,6 +29,8 @@ PetscLogEvent l2tEvent;
 
 void genGaussPts(int rank, unsigned int numOctPtsPerProc, std::vector<double> & pts);
 
+void genSpherePts(int rank, int npes, unsigned int numOctPtsPerProc, std::vector<double> & pts);
+
 void rescalePts(std::vector<double> & pts);
 
 double gaussian(double mean, double std_deviation);
@@ -99,6 +101,8 @@ int main(int argc, char** argv) {
 
   if(octPtsType == 0) {
     genGaussPts(rank, numOctPtsPerProc, pts);
+  } else if(octPtsType == 1) {
+    genSpherePts(rank, npes, numOctPtsPerProc, pts);
   } else {
     assert(false);
   }
@@ -144,6 +148,31 @@ int main(int argc, char** argv) {
 
   PetscFinalize();
 
+}
+
+void genSpherePts(int rank, int npes, unsigned int numOctPtsPerProc, std::vector<double> & pts) {
+  const unsigned int numIntervals = static_cast<unsigned int>(floor(sqrt(0.5*
+          static_cast<double>(npes)*static_cast<double>(numOctPtsPerProc))));
+
+  const double  __PI__ = 3.14159265;
+
+  unsigned int avgSize = (2*numIntervals*numIntervals)/npes;
+
+  unsigned int stPtId = rank*avgSize;
+
+  pts.resize( 3*avgSize );
+
+  for(unsigned int i = 0; i < avgSize; i++) {
+    unsigned int uId = (i + stPtId)/numIntervals;
+    unsigned int vId = (i + stPtId)%numIntervals;
+
+    double u = __PI__*static_cast<double>(uId)/static_cast<double>(numIntervals);
+    double v = __PI__*static_cast<double>(vId)/static_cast<double>(numIntervals);
+
+    pts[3*i] = cos(u)*cos(v);
+    pts[(3*i) + 1] = cos(u)*sin(v);
+    pts[(3*i) + 2] = sin(u);
+  }//end for i
 }
 
 void genGaussPts(int rank, unsigned int numOctPtsPerProc, std::vector<double> & pts)
