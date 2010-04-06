@@ -101,11 +101,13 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
   const double LbyP = static_cast<double>(L)/static_cast<double>(P);
   const double ImExpZfactor = LbyP/sqrt(delta); 
 
+#ifdef USE_TENSOR
   std::vector<std::vector<std::vector<double> > > tmp1R;
   std::vector<std::vector<std::vector<double> > > tmp1C;
 
   std::vector<std::vector<std::vector<double> > > tmp2R;
   std::vector<std::vector<std::vector<double> > > tmp2C;
+#endif
 
   std::vector<std::vector<unsigned int> > oct2fgtIdmap(numLocalExpandOcts);
 
@@ -183,6 +185,9 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
             aPz = aFz;
           }
 
+          std::vector<double> octWvals(Ndofs);
+
+#ifdef USE_TENSOR
           //Tensor-Product Acceleration 
 
           //Stage-1
@@ -275,8 +280,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
 
           //Stage-3
 
-          std::vector<double> octWvals(Ndofs);
-
           for(int k3 = -P, di = 0; k3 < P; k3++) {
             for(int k2 = -P; k2 < P; k2++) {
               int shiftK2 = (k2 + P);
@@ -302,6 +305,46 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
               }//end for k1
             }//end for k2
           }//end for k3
+
+#else
+
+          for(int k3 = -P, di = 0; k3 < P; k3++) {
+            for(int k2 = -P; k2 < P; k2++) {
+              for(int k1 = -P; k1 < P; k1++, di++) {
+
+                octWvals[2*di] = 0.0;
+                octWvals[(2*di) + 1] = 0.0;
+
+                for(int j3 = 0; j3 < tmpPtGridSize; j3++) {
+                  double pz = aPz + ptGridOff + (ptGridH*(static_cast<double>(j3)));
+
+                  double thetaZ = ImExpZfactor*(static_cast<double>(k3)*(cz - pz));
+
+                  for(int j2 = 0; j2 < tmpPtGridSize; j2++) {
+                    double py = aPy + ptGridOff + (ptGridH*(static_cast<double>(j2)));
+
+                    double thetaY = ImExpZfactor*(static_cast<double>(k2)*(cy - py));
+
+                    for(int j1 = 0; j1 < tmpPtGridSize; j1++) {
+                      double px = aPx + ptGridOff + (ptGridH*(static_cast<double>(j1)));
+
+                      double thetaX = ImExpZfactor*(static_cast<double>(k1)*(cx - px));
+
+                      double theta = (thetaX + thetaY + thetaZ);
+
+                      //Replace fMag by drand48() if you want
+                      octWvals[2*di] += (fMag*cos(theta));
+                      octWvals[(2*di) + 1] += (fMag*sin(theta));
+
+                    }//end for j1
+                  }//end for j2
+                }//end for j3
+
+              }//end for k1
+            }//end for k2
+          }//end for k3
+
+#endif
 
           unsigned int foundIdx;
           bool foundIt = seq::maxLowerBound<unsigned int>(uniqueOct2fgtIdmap, fgtId, foundIdx, 0, 0);
@@ -1695,6 +1738,9 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
         aPz = aFz;
       }
 
+      expandResults[i][l].resize(tmpPtGridSize*tmpPtGridSize*tmpPtGridSize);
+
+#ifdef USE_TENSOR
       //Tensor Product Acceleration
 
       //Stage - 1
@@ -1777,8 +1823,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
 
       //Stage - 3
 
-      expandResults[i][l].resize(tmpPtGridSize*tmpPtGridSize*tmpPtGridSize);
-
       for(unsigned int k3 = 0, pt = 0; k3 < tmpPtGridSize; k3++) {
         double pz = aPz + ptGridOff + (ptGridH*(static_cast<double>(k3)));
 
@@ -1807,6 +1851,62 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
           }//end for k1
         }//end for k2
       }//end for k3
+
+#else
+
+      for(unsigned int k3 = 0, pt = 0; k3 < tmpPtGridSize; k3++) {
+        double pz = aPz + ptGridOff + (ptGridH*(static_cast<double>(k3)));
+
+        double deltaZ = ImExpZfactor*((pz - cz)) ;
+
+        for(unsigned int k2 = 0; k2 < tmpPtGridSize; k2++) {
+          double py = aPy + ptGridOff + (ptGridH*(static_cast<double>(k2)));
+
+          double deltaY = ImExpZfactor*((py - cy)) ;
+
+          for(unsigned int k1 = 0; k1 < tmpPtGridSize; k1++, pt++) {
+            double px = aPx + ptGridOff + (ptGridH*(static_cast<double>(k1)));
+
+            double deltaX = ImExpZfactor*((px - cx)) ;
+
+            double rSum = 0.0;
+
+            for(int j3 = -P, di = 0; j3 < P; j3++) {
+              double thetaZ = (deltaZ*static_cast<double>(j3));
+
+              double factorZ = exp(ReExpZfactor*static_cast<double>(j3*j3));
+
+              for(int j2 = -P; j2 < P; j2++) {
+                double thetaY = (deltaY*static_cast<double>(j2));
+
+                double factorY = exp(ReExpZfactor*static_cast<double>(j2*j2));
+
+                for(int j1 = -P; j1 < P; j1++, di++) {
+                  double thetaX = (deltaX*static_cast<double>(j1));
+
+                  double factorX = exp(ReExpZfactor*static_cast<double>(j1*j1));
+
+                  double theta = (thetaX + thetaY + thetaZ); 
+
+                  double a = Wfgt[fgtIndex][2*di];
+                  double b = Wfgt[fgtIndex][(2*di) + 1];
+                  double c = cos(theta);
+                  double d = sin(theta);
+                  double factor = (factorX*factorY*factorZ); 
+
+                  rSum += (factor*( (a*c) - (b*d) ));
+
+                }//end for j1
+              }//end for j2
+            }//end for j3
+
+            expandResults[i][l][pt] = (C0*rSum);
+
+          }//end for k1
+        }//end for k2
+      }//end for k3
+
+#endif
 
     }//end for l
 

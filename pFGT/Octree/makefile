@@ -9,5 +9,7 @@ CEXT = C
 
 CFLAGS = -DPETSC_USE_LOG  -O3 
 
+#-DUSE_TENSOR 
+
 include ./makefileCore
 
