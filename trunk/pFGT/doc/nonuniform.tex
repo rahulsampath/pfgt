@@ -30,36 +30,24 @@ We assume sources and targets are the same for simplicity. We also assume that t
 \end{algorithm}
 
 
-Then the following are the different stages of the parallel algorithm;
+Then the following are the different stages of the parallel algorithm:
 
 {\em (i) S2W}. In this step, we form the plane-wave expansions at the set of boxes that cover $T_e$. 
-We visit each leaf, and add its contribution to the box it is contained in or to all the boxes it contains. \hfill $\bigO(N p^3/n_p)$
+We visit each leaf, and add its contribution to the box it is contained in or to all the boxes it contains. 
 
-{\em (ii) S2W-Comm.} Because the boxes are partitioned by [RAHUL] and the octree is partitioned by Morton ordering, the  
-In each processor, we visit every box it owns and gather all the plane-wave expansions formed at the center of this box across processors. 
+\hfill $\bigO(N p^3/n_p)$
+
+{\em (ii) S2W-Comm.} Because the boxes are partitioned by [RAHUL] and the octree is partitioned by Morton ordering, it is not necessary that the boxes contained in a leaf (or vice-versa) belong to the same processor. Therefore, after the S2W step, we send the plane-wave expansions formed in each processor to the owner of the respective boxes. Then, we visit each box $B \in T_e$ and add all the plane-wave expansions formed at different processors to obtain $\{w_k \}_{|k| \leq p}$.  
+
 \hfill $\bigO(K^3 n_p)$
 
-{\em (iii) W2D.} Each box $B \in T_e$ will visit every target point $x \in T_d$ in its interaction list and evaluates the Gauss transform at $x$ using:
+{\em (iii) W2D.} At this stage, all processors have finished forming the plane-wave expansions at their respective boxes. 
+Now, we use this information to evaluate the influence of $T_e$ on $T_d$. Each box $B \in T_e$ must visit every target point $x \in T_d$ in its interaction list and evaluate the Gauss transform using
 %
-\beq G[f](x) = \sum_{|k| \leq p} e^{-\frac{\norm{z_k}^2}{4}} e^{i z_k \cdot (x - c^B)/\sqrt{\delta}} w_k \eeq
+\beq F(x) = \sum_{|k| \leq p} e^{-\frac{\norm{z_k}^2}{4}} e^{i z_k \cdot (x - c^B)/\sqrt{\delta}} w_k \eeq
 %
-1. For each point within each leaf marked as Direct, figure out the set of
-FGT boxes whose interaction list contains this point.
-2. For each FGT box computed above, figure out the processor that owns
-it.
-3. Send these FGT boxes to their respective owners.
-4. The owner of an FGT box will return the source expansion for that box
-to the processors that requested them in step 3. This communication is
-like the reverse of the communication in step 3. Note, if an FGT box is
-within a Direct octant then its source expansion can simply be set to
-zero for this step. If we want to avoid communicating zero source 
-expansions for FGT boxes within a Direct octant, then we require an extra 
-communication for communicating which of the requested FGT boxes are empty and which are
-not.  
-5. For each point within each leaf marked as Direct, figure out the set
-of FGT boxes whose interaction list contains this point and use the
-corresponding values received in step 4 and compute the Gauss transform for this
-point.
+We perform a two-step communication to achieve this. In the first step, we send requests to the owners of boxes that are in the interaction lists of targets in $T_d$. In the second step, the owners send the plane-wave coefficients \footnote{ If $T_d$ receives any requests, it simply sends zero plane-wave coefficients. This can be avoided by an extra communication step}. 
+
 \hfill $\bigO(p^3 N / n_p)$
 % assuming O(N) points in the direct tree
 
@@ -89,38 +77,30 @@ B. Loop over the set of Direct octants O with Morton ids >= that of O1
 and <= that of O2. Loop over the set of points within O that lie in the
 interaction list of p. For each of these points, add the contribution to
 the Gauss transform from p.
+
 \hfill $\bigO(p^3 N/n_p)$
 
 {\em (v) W2L.} To allow execution of the sweeping algorithm independently on each processor, we exchange the plane-wave expansions of $\lfloor K/2 \rfloor ^3$ boundary boxes across adjacent processors. 
+
 \hfill $\bigO(15 p^3 |B|/n_p + K^3 p^3 n_p)$
 % doin the sweep + communicating ghost values
 
-{\em (vi) D2L.} This step is a dual of the $W2D$ step. 
-
+{\em (vi) D2L.} This step is a dual of the W2D. Here, we compute the influence of $T_d$ on $T_e$ by visiting every box $D \in T_e$ in the interaction list of a source $y \in T_d$ and modifying the local expansion as 
+%
 \beq v_k += \, f(y) e^{i z_k \cdot (c^D - y)/\sqrt{\delta}} \eeq
+%
+This requires a one-step communication: in each processor, we visit every source $y \in T_d$ 
+and send its information ($y$ and $f(y)$) to processors that own boxes that are in $\mathcal{I}[y]$.
 
-1. For each point within each octant marked as Direct, loop over the set 
-of FGT boxes that lie within this point's interaction list. For each of
-these FGT boxes, add the contribution from this point.
-2. Figure out the processors that own the FGT boxes computed in step 1.
-3. Send the values computed in step 1 to the owner of the respective FGT
-boxes.
-4. On the recieving end, add the incoming values to the target
-expansions for the corresponding FGT boxes. 
 \hfill $\bigO(p^3 N / n_p)$
 
-{\em (vii) L2T-Comm.} 
-1. Send the target expansions for each FGT box owned by this processor
-to the processors that own octants that are contained within this FGT
-box. This communication is like a reverse of the communication in
-S2W-Comm.  
+{\em (vii) L2T-Comm.} This step is a dual of S2W-Comm. Here, we send the local expansions formed at boxes in each processor 
+to the processors that own leaf nodes that are contained within this FGT box. 
+
 \hfill $\bigO(K^3 n_p)$
 
-{\em (viii) L2T.} 
-For each leaf that is marked as Expand do the following:
-  1. Do the same computation as in the uniform case for
-  all points within this octant using the target expansion for the
-  FGT box that contains this octant. 
+{\em (viii) L2T.} At this stage, all boxes must have formed their local expansions and $F(x)$ must have been computed at the points $x \in T_d$. The only remaining step is to compute $F(x)$ for points in $x \in T_e$ by using (\ref{eqn:l2t}) which can be done independently in each processor. 
+
 \hfill $\bigO(N p^3/n_p)$
 
 \begin{algorithm}[!h]
