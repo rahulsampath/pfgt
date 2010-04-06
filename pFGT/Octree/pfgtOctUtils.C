@@ -39,6 +39,8 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
 
   const double hRg = sqrt(delta);
 
+  const double halfH = (0.5*hRg);
+
   //Create DA for FGT boxes
 
   const unsigned int Ne = static_cast<unsigned int>(1.0/hRg);
@@ -167,7 +169,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
           double aFz = hRg*static_cast<double>(fgtzid);
 
           //Center of the FGT box
-          double halfH = (0.5*hRg);
           double cx =  aFx + halfH;
           double cy =  aFy + halfH;
           double cz =  aFz + halfH;
@@ -784,14 +785,21 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
           directResults[i][pt] = 0.0;
 
           for(int zid = minZid; zid < maxZid; zid++) {
-            for(int yid = minYid; yid < maxYid; yid++) {
-              for(int xid = minXid; xid < maxXid; xid++) {
-                unsigned int fgtId = ( (zid*Ne*Ne) + (yid*Ne) + xid );
+            double cz = hRg*(0.5 + static_cast<double>(zid));
 
-                //Center of the FGT box
+            double deltaZ = ImExpZfactor*(pz - cz);
+
+            for(int yid = minYid; yid < maxYid; yid++) {
+              double cy = hRg*(0.5 + static_cast<double>(yid));
+
+              double deltaY = ImExpZfactor*(py - cy);
+
+              for(int xid = minXid; xid < maxXid; xid++) {
                 double cx = hRg*(0.5 + static_cast<double>(xid));
-                double cy = hRg*(0.5 + static_cast<double>(yid));
-                double cz = hRg*(0.5 + static_cast<double>(zid));
+
+                double deltaX = ImExpZfactor*(px - cx);
+
+                unsigned int fgtId = ( (zid*Ne*Ne) + (yid*Ne) + xid );
 
                 unsigned int foundIdx;
                 bool foundIt = seq::BinarySearch<unsigned int>( (&(*(w2dRequiredFgtIds.begin()))),
@@ -800,17 +808,28 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
                 double sum = 0.0;
                 if(w2dPart[foundIdx] == rank) {
                   for(int k3 = -P, di = 0; k3 < P; k3++) {
-                    for(int k2 = -P; k2 < P; k2++) {
-                      for(int k1 = -P; k1 < P; k1++, di++) {
-                        double factor = exp(ReExpZfactor*static_cast<double>( (k1*k1) + (k2*k2) + (k3*k3) ));
+                    double factorZ = exp(ReExpZfactor*static_cast<double>(k3*k3));
 
-                        double theta = ImExpZfactor*( (static_cast<double>(k1)*(px - cx)) +
-                            (static_cast<double>(k2)*(py - cy)) + (static_cast<double>(k3)*(pz - cz)) );
+                    double thetaZ = deltaZ*static_cast<double>(k3);
+
+                    for(int k2 = -P; k2 < P; k2++) {
+                      double factorY = exp(ReExpZfactor*static_cast<double>(k2*k2));
+
+                      double thetaY = deltaY*static_cast<double>(k2);
+
+                      for(int k1 = -P; k1 < P; k1++, di++) {
+                        double factorX = exp(ReExpZfactor*static_cast<double>(k1*k1));
+
+                        double thetaX = deltaX*static_cast<double>(k1);
+
+                        double theta = (thetaX + thetaY + thetaZ);
 
                         double a = WgArr[zid][yid][xid][2*di];
                         double b = WgArr[zid][yid][xid][(2*di) + 1];
                         double c = cos(theta);
                         double d = sin(theta);
+
+                        double factor = factorX*factorY*factorZ;
 
                         sum += (factor*( (a*c) - (b*d) ));
                       }//end for k1
@@ -818,17 +837,28 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
                   }//end for k3
                 } else {
                   for(int k3 = -P, di = 0; k3 < P; k3++) {
-                    for(int k2 = -P; k2 < P; k2++) {
-                      for(int k1 = -P; k1 < P; k1++, di++) {
-                        double factor = exp(ReExpZfactor*static_cast<double>( (k1*k1) + (k2*k2) + (k3*k3) ));
+                    double factorZ = exp(ReExpZfactor*static_cast<double>(k3*k3));
 
-                        double theta = ImExpZfactor*( (static_cast<double>(k1)*(px - cx)) +
-                            (static_cast<double>(k2)*(py - cy)) + (static_cast<double>(k3)*(pz - cz)) );
+                    double thetaZ = deltaZ*static_cast<double>(k3);
+
+                    for(int k2 = -P; k2 < P; k2++) {
+                      double factorY = exp(ReExpZfactor*static_cast<double>(k2*k2));
+
+                      double thetaY = deltaY*static_cast<double>(k2);
+
+                      for(int k1 = -P; k1 < P; k1++, di++) {
+                        double factorX = exp(ReExpZfactor*static_cast<double>(k1*k1));
+
+                        double thetaX = deltaX*static_cast<double>(k1);
+
+                        double theta = (thetaX + thetaY + thetaZ);
 
                         double a = w2dRecvFgtVals[ (Ndofs*w2dCommMap[foundIdx]) + (2*di) ];
                         double b = w2dRecvFgtVals[ (Ndofs*w2dCommMap[foundIdx]) + (2*di) + 1 ];
                         double c = cos(theta);
                         double d = sin(theta);
+
+                        double factor = factorX*factorY*factorZ;
 
                         sum += (factor*( (a*c) - (b*d) ));
                       }//end for k1
@@ -1465,28 +1495,38 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
           }
 
           for(int zid = stZid; zid < endZid; zid++) {
+            double aFz = hRg*static_cast<double>(zid);
+
+            double cz =  aFz + halfH;
+
+            double deltaZ = ImExpZfactor*(cz - pz);
+
             for(int yid = stYid; yid < endYid; yid++) {
+              double aFy = hRg*static_cast<double>(yid);
+
+              double cy =  aFy + halfH;
+
+              double deltaY = ImExpZfactor*(cy - py);
+
               for(int xid = stXid; xid < endXid; xid++) {
-                unsigned int fgtId = ( (zid*Ne*Ne) + (yid*Ne) + xid );
-
-                //Anchor of the FGT box
                 double aFx = hRg*static_cast<double>(xid);
-                double aFy = hRg*static_cast<double>(yid);
-                double aFz = hRg*static_cast<double>(zid);
 
-                //Center of the FGT box
-                double halfH = (0.5*hRg);
                 double cx =  aFx + halfH;
-                double cy =  aFy + halfH;
-                double cz =  aFz + halfH;
+
+                double deltaX = ImExpZfactor*(cx - px);
 
                 std::vector<double> currBoxFgtVals(Ndofs);
 
                 for(int k3 = -P, di = 0; k3 < P; k3++) {
+                  double thetaZ = deltaZ*static_cast<double>(k3);
+
                   for(int k2 = -P; k2 < P; k2++) {
+                    double thetaY = deltaY*static_cast<double>(k2);
+
                     for(int k1 = -P; k1 < P; k1++, di++) {
-                      double theta = ImExpZfactor*( (static_cast<double>(k1)*(cx - px)) +
-                          (static_cast<double>(k2)*(cy - py)) + (static_cast<double>(k3)*(cz - pz)) );
+                      double thetaX = deltaX*static_cast<double>(k1);
+
+                      double theta = (thetaX + thetaY + thetaZ);
 
                       //replace fMag by drand48() if you want
                       currBoxFgtVals[2*di] = fMag*cos(theta);
@@ -1494,6 +1534,8 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
                     }//end for k1
                   }//end for k2
                 }//end for k3
+
+                unsigned int fgtId = ( (zid*Ne*Ne) + (yid*Ne) + xid );
 
                 unsigned int foundIdx;
                 bool foundIt = seq::maxLowerBound<unsigned int>(d2lInitialFgtIds, fgtId, foundIdx, 0, 0);
@@ -1720,7 +1762,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
       double aFz = hRg*static_cast<double>(fgtzid);
 
       //Center of the FGT box
-      double halfH = (0.5*hRg);
       double cx =  aFx + halfH;
       double cy =  aFy + halfH;
       double cz =  aFz + halfH;
