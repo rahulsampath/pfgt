@@ -311,8 +311,8 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
 
           for(int k3 = -P, di = 0; k3 < P; k3++) {
             for(int k2 = -P; k2 < P; k2++) {
-              for(int k1 = -P; k1 < P; k1++, di++) {
 
+              for(int k1 = -P; k1 < 1; k1++, di++) {
                 octWvals[2*di] = 0.0;
                 octWvals[(2*di) + 1] = 0.0;
 
@@ -342,6 +342,12 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
                 }//end for j3
 
               }//end for k1
+
+              for(int k1 = 1; k1 < P; k1++, di++) {
+                octWvals[2*di] = octWvals[2*(di - (2*k1))];
+                octWvals[(2*di) + 1] = -octWvals[(2*(di - (2*k1))) + 1];
+              }//end for k1
+
             }//end for k2
           }//end for k3
 
@@ -1910,7 +1916,7 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
 
             double deltaX = ImExpZfactor*((px - cx)) ;
 
-            double rSum = 0.0;
+            double sum = 0.0;
 
             for(int j3 = -P, di = 0; j3 < P; j3++) {
               double thetaZ = (deltaZ*static_cast<double>(j3));
@@ -1922,7 +1928,9 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
 
                 double factorY = exp(ReExpZfactor*static_cast<double>(j2*j2));
 
-                for(int j1 = -P; j1 < P; j1++, di++) {
+                double tempSum = 0.0;
+
+                for(int j1 = -P; j1 < 0; j1++, di++) {
                   double thetaX = (deltaX*static_cast<double>(j1));
 
                   double factorX = exp(ReExpZfactor*static_cast<double>(j1*j1));
@@ -1935,13 +1943,19 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
                   double d = sin(theta);
                   double factor = (factorX*factorY*factorZ); 
 
-                  rSum += (factor*( (a*c) - (b*d) ));
+                  tempSum += (factor*( (a*c) - (b*d) ));
 
                 }//end for j1
+
+                sum += ( (2.0*tempSum) + (factorY*factorZ*( (Wfgt[fgtIndex][2*di]*cos(thetaY + thetaZ)) -
+                        (Wfgt[fgtIndex][(2*di) + 1]*sin(thetaY + thetaZ)) )) );
+
+                di += P;
+
               }//end for j2
             }//end for j3
 
-            expandResults[i][l][pt] = (C0*rSum);
+            expandResults[i][l][pt] = (C0*sum);
 
           }//end for k1
         }//end for k2
