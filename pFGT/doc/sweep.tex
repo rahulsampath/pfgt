@@ -48,9 +48,15 @@ algorithm are as follows,
     These are marked in Figure \ref{fig:w2l} assuming $K=3, n=1$. 
     The local expansion can therefore be computed as,
     \begin{eqnarray*} 
-    v_k^{i+1,j+1} &=& \sum_{\eta_{i,j} = 0,1} (-1)^{1 + d + |\eta|_1} e^{iz_k\eta s/\sqrt{\delta}} v_k^{i+\eta_i, j+\eta_j} \\
-    & +& \sum_{\eta_{i,j}= 0,1} (-1)^{1 + d + |\eta|_1} e^{iz_k\eta ns/\sqrt{\delta}} w_k^{i+\eta_i, j+\eta_j}.
+    % v_k^{i+1,j+1} &=& \sum_{\eta_{i,j} = 0,1} (-1)^{1 + d + |\eta|_1} e^{i\lambda k\cdot\eta} v_k^{i+\eta_i, j+\eta_j} \\
+    v_k^x &=& \sum_{\eta \in \mathcal{N}(x)} (-1)^{1 + d + |\eta|_1} e^{i\lambda k\cdot\eta} v_k^{x+\eta} \\
+    % & +& \sum_{\eta_{i,j}= 0,1} (-1)^{1 + d + |\eta|_1} e^{iz_k\eta ns/\sqrt{\delta}} w_k^{i+\eta_i, j+\eta_j}.
+    & +& \sum_{\chi \in \mathcal{C}(x)} (-1)^{1 + d + |\chi|_1} e^{i\lambda k\cdot\chi} w_k^{x+\chi}.
     \end{eqnarray*}
+    where $\mathcal{C}(\cdot)$ assigns the sign to the contribution of the specific neighbour or corner. Specifically, it is 
+    \[
+      \mathcal{C}(x) = (-1)^{1+d+|x|_1}
+    \]
     
  %   e^{iz_k s/\sqrt{\delta}} v_k^{i+1,j} + e^{iz_k s/\sqrt{\delta}} v_k^{i,j+1} - e^{iz_k s/\sqrt{\delta}} v_k^{i,j} - e^{iz_k ns/\sqrt{\delta}} w_k^{i+n+1,j+n+1} + e^{-iz_k ns/\sqrt{\delta}} w_k^{i-n,j-n}
   
