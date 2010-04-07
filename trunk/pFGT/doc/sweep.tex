@@ -14,18 +14,21 @@ storage at all boxes $B_i$, till the sweeps in all $d$ dimensions are
 completed. We propose a new algorithm for accelerating the plane-wave
 translations, which only needs $\mathcal{O}(|B|^\frac{d-1}{d})$ storage instead
 of $\mathcal{O}(|B|)$ storage as required by the sweeping algorithm from
-\cite{fggt}. 
+\cite{fggt}. For cases where direct computation is more efficient compared to the sweeping
+algorithm, for example when the sources are distributed on the surface of a sphere, we propose
+a new method to {\em a priori} estimate the best way to traverse space. We use the direct scheme if the estimated cost of the direct scheme is lower than that of the sweep. The method for estimating the cost of the most efficient direct scheme is described in Section \ref{sec:mst}.
+
 % NOT CORRECT ...
 % In addition, the algorithm is work optimal for distributions with \ul{distribution density} less than $60\%$ (for $d=3$).
 
-\subsection{Accelerating the plane-wave translation step} Instead of sweeping
-along each dimension one-by-one as with the method proposed in \cite{fggt}, our
-algorithm visits each box only once and computes the full plane-wave
+\subsection{Accelerating the plane-wave translation step} 
+\label{sec:sweep}
+Instead of sweeping along each dimension one-by-one as with the method proposed 
+in \cite{fggt}, our algorithm visits each box only once and computes the full plane-wave
 translation based on its neighbours which have already been visited. The
 plane-wave expansions at a box $B_i$ can be represented as a combination of the
 plane-wave expansions of its $2^{d} -1$ neighbours, along with corrections for
-$2^d$ boxes. This results in an overall complexity of the sweep algorithm as
-$\mathcal{O}((2^{d+1} -1)p^d|B|)$. The constant in the
+$2^d$ boxes. We start with direct computation of the outermost layer, and then propagate it inwards, layer by layer, as illustrated in Figure \ref{fig:sweep}. This results in an overall complexity of the sweep algorithm as $\mathcal{O}((2^{d+1} -1)p^d|B|)$. The constant in the
 complexity for this step increases from $3d\rightarrow2^{d+1} - 1$, which is
 from $6\rightarrow7$ for $d=2$ and from $9\rightarrow15$ for $d=3$. 
 
@@ -68,28 +71,39 @@ algorithm are as follows,
 \end{enumerate}
 
 
-%\begin{figure}[h]
-%\centering
-%\begin{tikzpicture}
-%	
-%	\draw[fill=orange!10] (0,0) rectangle +(8,2);
-%	\draw[fill=orange!10] (0,2) rectangle +(2,6);
-%		
-%	% the grid ...
-%	\draw[step=2cm] (0,0) grid (8,8);	
-%	
-%\end{tikzpicture}
-%\caption{\small The outermost layer, for which the local expansions are computed directly. 
-%}
-%\label{fig:outer}
-%\end{figure}
-
-\begin{figure}[h]
+\begin{figure}
 \centering
-\begin{tikzpicture}
+\begin{tikzpicture}[scale=0.5]
 	
-	\draw[fill=orange!10] (2,2) rectangle +(4,2);
-	\draw[fill=orange!10] (2,2) rectangle +(2,4);
+	\draw[fill=orange!30] (0,0) rectangle +(8,2);
+	\draw[fill=orange!30] (0,2) rectangle +(2,6);
+
+	\draw[fill=green!30!black!30] (2,2) rectangle +(6,2);
+	\draw[fill=green!30!black!30] (2,4) rectangle +(2,4);
+	
+	\draw[fill=green!50!black!30] (4,4) rectangle +(4,2);
+	\draw[fill=green!50!black!30] (4,6) rectangle +(2,2);
+	
+	\draw[fill=green!10] (6,6) rectangle +(2,2);
+	
+	% arrows ...
+	\draw[green!50!black, thick, ->] (1,1) -- (7,7) node[above] {$r$}; 
+												
+	% the grid ...
+	\draw[step=2cm] (0,0) grid (8,8);	
+	
+\end{tikzpicture}
+\caption{\small The outermost layer is shown in orange, for which the local expansions are computed directly. The other layers (in green) are computed by propagation. The direction of propagation ($r$) is shown using the arrow and by the shade of the layers, lighter being later in time.
+}
+\label{fig:sweep}
+\end{figure}
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[scale=0.5]
+	
+	\draw[fill=orange!30] (2,2) rectangle +(4,2);
+	\draw[fill=orange!30] (2,2) rectangle +(2,4);
 	
 	\draw[fill=green!10] (4,4) rectangle +(2,2);		
 	% the grid ...
@@ -111,4 +125,8 @@ algorithm are as follows,
 \label{fig:w2l}
 \end{figure}
 
+\subsection{Estimating the cost of direct translations}
+\label{sec:mst}
+The cost of the first box for which we need to compute the plane-wave translations is $\mathcal{O}(n_bp^3)$, where $n_b$ are the number of non-zero boxes in the incidence list of the box. For subsequent boxes, we only need to consider the difference between the incidence list of the current box and that of boxes previously visited. The problem is therefore to determine the optimal traversal such the the overall cost is reduced. We pose the problem as one of finding the minimum spanning tree of a directed graph. The graph is made of all non-zero boxes as its vertices, along with one additional special vertex. This vertex is connected to all remaining vertices by edges whose weight is equal to the number of non-zero boxes in the incidence list of the target vertex. Each of the remaining vertices (FGT boxes) are connected to a maximum of 8 other vertices (corresponding to the non-zero neighbors of the box). The weight of an edge between boxes $B_i$ and $B_j$ is equal to the number of boxes in $\mathcal{I}(B_i)\cup\mathcal{I}(B_j) - \mathcal{I}(B_i)\cap\mathcal{I}(B_j)$.    
 
+We compute the minimum spanning tree of this directed graph using the method proposed by Tarjan \cite{tarjan86}. Since for most practical cases our graph is sparse ($E=9V$), the complexity of computing the minimum spanning tree is $\mathcal{O}(E\log V)$, which in our case becomes $\mathcal{O}(n\log n)$, where $n$ is the number of non-zero boxes. The total cost of the tree is used to determine whether to use the direct approach or to use the sweeping or the propagation scheme described in Section \ref{sec:sweep}. The edges of the tree gives us the optimal traversal to compute the plane-wave translations. \ul{Need to add example traversal graph and cost estimate for the sphere traversal.}
