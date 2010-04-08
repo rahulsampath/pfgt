@@ -6,6 +6,26 @@ In this section, we present a scalable algorithm for nonuniform distributions ba
 %
 We discuss this next.
 %
+
+{\em W2D.} At this stage, all processors have finished forming the plane-wave expansions at their respective boxes. 
+Now, we use this information to evaluate the influence of $T_e$ on $T_d$. Each box $B \in T_e$ must visit every target point $x \in T_d$ in its interaction list and evaluate the Gauss transform using
+%
+\beq F(x) = \sum_{|k| \leq p} e^{-\frac{\norm{z_k}^2}{4}} e^{i z_k \cdot (x - c^B)/\sqrt{\delta}} w_k \eeq
+%
+We perform a two-step communication to achieve this. In the first step, we send requests to the owners of boxes that are in the interaction lists of targets in $T_d$. In the second step, the owners send the plane-wave coefficients \footnote{ If $T_d$ receives any requests, it simply sends zero plane-wave coefficients. This can be avoided by an extra communication step}. 
+
+\hfill $\bigO(p^3 N / n_p)$
+% assuming O(N) points in the direct tree
+
+{\em D2D.}
+
+
+{\em D2L.} This step is a dual of the W2D. Here, we compute the influence of $T_d$ on $T_e$ by visiting every box $D \in T_e$ in the interaction list of a source $y \in T_d$ and modifying the local expansion as 
+%
+\beq v_k += \, f(y) e^{i z_k \cdot (c^D - y)/\sqrt{\delta}} \eeq
+%
+
+
 \subsection{Parallel octrees}
 We assume sources and targets are the same for simplicity. We also assume that the octree is constructed so that there are no more than a fixed number of points in each leaf node. 
 
