@@ -19,22 +19,9 @@ Total & & & & \\
 \label{t:scaling}
 \end{table}
 
-\begin{figure*}
+\begin{figure}
 	\begin{center}
-%		\subfigure[uniform]{\scalebox{1}{\input{figs/uniform_fixed.tex}}}
-%		\gap
-%		\subfigure[ellipse]{\scalebox{1}{\input{figs/ellipse_fixed.tex}}}
+	\input{isoUniformPlot}
 	\end{center}
-\caption{Strong scaling on Jaguar. The problem size is fixed to 1 billion points and the parameters are the same as defined in Table \ref{t:scaling}. [Rahul: Try varying the num. of processors from 16 to atleast 8192]}
-\label{f:fixed}
-\end{figure*}
-
-\begin{figure*}
-	\begin{center}
-%		\subfigure[uniform]{\scalebox{1}{\input{figs/uniform_iso.tex}}}
-%		\gap
-%		\subfigure[ellipse]{\scalebox{1}{\input{figs/ellipse_iso.tex}}}
-	\end{center}
-\caption{Weak scaling on Jaguar. Number of points per proceesor is fixed at 1 million (so $N = 10^6 \times n_p$) and the parameter $\delta = \frac{10}{N^{1/3}}$. [Rahul: Try varying the num. of processors from 16 to atleast 8192]}
-\label{f:iso}
-\end{figure*}
+\caption{\label{f:isoUniform} Isogranular scalability for an uniform point distribution.} 
+\end{figure}
