@@ -14,7 +14,7 @@ Broadly speaking, FGT algorithms \cite{fgt, greengard98} partition the domain in
 Central to the expansion algorithm is the finite-term plane-wave expansion of the kernel,
 \beq G_\delta(\norm{x_j - y_k}) \approx \sum_{|k| \leq p} \hat{G}(k) e^{i \lambda k \cdot (x_j - y_k)}, \quad \lambda = \frac{L}{p\sqrt{\delta}}\eeq
 where $k = (k_1, k_2, k_3)$ and the parameters $p$ and $L$ are determined by the required precision. $\hat{G}$ is the discrete Fourier transform of the kernel. For the Gaussian kernel, it is given by
-\beq \hat{G}(k) = \left(\frac{L }{2p\sqrt{\pi}}\right)^3 e^{-\frac{\lambda^2 |k|^2 \delta}{4}}.\eeq
+\beq \hat{G}(k) = \left(\frac{L }{2p\sqrt{\pi}}\right)^3 e^{-\frac{\lambda^2 |k|^2 \delta}{4}}. \label{eqn:ghat}\eeq
 
 The algorithm begins by partitioning the domain into uniform boxes of size $\sqrt{\delta}$ each. A Gaussian located at the center of a box $B$ decays below $\epsilon$ beyond a fixed number of boxes. We call these boxes the interaction list of $B$, denoted by $\mathcal{I}[B]$. 
 
@@ -48,3 +48,6 @@ The translation costs can be reduced dramatically by using the {\em sweeping alg
 }
 
 
+%\subsection{Kernel independence} 
+%The advantage of the plane-wave expansion (\ref{eqn:ghat}) is that once  
+%If the kernel values are known at the discrete points $\{Lk/p \}_{|k| \leq p}$, then we can compute $\hat{G}$ using discrete Fourier transform. 
