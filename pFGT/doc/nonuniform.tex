@@ -1,11 +1,17 @@
-In the uniform distribution case, one can precisely estimate the threshold $n^*$ that determines whether one should use the truncation or the expansion algorithm. However, when the source and target distributions are highly nonuniform, as is the case in most practical applications, it is not straightforward. For example, when we superimpose a regular grid structure of FGT on a nonuniform distribution, some boxes will have lot of points while some are almost empty. 
 
+%In the uniform distribution case, one can precisely estimate the threshold $n^*$ that determines whether one should use the truncation or the expansion algorithm. However, when the source and target distributions are highly nonuniform, as is the case in most practical applications, it is not straightforward. For example, when we superimpose a regular grid structure of FGT on a nonuniform distribution, some boxes will have lot of points while some are almost empty. 
 
-In this section, we present an algorithm for nonuniform distributions based on the ideas introduced in \cite{veerapaneni08}. 
-We assume sources and targets are the same for simplicity. Similar to the uniform case, we intend to switch between truncation and expansion algorithms to achieve optimal comlexity. Unlike the uniform case, the criterion here will also be based on the distribution of sources apart from $N$, $\delta$ and $\epsilon$. To enable us to identify the threshold, we build an {\em octree} so that there are no more than a fixed number of points in each leaf node. [OCTREE INTRO]
-%
+In the case of uniform point distributions, we could choose between the truncation and expansion algorithms to achieve optimal complexity
+ based on the threshold $n^*$ and we could even obtain precise estimates for $n^*$. However, when the source and 
+ target distributions are highly nonuniform, as is the case in most practical applications, it is not as
+ straightforward. 
+ 
+ Instead, we use the truncation algorithm in some regions and the expansion algorithm in other regions.  
+ Just as in the uniform case, this choice depends $N$, $\delta$ and $\epsilon$ but, now it also 
+ depends on distribution of sources. In this section, we present an algorithm for nonuniform distributions based on the ideas introduced in \cite{veerapaneni08}. 
+For simplicity, we assume that the sources and targets coincide. To enable us to identify the threshold, we build an {\em octree} so that there are no more than a fixed number of points in each leaf node. [OCTREE INTRO]
+
 %\footnote{The original FGT \cite{fgt} handles nonuniform distributions without using any sort of hierarchical data-structures. In principle, one can extend these ideas to the present context. However there are certain advantages of using octrees both at the implementational and algorithmic levels. [NEED TO EXPAND]}. 
-%
 %
 
 Now let us consider two extreme cases. If the size of a leaf $\ell$ denoted by $|\ell|$ is much larger than that of FGT box, then converting the sources into plane-wave expansions is futile because there are fewer sources per box. On the other hand, when the leaf nodes are much smaller than the FGT box, then there will be large number of sources within the box covering them and hence it is desirable to convert them to plane-wave expansions. Inspired by this observation, we split the octree as follows. 
