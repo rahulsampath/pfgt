@@ -1,27 +1,34 @@
+Translation, as we have seen in Section \ref{sc:fgt}, forms the local expansion at a target box by combining the plane-wave expansions of $K^3$ nearest source boxes. In most practical applications, not all boxes in the unit cube will be possess 
+ For example, heat potentials can be classified into two categories: (i) volume potentials, which require convolutions of the form () in the entire volume $[0, 1]^3$, (ii) layer potentials, in which the sources reside only on manifolds embedded in $[0, 1]^3$. The volume potentials can 
+% 
+\begin{prob}
+{\em Given a regular grid of size $1/n_b$ in the unit cube with $|B|$ non-zero boxes in it, find the optimal traversal path so that the cost of translation is minimized.
+}
+\end{prob}
+%
+In the uniform distribution case, $|B| = n_b^3$ and the cost of the direct scheme (\ref{}) is $\bigO(K^3 p^3 |B|)$. The sweeping algorithm introduced in \cite{greengard98} and extended to multidimensions in \cite{fggt} brings down the complexity to $\bigO(3dp^d |B|)$ in $d$ dimensions. Infact, we believe the following to be true. 
 
-Once the plane-wave expansions are formed for each of the FGT boxes, step (ii)
-involves translating the information to its interaction list to obtain the
-local expansions. A direct scheme forms the local expansions by simply visiting
-all the boxes in $\mathcal{I}|B|$ for each box $B$ and translating the wave
-expansions according to (\ref{e:w2l}). Since the size of the interaction list
-is $K^d$, this algorithm requires $\mathcal{O}(K^dp^d|B|)$ work to form all
-local expansions, where $|B|$ is the total number of boxes. By using the
-sweeping algorithm proposed in \cite{fggt}, the complexity of this step can be
-reduced to $\mathcal{O}(3dp^d|B|)$. This algorithm is optimal in terms of work,
-but is not ideal in terms of storage. In cases where we have non-uniform
-distributions (resulting in several empty boxes), the sweep algorithm requires
-storage at all boxes $B_i$, till the sweeps in all $d$ dimensions are
-completed. We propose a new algorithm for accelerating the plane-wave
-translations, which only needs $\mathcal{O}(|B|^\frac{d-1}{d})$ storage instead
-of $\mathcal{O}(|B|)$ storage as required by the sweeping algorithm from
-\cite{fggt}. For cases where direct computation is more efficient compared to the sweeping
-algorithm, for example when the sources are distributed on the surface of a sphere, we propose
-a new method to {\em a priori} estimate the best way to traverse space. We use the direct scheme if the estimated cost of the direct scheme is lower than that of the sweep. The method for estimating the cost of the most efficient direct scheme is described in Section \ref{sec:mst}.
+\begin{conj}
+{\em If $|B| = n_b^3$, then the optimal cost of translation is $\bigO(3 d p^d)$ and the sweeping algorithm of \cite{greengard98} achieves it.}
+\end{conj}
+
+There are two problems with the sweeping algorithm in the general case.  
+First, a naive implementation of the sweeping algorithm stores data in all the $n_b^3$ boxes. This could be detrimental both for the adaptive volume and the surface potentials as $|B| << n_b^3$. Second, its performance is worse than the direct scheme in the surface potential case. This is because 
+
+
+In this section, we propose two algorithms: one for eliminating the storage requirements in the volume case and achieving nearly optimal complexity and the other is an optimal algorithm for the surface potentials. We also present a decision making algorithm which picks the optimal of the two for any given distribution of nonzero boxes. 
+
+%We propose a new algorithm for accelerating the plane-wave
+%translations, which only needs $\mathcal{O}(|B|^\frac{d-1}{d})$ storage instead
+%of $\mathcal{O}(|B|)$ storage as required by the sweeping algorithm from
+%\cite{fggt}. For cases where direct computation is more efficient compared to the sweeping
+%algorithm, for example when the sources are distributed on the surface of a sphere, we propose
+%a new method to {\em a priori} estimate the best way to traverse space. We use the direct scheme if the estimated cost of the direct scheme is lower than that of the sweep. The method for estimating the cost of the most efficient direct scheme is described in Section \ref{sec:mst}.
 
 % NOT CORRECT ...
 % In addition, the algorithm is work optimal for distributions with \ul{distribution density} less than $60\%$ (for $d=3$).
 
-\subsection{Accelerating the plane-wave translation step} 
+\subsection{Modified sweeping algorithm for volume distributions} 
 \label{sec:sweep}
 Instead of sweeping along each dimension one-by-one as with the method proposed 
 in \cite{fggt}, our algorithm visits each box only once and computes the full plane-wave
@@ -125,7 +132,7 @@ algorithm are as follows,
 \label{fig:w2l}
 \end{figure}
 
-\subsection{Estimating the cost of direct translations}
+\subsection{Modified sweeping algorithm for surface distributions} 
 \label{sec:mst}
 The cost of the first box for which we need to compute the plane-wave translations is $\mathcal{O}(n_bp^3)$, where $n_b$ are the number of non-zero boxes in the incidence list of the box. For subsequent boxes, we only need to consider the difference between the incidence list of the current box and that of boxes previously visited. The problem is therefore to determine the optimal traversal such the the overall cost is reduced. We pose the problem as one of finding the minimum spanning tree of a graph. The graph is made of all non-zero boxes as its vertices, along with one additional special vertex. This vertex is connected to all remaining vertices by edges whose weight is equal to the number of non-zero boxes in the incidence list of the target vertex. This encodes the cost of the direct computation for the target box, and is there to enable the start of the direct computation from any given box. Each of the remaining vertices (FGT boxes) are connected to a maximum of $26$ other vertices (corresponding to the immediate non-zero neighbors of the box). The weight of an edge between boxes $B_i$ and $B_j$ is equal to the number of boxes in $\mathcal{I}(B_i)\cup\mathcal{I}(B_j) - \mathcal{I}(B_i)\cap\mathcal{I}(B_j)$.    
 
