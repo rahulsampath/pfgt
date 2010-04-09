@@ -5,7 +5,11 @@ Gauss transform is one of several discrete spatial transforms of the form
 We refer to the points $ x_j, y_k \in \mathbb{R}^3 $ as the targets and sources respectively. The kernel $G_\delta$ is a smooth exponentially decaying function in both the physical and Fourier domains. We shall call such kernels as {\em Gaussian-type}. The parameter $\delta$ controls how rapidly the kernel decays.  In the Gauss transform case, $\kernel = e^{-\frac{\norm{x_j - y_k}^2}{\delta}}$. 
 
 Discrete sums of the form (\ref{gt}) are encountered in a variety of disciplines including computational physics,
- machine learning, computational finance and computer graphics \cite{strain94adap, elgammal03, broadie03, kim05, veerapaneni08}. An important application, which happens to be our main focus, is the solution of linear parabolic partial differential equations (PDEs) via {\em potential theory} \cite{kress99}. Several advantages characterize potential theoretic approaches including reduction in dimensionality, exact satisfaction of the far-field conditions, and high-order space-time discretizations. A crucial computational bottle-neck in such approaches is the need for computing sums of the form (\ref{gt}). For example, high-order methods for the heat potentials require evaluating the convolutions \cite{li09, skv09}
+ machine learning, computational finance and computer graphics \cite{strain94adap, elgammal03, broadie03, kim05, veerapaneni08}. The 
+ motivation for the present work comes from {\em potential theory} \cite{kress99}, which is used to solve linear parabolic partial 
+ differential equations (PDEs). Several advantages characterize potential theoretic approaches including reduction in dimensionality, exact 
+ satisfaction of the far-field conditions, and high-order space-time discretizations. A computational bottle-neck in such approaches is the 
+ need to compute sums of the form (\ref{gt}). For example, high-order methods for the heat potentials require evaluating the convolutions \cite{li09, skv09}
 % 
 \beq F(x) = \int_\Omega \norm{x - y}^{2n} e^{-\frac{\norm{x - y}^2}{\delta}} f(y) \, d\Omega \label{heat} \eeq
 % 
