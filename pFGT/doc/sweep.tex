@@ -138,6 +138,12 @@ The cost of the first box for which we need to compute the plane-wave translatio
 
 We compute the minimum spanning tree of this graph using Kruskal's method \cite{kruskal56}. For most practical cases our graph is sparse ($E\le13V$). The complexity of computing the minimum spanning tree is $\mathcal{O}(E\log V)$, which in our case becomes $\mathcal{O}(n\log n)$, where $n$ is the number of non-zero boxes. The total cost of the tree is used to determine whether to use the direct approach or to use the sweeping or the propagation scheme described in Section \ref{sec:sweep}. The edges of the tree gives us the optimal traversal to compute the plane-wave translations. \ul{Need to add example traversal graph and cost estimate for the sphere traversal.}
 
+\begin{figure}
+\centering 	
+\includegraphics[width=0.4\textwidth]{figs/sphere_mst}
+\caption{The optimal traversal path for a spherical shell distribution, shown here superimposed on a sphere. The nodes of the graph are the centers of the boxes $B_i$.}
+\end{figure}
+
 \begin{table*}[bht]
 \centering
 \begin{tabular}{cccc}\hline
