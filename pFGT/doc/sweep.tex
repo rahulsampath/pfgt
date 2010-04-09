@@ -5,13 +5,13 @@ Translation, as we have seen in Section \ref{sc:fgt}, forms the local expansion 
 %{\em If $|B| = n_b^3$, then the optimal cost of translation is $\bigO(3 d p^d)$ and the sweeping algorithm of %\cite{greengard98} achieves it.}
 %\end{conj}
 
-In most practical applications, unlike the uniform case, not all boxes exist and predominantly, there are two kinds of non-empty box distributions:
+In most practical applications, unlike the uniform case, not all boxes exist. Predominantly, there are two kinds of non-empty box distributions:
 %
-\begin{enumerate}
+\begin{itemize}
  \item Volume distribution, in which, each source box on an average has $\bigO(K^3)$ target boxes in its interaction list. The uniform distribution is an example of this class. They also arise from highly nonuniform volumetric distribution of sources resulting in zero-boxes wherever there are no sources within them. 
  
- \item Surface distribution, in which, each source box on an average has $\bigO(K^2)$ target boxes in its interaction list. These arise when the sources reside on the surface of a manifold (eg., sphere) embedded in the volume. 
-\end{enumerate}
+ \item Surface distribution, in which, each source box on an average has $\bigO(K^2)$ target boxes in its interaction list. These arise when the sources reside on two-dimensional manifolds (eg., a sphere) embedded in the volume. 
+\end{itemize}
 %   
 % 
 
@@ -21,9 +21,10 @@ In most practical applications, unlike the uniform case, not all boxes exist and
 %\end{prob}
 %
 
-Suppose there are $n_b^3$ regular boxes sitting in $[0, 1]^3$ and $|B|$ of them are non-empty. There are two problems with the sweeping algorithm in the general case. First, a naive implementation of the sweeping algorithm stores data in all the $n_b^3$ boxes. This could be detrimental both for the volume and the surface distributions as, potentially, $|B| <\!< n_b^3$. Second, its performance is worse than the direct scheme for surface distributions. For example, consider the case where the sources are distributed just on the sphere.
+Suppose the unit cube $[0, 1]^3$ is partitioned into $n_b^3$ regular boxes and $|B|$ of them are non-empty. There are two main problems with the sweeping algorithm. First, a naive implementation stores data in all the $n_b^3$ boxes. This could be detrimental both for the volume and the surface distributions as, potentially, $|B| <\!< n_b^3$. Second, its performance is worse than the direct scheme for surface distributions. For example, consider the case where the sources reside on the sphere. The sweeping algorithm generates extra non-empty boxes around the initial spherical layer of boxes increasing their total number from $|B|$ to $\bigO(K^3 |B|)$. Thereby, the overall cost of sweeping algorithm is $\bigO(9 p^3 K^3 |B|)$. The direct scheme, on the other hand, requires $\bigO(p^3 K^2 |B|)$ because each source box has only $\bigO(K^2)$ target boxes in its interaction list. 
 
-In this section, we propose two algorithms: one for eliminating the storage requirements for volume distributions and achieving nearly optimal complexity and the other for achieving optimal complexity for the surface distributions. We also present a computationally inexpensive method that computes the cost of both algorithms {\em apriori} and picks the optimal of the two for any given distribution of nonzero boxes. 
+In this section, we propose two algorithms, one for volume and the other for surface distributions, that achieve optimal complexity and have minimal storage requirements. Given any arbitrary source distribution, it could be hard to distinguish which category the resulting non-empty box distribution falls into. We present a computationally inexpensive method to compute the cost of both algorithms {\em apriori} and pick the optimal of the two. 
+
 
 %We propose a new algorithm for accelerating the plane-wave
 %translations, which only needs $\mathcal{O}(|B|^\frac{d-1}{d})$ storage instead
@@ -37,7 +38,7 @@ In this section, we propose two algorithms: one for eliminating the storage requ
 
 \subsection{Modified sweeping algorithm for volume distributions} 
 \label{sec:sweep}
-Instead of sweeping along each dimension one-by-one as with the method proposed 
+Instead of sweeping along each dimension one-by-one as proposed 
 in \cite{fggt}, our algorithm visits each box only once and computes the full plane-wave
 translation based on its neighbours which have already been visited. The
 plane-wave expansions at a box $B_i$ can be represented as a combination of the
@@ -143,7 +144,27 @@ algorithm are as follows,
 \label{sec:mst}
 The cost of the first box for which we need to compute the plane-wave translations is $\mathcal{O}(n_bp^3)$, where $n_b$ are the number of non-zero boxes in the incidence list of the box. For subsequent boxes, we only need to consider the difference between the incidence list of the current box and that of boxes previously visited. The problem is therefore to determine the optimal traversal such the the overall cost is reduced. We pose the problem as one of finding the minimum spanning tree of a graph. The graph is made of all non-zero boxes as its vertices, along with one additional special vertex. This vertex is connected to all remaining vertices by edges whose weight is equal to the number of non-zero boxes in the incidence list of the target vertex. This encodes the cost of the direct computation for the target box, and is there to enable the start of the direct computation from any given box. Each of the remaining vertices (FGT boxes) are connected to a maximum of $26$ other vertices (corresponding to the immediate non-zero neighbors of the box). The weight of an edge between boxes $B_i$ and $B_j$ is equal to the number of boxes in $\mathcal{I}(B_i)\cup\mathcal{I}(B_j) - \mathcal{I}(B_i)\cap\mathcal{I}(B_j)$.    
 
-We compute the minimum spanning tree of this graph using Kruskal's method \cite{kruskal56}. For most practical cases our graph is sparse ($E\le13V$). The complexity of computing the minimum spanning tree is $\mathcal{O}(E\log V)$, which in our case becomes $\mathcal{O}(n\log n)$, where $n$ is the number of non-zero boxes. The total cost of the tree is used to determine whether to use the direct approach or to use the sweeping or the propagation scheme described in Section \ref{sec:sweep}. The edges of the tree gives us the optimal traversal to compute the plane-wave translations. \ul{Need to add example traversal graph and cost estimate for the sphere traversal.}
+We compute the minimum spanning tree of this graph using Kruskal's method \cite{kruskal56}. For most practical cases our graph is sparse ($E\le13V$). The complexity of computing the minimum spanning tree is $\mathcal{O}(E\log V)$, which in our case becomes $\mathcal{O}(n\log n)$, where $n$ is the number of non-zero boxes. The total cost of the tree is used to determine whether to use the direct approach or to use the sweeping or the propagation scheme described in Section \ref{sec:sweep}. The edges of the tree gives us the optimal traversal to compute the plane-wave translations.
+\begin{table}
+\centering
+\begin{tabular}{cccc} \hline
+        $|B|$  &  direct & MST & ratio \\ \hline       
+        \multicolumn{4}{c}{}  \\
+        \multicolumn{4}{c}{ {\small $K =  9 \quad (\epsilon = 10^{-6})$}}  \\
+        \multicolumn{4}{c}{}  \\
+         1K & & &  \\  
+        100K & & &  \\  
+       1000K & & &  \\  
+       \multicolumn{4}{c}{}  \\
+       \multicolumn{4}{c}{ {\small $K =  13 \quad (\epsilon = 10^{-12})$}}  \\
+       \multicolumn{4}{c}{}  \\
+             1K & & &  \\  
+        100K & & &  \\  
+       1000K & & &  \\  
+\hline
+\end{tabular}
+\end{table}
+
 
 \begin{figure}
 \centering 	
@@ -151,14 +172,3 @@ We compute the minimum spanning tree of this graph using Kruskal's method \cite{
 \caption{The optimal traversal path for a spherical shell distribution, shown here superimposed on a sphere. The nodes of the graph are the centers of the boxes $B_i$.}
 \end{figure}
 
-\begin{table*}[bht]
-\centering
-\begin{tabular}{cccc}\hline
-         $|B|$  &  direct & MST & ratio \\ \hline
-         xxx & & &  \\  
-        xxxx & & &  \\  
-       xxxxx & & &  \\  
-\hline
-\end{tabular}
-\caption{Number of boxes visited.\label{count}}
-\end{table*}
