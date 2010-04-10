@@ -17,7 +17,7 @@
  \draw (-0.4, \label\yscale) node {\scriptsize{\label}};
 }
 
-\draw[very thin, color=gray, xstep=1, ystep=0.5] (0, -3.0) grid (5, -0.5);
+\draw[very thin, color=gray, xstep=1, ystep=0.5] (0, -3.5) grid (5, -0.5);
 
 \draw[fill=blue!50, fill opacity=0.5] (-1.5, -1.0) rectangle +(1.5, 0.5);
 \draw (-0.75, -0.75) node {\scriptsize{S2W}};
@@ -34,15 +34,19 @@
 \draw (-1.5, -3.0) rectangle +(1.5, 0.5);
 \draw (-0.75, -2.75) node {\scriptsize{Points}};
 
+\draw (-1.5, -3.5) rectangle +(1.5, 0.5);
+\draw (-0.75, -3.25) node {\scriptsize{$\delta$}};
+
+
 \newdimen\mypos
 \newdimen\myoff
 
-\foreach \pos/\vala/\valb/\valc/\vald/\vale in { 
-0/58.75/53.36/0.0698/112.19/29.2M,
-1/62.25/56.98/3.90/120.93/233.8M,
-2/64.39/57.18/4.93/125.06/1.9B,
-3/65.56/57.50/5.92/127.62/15.0B,
-4/67.53/57.75/6.59/131.65/119.7B } { 
+\foreach \pos/\vala/\valb/\valc/\vald/\vale/\valf in { 
+0/58.75/53.36/0.0698/112.19/29.2M/$\frac{1}{16}$,
+1/62.25/56.98/3.90/120.93/233.8M/$\frac{1}{64}$,
+2/64.39/57.18/4.93/125.06/1.9B/$\frac{1}{256}$,
+3/65.56/57.50/5.92/127.62/15.0B/$\frac{1}{1024}$,
+4/67.53/57.75/6.59/131.65/119.7B/$\frac{1}{4096}$ } { 
 
 \mypos=\pos cm
 \advance \mypos by 0.5 cm
@@ -52,6 +56,7 @@
 \draw (\mypos, -1.75 cm) node {\scriptsize{\valc}};
 \draw (\mypos, -2.25 cm) node {\scriptsize{\textbf{\vald}}};
 \draw (\mypos, -2.75 cm) node {\scriptsize{\vale}};
+\draw (\mypos, -3.25 cm) node {\scriptsize{\valf}};
 
 \advance \mypos by -0.25 cm
 
