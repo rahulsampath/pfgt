@@ -25,31 +25,29 @@ octant is its front lower left corner.
 \subsection{Octree based FGT algorithm}
 \label{sc:octreefgt}
 
-Given a point distribution, we construct a linear octree such that there are no more than $M$ points contained within each leaf; we
- use the algorithm described in \cite{octPaper08} to do this. Just as in the uniform case, we partition the
-domain into boxes of size $h = \sqrt{\delta}$.
-
-  %Just as in the uniform case, this choice depends on $N$, $\delta$ and $\epsilon$ but, now it also depends on the point distribution. 
-%Now let us consider two extreme cases. If the size of a leaf $\ell$ denoted by $|\ell|$ is much larger than that of the FGT boxes, 
-%then  is futile because each box will only contain a few sources. On the other hand,
-% when the leaf nodes are much smaller than the FGT box, then there will be large number of sources within the box covering them
-%  and hence it is desirable to convert them to plane-wave expansions. Inspired by this observation, we split the octree as follows. 
+ Given a point distribution, we construct a linear octree such that there are no more than $M$ points contained within each leaf; we
+ use the algorithm described in \cite{octPaper08} to do this. Note that regions with sparse point distributions will contain 
+ leaves that are large in size and regions with dense point distributions will contain leaves that are small in size. Just as in 
+ the uniform case, we partition the domain into FGT boxes of size $h = \sqrt{\delta}$. We denote the size of leaf $\ell$ by $|\ell|$.
+ We use a heuristic parameter, $c$, to mark leaves as either ``Expand'' or ``Direct'' as follows:
 
 {\tt
 \begin{algorithmic}
 \STATE
-  \FOR {each leaf node $\ell$}
-      \IF {$|\ell| > c\sqrt{\delta}$}
-          \STATE assign $\ell$ to $T_d$ (direct tree)
+  \FOR {each leaf $\ell$}
+      \IF {$|\ell| > c h$}
+          \STATE Mark $\ell$ as ``Direct''. 
       \ELSE
-          \STATE assign $\ell$ to $T_e$ (expand tree)
+          \STATE Mark $\ell$ as ``Expand''. 
       \ENDIF
   \ENDFOR
 \STATE
 \end{algorithmic}
 }
 
-Here $c$ is a constant, which is determined by experimentation. Apart from the steps discussed in Section \ref{sc:fgt}, we
+We denote the set of direct leaves by $T_d$ and use $T_e$ to represent the set of expand leaves.
+
+   Apart from the steps discussed in Section \ref{sc:fgt}, we
  need extra ones to model the interaction between the trees. We describe them next.  
 
 First, we visit all the boxes $B \in T_e$ and form the plane-wave expansions from the sources (S2W step). Now, we have 
