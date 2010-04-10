@@ -66,12 +66,12 @@ algorithm are as follows,
     $B(i,j+1)$, along with corrections terms from the $2^d$ corners.
     These are marked in Figure \ref{fig:w2l} assuming $K=3, n=1$. 
     The local expansion can therefore be computed as,
-    \begin{eqnarray*} 
+    \begin{eqnarray} 
     % v_k^{i+1,j+1} &=& \sum_{\eta_{i,j} = 0,1} (-1)^{1 + d + |\eta|_1} e^{i\lambda k\cdot\eta} v_k^{i+\eta_i, j+\eta_j} \\
     v_k^x &=& \sum_{\eta \in \mathcal{N}(x)} (-1)^{1 + d + |\eta|_1} e^{i\lambda k\cdot\eta} v_k^{x+\eta} \\
     % & +& \sum_{\eta_{i,j}= 0,1} (-1)^{1 + d + |\eta|_1} e^{iz_k\eta ns/\sqrt{\delta}} w_k^{i+\eta_i, j+\eta_j}.
-    & +& \sum_{\chi \in \mathcal{C}(x)} (-1)^{1 + d + |\chi|_1} e^{i\lambda k\cdot\chi} w_k^{x+\chi}.
-    \end{eqnarray*}
+    & +& \sum_{\chi \in \mathcal{C}(x)} (-1)^{1 + d + |\chi|_1} e^{i\lambda k\cdot\chi} w_k^{x+\chi}. \label{eqn:sweep}
+    \end{eqnarray}
     where $\mathcal{C}(\cdot)$ assigns the sign to the contribution of the specific neighbour or corner. Specifically, it is 
     \[
       \mathcal{C}(x) = (-1)^{1+d+|x|_1}
@@ -109,7 +109,7 @@ algorithm are as follows,
 	\draw[step=2cm] (0,0) grid (8,8);	
 	
 \end{tikzpicture}
-\caption{\small The outermost layer is shown in orange, for which the local expansions are computed directly. The other layers (in green) are computed by propagation. The direction of propagation ($r$) is shown using the arrow and by the shade of the layers, lighter being later in time.
+\caption{\small The outermost layer is shown in orange, for which the local expansions are computed directly. The other layers (in green) are computed by propagation. The direction of propagation ($r$) is shown using the arrow and by the shade of the layers, lighter being later in time. 
 }
 \label{fig:sweep}
 \end{figure}
@@ -136,8 +136,7 @@ algorithm are as follows,
 	\draw (7,1) node {$+$};
 			
 \end{tikzpicture}
-\caption{\small The propagation of the local expansions using neighbors. 
-}
+\caption{\small Illustration of the modified sweeping. The local expansions of the boxes shown in orange color are used for computing the local expansion at the box shown in blue color. The stencil is given in equation (\ref{eqn:sweep}). Assuming $K = 3$, a simple inspection of the interaction lists reveal that the contributions of boxes marked by ``+'' must be added and those marked by ``-'' must be substracted. }
 \label{fig:w2l}
 \end{figure}
 
