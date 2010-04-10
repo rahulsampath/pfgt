@@ -8,50 +8,28 @@
  truncation algorithm in other regions. We use an {\em octree} \cite{clr90} data structure to efficiently
  separate out regions with a dense point distribution from regions with a sparse point distribution and use
  it to appropriately choose between the truncation and expansion algorithm in each region. A similar idea was
- introduced in \cite{veerapaneni08}. 
+ used in \cite{veerapaneni08}. 
  
-{\em Review on octrees.} An octree is a tree data structure that is used for spatial decomposition. Every
-node\footnote{The term ``{\em node}'' is usually used to refer to the
-vertices of elements in a finite element mesh; but, in the context of
-tree data structures, it refers to the octants themselves.} of an
-octree has a maximum of eight children. An octant with no children is
+{\em Primer on octrees.} An octree is a tree data structure that is used for spatial decomposition. Every
+node of an octree has a maximum of eight children. An octant with no children is
 called a ``{\em leaf}'' and an octant with one or more children is
-called an ``{\em interior octant}''. ``{\em Complete}'' octrees are
-octrees in which every interior octant has exactly eight children. The
-only octant with no parent is the ``{\em root}'' and all other octants
-have exactly one parent. Octants that have the same parent are called
-``{\em siblings}''. The depth of an octant from the root is referred
-to as its ``{\em level}''.\footnote{This is not to be confused with
-the term ``{\em multigrid level}''.} We use a ``{\em linear}'' octree
+called an ``{\em interior octant}''. The only octant with no parent is the
+ ``{\em root}'' and all other octants have exactly one parent. The depth of an octant 
+ from the root is referred to as its ``{\em level}''. We use a ``{\em linear}'' octree
 representation (i.e., we exclude interior octants) using the ``{\em
-Morton encoding}'' scheme \cite{bern99, zoltan, odaPaper07,
-octPaper07, tropf81, tu05}. Any octant in the domain can be uniquely
+Morton encoding}'' scheme \cite{morton66}. Any octant in the domain can be uniquely
 identified by specifying one of its vertices, also known as its ``{\em
 anchor}'', and its level in the tree. By convention, the anchor of an
-octant is its front lower left corner ($a_0$ in Figure
-\ref{fig:hanging}). An octant's configuration with respect to its
-parent is specified by its ``{\em child number}'': The octant's
-position relative to its siblings in a sorted list. The child number
-of an octant is a function of the coordinates of its anchor and its
-level in the tree. For convenience, we use the Morton ordering to
-number the vertices of an octant. Hence, an octant with a child number
-equal to k will share its k-th vertex with its parent. This is a
-useful property that will be used frequently in the remaining
-sections. In order to perform finite element calculations of octrees,
-we impose a restriction on the relative sizes of adjacent
-octants. This is known as the ``{\em 2:1 balance constraint}'' (not to
-be confused with load balancing): No octant should be more than twice
-the size of any other octant that shares a corner, edge or face with
-this octant. In this paper, we use the balancing algorithm described
-in \cite{octPaper07}. {\em In this work, we only deal with sorted,
-complete, linear, 2:1 balanced octrees.}
+octant is its front lower left corner. 
 
-  To enable us to identify the threshold, we build an {\em octree} so that there are no more than a fixed number of points in each leaf node. [OCTREE INTRO]
+\subsection{Octree based FGT algorithm}
+\label{sc:octreefgt}
 
-%\footnote{The original FGT \cite{fgt} handles nonuniform distributions without using any sort of hierarchical data-structures. In principle, one can extend these ideas to the present context. However there are certain advantages of using octrees both at the implementational and algorithmic levels. [NEED TO EXPAND]}. 
-%
+Given a point distribution, we construct a linear octree such that there are no more than $M$ points contained within each leaf; we
+ use the algorithm described in \cite{octPaper08} to do this. Just as in the uniform case, we partition the
+domain into boxes of size $h = \sqrt{\delta}$.
 
-%Just as in the uniform case, this choice depends on $N$, $\delta$ and $\epsilon$ but, now it also depends on the point distribution. 
+  %Just as in the uniform case, this choice depends on $N$, $\delta$ and $\epsilon$ but, now it also depends on the point distribution. 
 %Now let us consider two extreme cases. If the size of a leaf $\ell$ denoted by $|\ell|$ is much larger than that of the FGT boxes, 
 %then  is futile because each box will only contain a few sources. On the other hand,
 % when the leaf nodes are much smaller than the FGT box, then there will be large number of sources within the box covering them
