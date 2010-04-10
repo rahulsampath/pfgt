@@ -58,6 +58,8 @@ modified version of the same in the next section. The total cost of the expansio
 %If the kernel values are known at the discrete points $\{Lk/p \}_{|k| \leq p}$, then we can compute $\hat{G}$ using discrete Fourier transform. 
 
 \subsection{Parallel implementation of the truncation algorithm}
+We divide the unit cube into a regular grid of boxes and distribute the boxes across $n_p$ processors
+ such that {\tt{(a)}} each processor owns exactly one box and {\tt{(b)}} each box is owned by an unique processor.
 
 \subsection{Parallel implementation of the expansion algorithm} 
 We create a regular grid of $|B|$ FGT boxes distributed on $n_p$ processors 
