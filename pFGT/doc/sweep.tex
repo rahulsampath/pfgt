@@ -103,7 +103,7 @@ algorithm are as follows,
 	\draw[fill=green!10] (6,6) rectangle +(2,2);
 	
 	% arrows ...
-	\draw[green!50!black, thick, ->] (1,1) -- (7,7) node[above] {$r$}; 
+	\draw[blue, thick, ->] (1,1) -- (7,7) node[above] {$r$}; 
 												
 	% the grid ...
 	\draw[step=2cm] (0,0) grid (8,8);	
@@ -116,7 +116,7 @@ algorithm are as follows,
 
 \begin{figure}
 \centering
-\begin{tikzpicture}[scale=0.5]
+\begin{tikzpicture}[scale=0.75]
 	
 	\draw[fill=orange!30] (2,2) rectangle +(4,2);
 	\draw[fill=orange!30] (2,2) rectangle +(2,4);
@@ -125,10 +125,10 @@ algorithm are as follows,
 	% the grid ...
 	\draw[step=2cm] (0,0) grid (8,8);	
 	
-	\draw (3,3) node {$i, j$};
-	\draw (5,3) node {$i+1, j$};
-	\draw (3,5) node {$i, j+1$};
-	\draw (5,5) node {$i+1, j+1$};
+	\draw (3,3) node {\scriptsize{$i, j$}};
+	\draw (5,3) node {\scriptsize{$i+1, j$}};
+	\draw (3,5) node {\scriptsize{$i, j+1$}};
+	\draw (5,5) node {\scriptsize{$i+1, j+1$}};
 	
 	\draw (1,1) node {$-$};
 	\draw (7,7) node {$-$};
