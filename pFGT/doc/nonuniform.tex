@@ -1,8 +1,6 @@
 
-%In the uniform distribution case, one can precisely estimate the threshold $n^*$ that determines whether one should use the truncation or the expansion algorithm. However, when the source and target distributions are highly nonuniform, as is the case in most practical applications, it is not straightforward. For example, when we superimpose a regular grid structure of FGT on a nonuniform distribution, some boxes will have lot of points while some are almost empty. 
-
-In the case of uniform point distributions, we could choose between the truncation and expansion algorithms to achieve optimal complexity
- based on the threshold $n^*$ and we could even obtain precise estimates for $n^*$. However, when the source and 
+In the case of uniform point distributions, we could obtain precise estimates for the threshold $n^*$ and use it to 
+ choose between the truncation and expansion algorithms to achieve optimal complexity. However, when the source and 
  target distributions are highly nonuniform, as is the case in most practical applications, it is not as
  straightforward. 
  
@@ -15,7 +13,7 @@ For simplicity, we assume that the sources and targets coincide. To enable us to
 %
 
 Now let us consider two extreme cases. If the size of a leaf $\ell$ denoted by $|\ell|$ is much larger than that of FGT box, then converting the sources into plane-wave expansions is futile because there are fewer sources per box. On the other hand, when the leaf nodes are much smaller than the FGT box, then there will be large number of sources within the box covering them and hence it is desirable to convert them to plane-wave expansions. Inspired by this observation, we split the octree as follows. 
-%
+
 {\tt
 \begin{algorithmic}
 \STATE
@@ -29,7 +27,7 @@ Now let us consider two extreme cases. If the size of a leaf $\ell$ denoted by $
 \STATE
 \end{algorithmic}
 }
-%
+
 Here $c$ is constant which is determined by experimentation. Apart from the steps discussed in Section \ref{sc:fgt}, we need extra ones to model the interaction between the trees. We describe them next.  
 
 First, we visit all the boxes $B \in T_e$ and form the plane-wave expansions from the sources (S2W step). Now, we have all the information necessary to compute (\ref{gt}) at all the targets in $T_d$. We proceed in the following two steps.
@@ -51,39 +49,4 @@ Until now we have evaluated (\ref{gt}) at all the targets in $T_d$. Now, only th
 %
 \beq v_k  \,+=\, \, f(y) e^{i z_k \cdot (c^D - y)/\sqrt{\delta}} \eeq
 \end{description}
-Finally, we visit each box $D \in T_e$ and compute (\ref{gt}) at all its constituent target points by evaluating the local expansion (L2T step). We summarize all the steps in Algorithm \ref{a:ofgt}.  
-
-\begin{algorithm}[!h]
-\caption{\em FGT on a split tree}
-\label{a:ofgt}
-{\tt
-\begin{algorithmic}
-\STATE
-%\STATE {\sc FGT on a split Octree}
-  \FOR {each $\ell \in T_e$}
-      \STATE (S2W) Add contribution of point in $\ell$ to the FGT box it belongs
-  \ENDFOR
-  \STATE W2D
-  \STATE D2D 
-  \STATE (W2L) Form local expansions using sweeping
-  \STATE 
-
-  \STATE {\sc Evaluate the effect of all sources in $T_d$}
-  \FOR {each $\ell \in T_d$}
-       \FOR {$x \in \ell$}
-          \STATE (D2L) Add contribution of $x$ to all the target boxes (in $T_e$) 
-       \ENDFOR  
-  \ENDFOR
-  
-  \STATE 
-  \STATE {\sc Evaluate the effect of all sources in $T_e$}
-     \FOR {each FGT box $B \in T_e$}
-        \STATE Use local expansion for target points within $B$ 
-        \STATE
-        \STATE Use wave expansion for target points in $T_e$ that are within its interaction list
-     \ENDFOR  
-\STATE
-\end{algorithmic}
-}
-\end{algorithm}
-
+Finally, we visit each box $D \in T_e$ and compute (\ref{gt}) at all its constituent target points by evaluating the local expansion (L2T step). 
