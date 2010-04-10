@@ -1,3 +1,4 @@
+
 \subsection{Parallel Issues}
 
 Then the following are the different stages of the parallel algorithm:
@@ -72,4 +73,35 @@ to the processors that own leaf nodes that are contained within this FGT box.
 {\em (viii) L2T.} At this stage, all boxes must have formed their local expansions and $F(x)$ must have been computed at the points $x \in T_d$. The only remaining step is to compute $F(x)$ for points in $x \in T_e$ by using (\ref{eqn:l2t}) which can be done independently in each processor. 
 
 \hfill $\bigO(N p^3/n_p)$
+
+We summarize the overall algorithm in Algorithm \ref{a:ofgt}.  
+
+\begin{algorithm}[!h]
+\caption{ \label{a:ofgt}
+\em Parallel FGT for non-uniform distributions}
+{\tt
+\begin{algorithmic}
+\STATE Input: Points, $\delta$, $\epsilon$, $M$ and $c$
+\STATE 1. Create a regular grid of FGT boxes partitioned across processors such that \\
+ (A) the size of each box is $h = \sqrt{\delta}$, \\
+ (B) each processor owns a sub-grid of boxes and \\
+ (C) each box is owned by an unique processor. 
+\STATE 2. Construct a linear octree such that each leaf contains fewer than $M$ points. 
+\STATE 3. Mark each leaf as either ``expand'' or ``direct'' based on $c$ and $\delta$.
+\STATE 4. Partition the direct leaves across processors such that \\
+  (A) they are globally sorted in the Morton ordering and \\
+  (B) each leaf is owned by an unique processor.
+\STATE 5. Partition the expand leaves across processors. 
+\STATE 6. Execute S2W.
+\STATE 7. Execute S2W-Comm.
+\STATE 8. Execute W2D.
+\STATE 9. Execute D2D.
+\STATE 10. Execute W2L.
+\STATE 11. Execute D2L.
+\STATE 12. Execute L2T-Comm.
+\STATE 13. Execute L2T.
+\end{algorithmic}
+}
+\end{algorithm}
+
 
