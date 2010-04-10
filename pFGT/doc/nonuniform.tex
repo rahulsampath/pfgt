@@ -1,18 +1,22 @@
 
 In the case of uniform point distributions, we could obtain precise estimates for the threshold $n^*$ and use it to 
  choose between the truncation and expansion algorithms to achieve optimal complexity. However, when the source and 
- target distributions are highly nonuniform, as is the case in most practical applications, it is not as
- straightforward. 
+ target distributions are highly non-uniform, as is the case in most practical applications, it is not as
+ straightforward. To achieve optimal complexity in the non-uniform case, we need a hybrid algorithm that uses
+ the truncation algorithm in some regions and the expansion algorithm in other regions. Just as in the uniform case,
+ this choice depends on $N$, $\delta$ and $\epsilon$ but, now it also depends on the point distribution. In this section, 
+ we present an algorithm for non-uniform distributions based on the ideas introduced in \cite{veerapaneni08}. For simplicity, we
+ assume that the sources and targets coincide. 
  
- Instead, we use the truncation algorithm in some regions and the expansion algorithm in other regions.  
- Just as in the uniform case, this choice depends $N$, $\delta$ and $\epsilon$ but, now it also 
- depends on distribution of sources. In this section, we present an algorithm for nonuniform distributions based on the ideas introduced in \cite{veerapaneni08}. 
-For simplicity, we assume that the sources and targets coincide. To enable us to identify the threshold, we build an {\em octree} so that there are no more than a fixed number of points in each leaf node. [OCTREE INTRO]
+ To enable us to identify the threshold, we build an {\em octree} so that there are no more than a fixed number of points in each leaf node. [OCTREE INTRO]
 
 %\footnote{The original FGT \cite{fgt} handles nonuniform distributions without using any sort of hierarchical data-structures. In principle, one can extend these ideas to the present context. However there are certain advantages of using octrees both at the implementational and algorithmic levels. [NEED TO EXPAND]}. 
 %
 
-Now let us consider two extreme cases. If the size of a leaf $\ell$ denoted by $|\ell|$ is much larger than that of FGT box, then converting the sources into plane-wave expansions is futile because there are fewer sources per box. On the other hand, when the leaf nodes are much smaller than the FGT box, then there will be large number of sources within the box covering them and hence it is desirable to convert them to plane-wave expansions. Inspired by this observation, we split the octree as follows. 
+Now let us consider two extreme cases. If the size of a leaf $\ell$ denoted by $|\ell|$ is much larger than that of the FGT boxes, 
+then converting the sources that lie within the leaf into plane-wave expansions is futile because each box will only contain a few sources. On the other hand,
+ when the leaf nodes are much smaller than the FGT box, then there will be large number of sources within the box covering them
+  and hence it is desirable to convert them to plane-wave expansions. Inspired by this observation, we split the octree as follows. 
 
 {\tt
 \begin{algorithmic}
@@ -28,25 +32,33 @@ Now let us consider two extreme cases. If the size of a leaf $\ell$ denoted by $
 \end{algorithmic}
 }
 
-Here $c$ is constant which is determined by experimentation. Apart from the steps discussed in Section \ref{sc:fgt}, we need extra ones to model the interaction between the trees. We describe them next.  
+Here $c$ is constant which is determined by experimentation. Apart from the steps discussed in Section \ref{sc:fgt}, we
+ need extra ones to model the interaction between the trees. We describe them next.  
 
-First, we visit all the boxes $B \in T_e$ and form the plane-wave expansions from the sources (S2W step). Now, we have all the information necessary to compute (\ref{gt}) at all the targets in $T_d$. We proceed in the following two steps.
+First, we visit all the boxes $B \in T_e$ and form the plane-wave expansions from the sources (S2W step). Now, we have 
+all the information necessary to compute (\ref{gt}) at all the targets in $T_d$. We proceed in the following two steps.
 \begin{description}
-\item[\textbf{W2D}] We first evaluate the influence of sources in $T_e$ on targets in $T_d$. Each box $B \in T_e$ visits every target point $x \in T_d$ in its interaction list and evaluates the Gauss transform using
+\item[\textbf{W2D}] We first evaluate the influence of sources in $T_e$ on targets in $T_d$. Each box $B \in T_e$ visits
+ every target point $x \in T_d$ in its interaction list and evaluates the Gauss transform using
 %
 \beq F(x) \, +=\, \sum_{|k| \leq p} e^{-\frac{\norm{z_k}^2}{4}} e^{i z_k \cdot (x - c^B)/\sqrt{\delta}} w_k \eeq
 %
-\item[\textbf{D2D}] Here, we compute the influence of sources in $T_d$ on targets in $T_d$. Each source $y \in T_d$ visits every target $x \in \mathcal[y]$ and updates the potential at $x$ as 
+\item[\textbf{D2D}] Here, we compute the influence of sources in $T_d$ on targets in $T_d$. Each source $y \in T_d$ visits 
+every target $x \in \mathcal[y]$ and updates the potential at $x$ as 
 %  
 \beq F(x) \,+=\, e^{-\norm{x - y}^2/\sqrt{\delta}} f(y) \eeq
 %
 \end{description}
 %
-Until now we have evaluated (\ref{gt}) at all the targets in $T_d$. Now, only the targets in $T_e$ remain. First, we execute the W2L step and convert all the plane-wave expansions to local expansions at target boxes by using the algorithms of Section \ref{sc:sweep}. This accounts for all the sources in $T_e$. 
+Until now we have evaluated (\ref{gt}) at all the targets in $T_d$. Now, only the targets in $T_e$ remain. First, we execute
+ the W2L step and convert all the plane-wave expansions to local expansions at target boxes by using the algorithms of 
+ Section \ref{sc:sweep}. This accounts for all the sources in $T_e$. 
 
 \begin{description}
-\item[\textbf{D2L}] This step is a dual of the W2D. Here, we compute the influence of sources in $T_d$ on targets in $T_e$ by visiting every box $D \in T_e$ in the interaction list of a source $y \in T_d$ and modifying the local expansion as 
+\item[\textbf{D2L}] This step is a dual of the W2D. Here, we compute the influence of sources in $T_d$ on targets in $T_e$ by 
+visiting every box $D \in T_e$ in the interaction list of a source $y \in T_d$ and modifying the local expansion as 
 %
 \beq v_k  \,+=\, \, f(y) e^{i z_k \cdot (c^D - y)/\sqrt{\delta}} \eeq
 \end{description}
-Finally, we visit each box $D \in T_e$ and compute (\ref{gt}) at all its constituent target points by evaluating the local expansion (L2T step). 
+Finally, we visit each box $D \in T_e$ and compute (\ref{gt}) at all its constituent target points by evaluating the 
+local expansion (L2T step). 
