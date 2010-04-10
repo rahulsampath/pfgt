@@ -116,7 +116,7 @@ algorithm are as follows,
 
 \begin{figure}
 \centering
-\begin{tikzpicture}[scale=0.75]
+\begin{tikzpicture}[scale=0.6]
 	
 	\draw[fill=orange!30] (2,2) rectangle +(4,2);
 	\draw[fill=orange!30] (2,2) rectangle +(2,4);
@@ -125,10 +125,10 @@ algorithm are as follows,
 	% the grid ...
 	\draw[step=2cm] (0,0) grid (8,8);	
 	
-	\draw (3,3) node {\scriptsize{$i, j$}};
-	\draw (5,3) node {\scriptsize{$i+1, j$}};
-	\draw (3,5) node {\scriptsize{$i, j+1$}};
-	\draw (5,5) node {\scriptsize{$i+1, j+1$}};
+  \draw (3,3) node {$_{i, j}$};
+  \draw (5,3) node {$_{i+1, j}$};
+  \draw (3,5) node {$_{i, j+1}$};
+  \draw (5,5) node { $_{i+1, j+1}$};
 	
 	\draw (1,1) node {$-$};
 	\draw (7,7) node {$-$};
@@ -178,13 +178,15 @@ The total cost of the tree is used to determine whether to use the direct approa
         \multicolumn{4}{c}{}  \\
         \multicolumn{4}{c}{ {\small $K =  9 \quad (\epsilon = 10^{-6})$}}  \\
         \multicolumn{4}{c}{}  \\
-         1K & & &  \\  
-        100K & & &  \\  
+         1K & 75K & 6K & 12 \\  
+        10K & 831K & 72K & 11 \\  
+       100K & 9.97M & 936K & 10.65 \\  
        1000K & & &  \\  
        \multicolumn{4}{c}{}  \\
        \multicolumn{4}{c}{ {\small $K =  13 \quad (\epsilon = 10^{-12})$}}  \\
        \multicolumn{4}{c}{}  \\
-             1K & & &  \\  
+             1K & 170K & 8K & 20 \\  
+        10K & 1.88M & 11K & 17 \\  
         100K & & &  \\  
        1000K & & &  \\  
 \hline
