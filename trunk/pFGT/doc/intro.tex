@@ -1,3 +1,4 @@
+
 Gauss transform is one of several discrete spatial transforms of the form 
 %
 \beq F(x_j) = \sum_{k=1}^N \kernel f(y_k) \quad \text{at} \quad \{ x_j \, | \, j = 1,...,M \}.  \label{gt} \eeq
@@ -16,7 +17,7 @@ where $\Omega$ is the the domain and $n$ is a positive integer. Nystr\"{o}m meth
 {\em Contributions.} The main contributions of this work are summarized below.
 \begin{itemize} 
 %
-\item We present a parallel algorithm for the fast gauss transform. 
+\item We present a parallel algorithm for the fast gauss transform (FGT). 
 We incorporate the accelerations introduced in \cite{fggt} for tensor product grids. 
 Thereby, the complexity constants in our scheme scale linearly with the number of dimensions 
 as opposed to exponential growth. 
@@ -28,14 +29,15 @@ non-uniform point distributions.
 %
 \item We extend our schemes to nonuniform distributions. \ul{OCTREES}.
 
-\item The cost FGT grows for smaller values of $\delta$. In the nonuniform case, 
+\item The cost of FGT grows for smaller values of $\delta$. In the nonuniform case, 
 We present a scheme that scales well in all ranges of the parameters. It is an extension of the tree-splitting scheme 
 proposed in \cite{veerapaneni08} for computing continuous Gauss transforms. 
 %
 \end{itemize}
 
-The rest of the paper is organized as follows. In Section \ref{sc:fgt}, we give a high-level description of FGT for uniform point distributions and discuss its parallelization. We introduce a novel translation scheme in Section \ref{sc:sweep}. This scheme is slightly more expensive compared to the {\em sweeping algorithm} introduced in \cite{greengard98} but it 
-significantly improves the storage cost for nonuniform distributions. We also discuss its parallel implementation. In Section 
-\ref{sc:nonuniform}, we present our octree-based sequential and parallel algorithms for nonuniform distributions. Finally, in 
-Section \ref{sc:results}, we  present scalability results of our algorithm using a variety of test cases. 
-In the rest of the paper, we stick to the case where $G_\delta$ is a Gaussian. This is purely for ease of exposition, all the concepts are valid in the general case too. 
+The rest of the paper is organized as follows. In Section \ref{sc:fgt}, we present a short description of the standard FGT algorithm and discuss our parallel implementation of the same. We introduce a novel translation scheme in Section \ref{sc:sweep}. This scheme is slightly more expensive compared to the {\em sweeping algorithm} introduced in \cite{greengard98} but it significantly improves the storage cost for non-uniform distributions. In Section 
+\ref{sc:nonuniform}, we present a new octree-based FGT algorithm for non-uniform point distributions; we also discuss its parallel implementation. Finally, in 
+Section \ref{sc:results}, we demonstrate the scalability of our algorithms for uniform as well as non-uniform point distributions. 
+In the rest of the paper, we stick to the case where $G_\delta$ is a Gaussian. This is purely for ease of exposition, all the
+ concepts are valid in the general case too. For simplicity, we also assume that the sources and targets coincide and that they 
+ lie within an unit cube.
