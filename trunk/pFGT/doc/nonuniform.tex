@@ -115,12 +115,24 @@ modify the local expansion, $v_k$, of $D$ as:
 
 \item[\textbf{L2T}] For each target, $x$, within some expand leaf, evaluate the transform using the local 
 expansion of the FGT box, $D$, that contains $x$ using (\ref{eqn:l2t}).
-
 \end{description}
-
 
 \subsection{Parallel Implementation}
 \label{sc:parallelnufgt}
+
+We create a regular grid of FGT boxes partitioned across processors such that 
+ {\tt{(a)}} the size of each box is $h = \sqrt{\delta}$, {\tt{(b)}} each processor owns a sub-grid of boxes and
+ {\tt{(c)}} each box is owned by an unique processor.  We use PETSc's \cite{petsc-user-ref, petsc-home-page} DA
+ module to manage this distributed regular grid. We construct a parallel linear octree such that each leaf
+ contains fewer than $m$ points; we use DENDRO \cite{dendro} to do this. We then mark the leaves as either
+ ``Expand'' or ``Direct''; this step is embarrassingly parallel. The direct leaves are then partitioned across 
+ the processors such that {\tt{(a)}} they are globally sorted in the Morton ordering and {\tt{(b)}} each leaf 
+ is owned by an unique processor. Similarly, we partition the expand leaves across the processors. The expand
+ and direct leaves are used at different steps in the algorithm and there are collective communications between
+ these steps. So, it is better to have good load balance for the expand and direct leaves independently and hence
+ we partition the two sets, $T_d$ and $T_e$, independently.
+
+ 
 
 Then the following are the different stages of the parallel algorithm:
 
