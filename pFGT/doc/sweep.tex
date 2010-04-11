@@ -177,25 +177,82 @@ The total cost of the tree is used to determine whether to use the direct approa
         \multicolumn{4}{c}{}  \\
         \multicolumn{4}{c}{ {\small $K =  9 \quad (\epsilon = 10^{-6})$}}  \\
         \multicolumn{4}{c}{}  \\
-         1K & 75K & 6K & 12 \\  
-        10K & 831K & 72K & 11 \\  
-       100K & 9.97M & 936K & 10.65 \\  
-       1000K & & &  \\  
+         1K & 114K & 18K & 6.3 \\  
+        10K & 1M & 182K & 5.88 \\  
+       100K & 9.65M & 1.7M & 5.68 \\  
+       1M & 96.8M & 17.1M & 5.68 \\  
        \multicolumn{4}{c}{}  \\
        \multicolumn{4}{c}{ {\small $K =  13 \quad (\epsilon = 10^{-12})$}}  \\
        \multicolumn{4}{c}{}  \\
-             1K & 170K & 8K & 20 \\  
-        10K & 1.88M & 11K & 17 \\  
-        100K & & &  \\  
-       1000K & & &  \\  
+             1K & 238K & 24K & 9.65 \\  
+        10K & 2.24M & 264K & 8.48 \\  
+        100K & 20.16M & 2.46M & 8.18 \\  
+       1M &   200.56M & 24.5M & 8.18 \\   
 \hline
 \end{tabular}
 \end{table}
 
+\begin{figure}
+  \begin{tikzpicture}
+    \begin{axis}[
+      xlabel=$K$,
+      ylabel=$Speedup$]
+      \addplot[smooth,mark=*,blue] plot coordinates {
+      (9, 5.88)
+      (13, 8.5)
+      (17, 11.16)
+      (21, 14.01)
+      (25, 16.9535)
+      (29, 20.0165)
+      (33, 23.3387)
+      };
+      % \addlegendentry{Direct}
+
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Increasing values of the influence region for a fixed geometry.}  
+\end{figure}  
+
+
+
+
 
 \begin{figure}
 \centering 	
-\includegraphics[width=0.4\textwidth]{figs/sphere_mst}
+
+\begin{tikzpicture}
+\begin{axis}[
+view={120}{40},
+width=220pt,
+height=220pt,
+grid=major,
+z buffer=sort,
+xmin=3,xmax=25,
+ymin=3,ymax=25,
+zmin=3,zmax=25,
+enlargelimits=upper,
+xtick={1,11,...,29},
+ytick={1,11,...,29},
+ztick={1,11,...,29},
+xlabel={$X$},
+ylabel={$Y$},
+zlabel={$Z$},
+colorbar,
+%colormap={summap}{
+%color=(black); color=(blue);
+%color=(black); color=(white)
+%color=(orange) color=(violet)
+%color=(red)
+%},
+scatter/use mapped color={
+draw=mapped color,fill=mapped color!70},
+]
+\addplot3[only marks,scatter,mark=cube*,mark size=7,point meta={\thisrow{col}}]
+table[x=xc,y=yc,z=zc]{sphere_mst.dat};
+\end{axis}
+\end{tikzpicture}
+
+% \includegraphics[width=0.4\textwidth]{figs/sphere_mst}
 \caption{The optimal traversal path for a spherical shell distribution, shown here superimposed on a sphere. The nodes of the graph are the centers of the boxes $B_i$.}
 \end{figure}
 
