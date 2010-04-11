@@ -69,6 +69,7 @@ The rest of the paper is organized as follows. In Section \ref{sc:fgt}, we prese
 \hline 
 FGT parameters &\\
 $\delta$                    & bandwidth of the kernel\\
+$h$                         & size of an FGT box \\
 $\epsilon$                  & user specified precision\\
 $p$                         & truncation order of the kernel expansion \\
 $K$                         & length of interaction list in each dimension \\
@@ -81,6 +82,11 @@ $m$                         & upper bound for the number \\
                             & of points within any leaf \\
 $c$                          & heuristic parameter used to classify \\
                             & leaves as either expand or direct \\
+$T_d$                       & set of direct leaves \\
+$T_e$                       & set of expand leaves \\ 
+$|T_d|$                       & number of direct leaves \\                            
+$|T_e^l|$                       & number of expand leaves with size $> h$ \\                            
+$|T_e^s|$                       & number of expand leaves with size $\leq h$\\                            
 \hline
 \end{tabular}
 \end{table}
