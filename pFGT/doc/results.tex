@@ -1,8 +1,4 @@
-In this section, we present scalability results using a few test cases.  
-
-{\em Machine.} The scalability experiments were performed on the {\it{Jaguar}} supercomputer at Oak Ridge National Laboratory (ORNL). The architectural details for this supercomputer can be found in \cite{jaguar}.
-
-{\em Implementation.} The code is written in C language and built on top of \texttt{PETSc} and \texttt{DENDRO} packages. Specifically, we use \texttt{DENDRO} for linear octree construction and \texttt{PETSc} for [RAHUL/HARI] and profiling. 
+In this section, we present scalability results using a few test cases.  All the scalability experiments were performed on the {\it{Jaguar}} supercomputer at Oak Ridge National Laboratory (ORNL). The architectural details for this supercomputer can be found in \cite{jaguar}. The code is written in C language and built on top of \texttt{PETSc} and \texttt{DENDRO} packages. Specifically, we use \texttt{DENDRO} for linear octree construction and \texttt{PETSc} for [RAHUL/HARI] and profiling. 
 
 {\em Example 1.} We consider a uniform tensor product grid in the unit cube. We use the techniques introduced in \cite{fggt}. They are based on {\em seperation of variables} and the complexity of the S2W and L2T steps is reduced to $\bigO(p N)$. We present the weak scalability results in Figure \ref{fig:uniform}. 
 
