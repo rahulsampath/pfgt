@@ -58,7 +58,7 @@ as shown in (\ref{eqn:s2w}).
  each target, $x$, within some direct leaf, find all FGT boxes, $B$, such that $\mathcal{I}[B]$ contains $x$ and
  add the contributions from the respective plane-wave expansion, $w_k$ to the transform at the target as follow: 
 
-\beq F(x) \, +=\, \sum_{|k| \leq p} e^{-\frac{\norm{z_k}^2}{4}} e^{i \lambda k \cdot (x - c^B)} w_k \label{eqn:w2d} \eeq
+\beq F(x) \, +=\, \sum_{|k| \leq p} \hat{G}(k)  w_k e^{i \lambda k \cdot (x - c^B)} \label{eqn:w2d} \eeq
 
 Note, that for any FGT box, $B$, which is contained within some direct leaf the corresponding $w_k$ is zero.
 
@@ -75,15 +75,14 @@ visiting every box $D \in T_e$ in the interaction list of a source $y \in T_d$ a
 %
 \beq v_k  \,+=\, \, f(y) e^{i z_k \cdot (c^D - y)/\sqrt{\delta}} \label{eqn:d2l} \eeq
 
-\item[\textbf{L2T}]
+\item[\textbf{L2T}] For each target, $x$, within some expand leaf, evaluate the transform using the local 
+expansion of the FGT box, $D$, that contains $x$ using (\ref{eqn:l2t}).
+
 \end{description}
    
 Until now we have evaluated (\ref{gt}) at all the targets in $T_d$. Now, only the targets in $T_e$ remain. First, we execute
  the W2L step and convert all the plane-wave expansions to local expansions at target boxes by using the algorithms of 
  Section \ref{sc:sweep}. This accounts for all the sources in $T_e$. 
-
-Finally, we visit each box $D \in T_e$ and compute (\ref{gt}) at all its constituent target points by evaluating the 
-local expansion (L2T step). 
 
 \subsection{Parallel Implementation}
 \label{sc:parallelnufgt}
