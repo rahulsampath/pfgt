@@ -1,6 +1,10 @@
+In this section, we present scalability results using a few test cases.  
 
-The scalability experiments were performed on the {\it{Jaguar}} supercomputer at Oak Ridge National Laboratory (ORNL). The
- architectural details for this supercomputer can be found in \cite{jaguar}.
+{\em Machine.} The scalability experiments were performed on the {\it{Jaguar}} supercomputer at Oak Ridge National Laboratory (ORNL). The architectural details for this supercomputer can be found in \cite{jaguar}.
+
+{\em Implementation.} The code is written in C language and built on top of \texttt{PETSc} and \texttt{DENDRO} packages. Specifically, we use \texttt{DENDRO} for linear octree construction and \texttt{PETSc} for [RAHUL/HARI] and profiling. 
+
+{\em Example 1.} We consider a uniform tensor product grid in the unit cube. We use the techniques introduced in \cite{fggt}. They are based on {\em seperation of variables} and the complexity of the S2W and L2T steps is reduced to $\bigO(p N)$. We present the weak scalability results in Figure \ref{fig:uniform}. 
 
 \begin{figure}
 	\begin{center}
@@ -9,8 +13,11 @@ The scalability experiments were performed on the {\it{Jaguar}} supercomputer at
 \caption{\label{f:isoUniform} Isogranular scalability for an uniform point distribution. For
  this experiment, we set $\epsilon = 10^{-6}$. The reported times for 
 each component are the maximum values for that component across all the processors. The total wall-clock
-time is reported in bold face.} 
+time is reported in bold face.} \label{fig:uniform}
 \end{figure}
+
+{\em Example 2.} In this example, we consider a Gaussian random distribution of points in the unit cube. 
+We present the weak scalability results in Figure \ref{fig:nonuniform}. 
 
 \begin{figure}
 	\begin{center}
@@ -19,5 +26,5 @@ time is reported in bold face.}
 \caption{\label{f:isoGaussian} Isogranular scalability for a gaussian point distribution. For
  this experiment, we set $\epsilon = 10^{-3}$. The reported times for each component are the
  maximum values for that component across all the processors. The total wall-clock
-time is reported in bold face.} 
+time is reported in bold face.} \label{fig:nonuniform}
 \end{figure}
