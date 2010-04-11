@@ -8,7 +8,7 @@
  truncation algorithm in other regions. We use an {\em octree} \cite{clr90} data structure to efficiently
  separate out regions with a dense point distribution from regions with a sparse point distribution and use
  it to appropriately choose between the truncation and expansion algorithm in each region. A similar idea was
- used in \cite{veerapaneni08}. 
+ used in \cite{veerapaneni08}.  
  
 {\em Primer on octrees.} An octree is a tree data structure that is used for spatial decomposition. Every
 node of an octree has a maximum of eight children. An octant with no children is
@@ -45,6 +45,43 @@ octant is its front lower left corner.
 \end{algorithmic}
 }
 
+\begin{figure}
+\begin{tikzpicture}[scale=0.5]
+
+\draw[fill=blue!20] (0,8) rectangle +(8,8);
+\draw[fill=blue!20] (8,0) rectangle +(8,8);
+\draw[fill=blue!20] (0,0) rectangle +(4,4);
+\draw[fill=blue!20] (12,12) rectangle +(4,4);
+
+\draw[fill=brown!50] (4,0) rectangle +(4,4);
+\draw[fill=brown!50] (0,4) rectangle +(4,4);
+\draw[fill=brown!50] (4,4) rectangle +(4,4);
+\draw[fill=brown!50] (8,8) rectangle +(4,4);
+\draw[fill=brown!50] (8,12) rectangle +(4,4);
+\draw[fill=brown!50] (12,8) rectangle +(4,4);
+
+%Draw the initial octree
+\draw[step = 8] (0,0) grid (16,16);
+\draw[step = 4] (8,8) grid(16,16);
+\draw[step = 4] (0,8) grid(8,16);
+\draw[step = 2] (0,4) grid(4,8);
+\draw[step = 2] (4,4) grid (8,8);
+\draw[step = 2] (4,0) grid (8,4);
+\draw[step = 1] (2,4) grid (4,8);    	
+\draw[step = 1] (0,6) grid (2,8);
+\draw[step = 0.5] (2,6) grid (3,7);
+
+\draw[step = 2] (8,8) grid(12,16);
+\draw[step = 2] (12,8) grid (16,12);
+    	    	
+\draw[step = 1] (12,8) grid (14,12);
+\draw[step = 1] (14,8) grid (16,10);
+\draw[step = 0.5] (13,9) grid (14,10);    	    	    	    	
+    	    	    	    	
+\end{tikzpicture}
+\caption{\label{f:directExpand} The direct octants are marked in and the expand octants are marked in .}  
+\end{figure}
+
 We denote the set of direct leaves by $T_d$ and use $T_e$ to represent the set of expand leaves. Next,
 we describe the sequence of steps involved in this algorithm.
 
@@ -70,7 +107,8 @@ every target $x \in \mathcal[y]$ and updates the potential at $x$ as
 
 \item[\textbf{W2L}] This step is identical to the W2L step discussed in Sections \ref{sc:fgt} and \ref{sc:sweep}.
 
-\item[\textbf{D2L}] This step is a dual of the W2D. Here, we compute the influence of sources in $T_d$ on targets in $T_e$ by 
+\item[\textbf{D2L}] For each source, $y$, within some direct leaf, find all FGT boxes, $B$, such that $\mathcal{I}[y]$ intersects $B$ and
+modify the local expansion of $B$
 visiting every box $D \in T_e$ in the interaction list of a source $y \in T_d$ and modifying the local expansion as 
 %
 \beq v_k  \,+=\, \, f(y) e^{i z_k \cdot (c^D - y)/\sqrt{\delta}} \label{eqn:d2l} \eeq
