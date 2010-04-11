@@ -49,7 +49,10 @@ We denote the set of direct leaves by $T_d$ and use $T_e$ to represent the set o
 we describe the sequence of steps involved in this algorithm.
 
 \begin{description}
-\item[\textbf{S2W}]
+\item[\textbf{S2W}] For each leaf $\ell \in T_e$ such that $|\ell| \leq h$, add the contributions from all sources within $\ell$
+to the plane-wave expansion for the FGT box, $B$, that contains $\ell$ using (\ref{eqn:s2w}). For each leaf $\ell \in T_e$ such that $|\ell| > h$,
+visit each FGT box $B$ that is contained within $\ell$ and form the plane-wave expansion for $B$ using the sources that are contained within $B$
+as shown in (\ref{eqn:s2w}).
 
 \item[\textbf{W2D}] We first evaluate the influence of sources in $T_e$ on targets in $T_d$. Each box $B \in T_e$ visits
  every target point $x \in T_d$ in its interaction list and evaluates the Gauss transform using
@@ -73,8 +76,7 @@ visiting every box $D \in T_e$ in the interaction list of a source $y \in T_d$ a
 \item[\textbf{L2T}]
 \end{description}
 
-  First, we visit all the boxes $B \in T_e$ and form the plane-wave expansions from the sources (S2W step). Now, we have 
-all the information necessary to compute (\ref{gt}) at all the targets in $T_d$. We proceed in the following two steps.
+   Now, we have all the information necessary to compute (\ref{gt}) at all the targets in $T_d$. We proceed in the following two steps.
 
 Until now we have evaluated (\ref{gt}) at all the targets in $T_d$. Now, only the targets in $T_e$ remain. First, we execute
  the W2L step and convert all the plane-wave expansions to local expansions at target boxes by using the algorithms of 
@@ -88,9 +90,7 @@ local expansion (L2T step).
 
 Then the following are the different stages of the parallel algorithm:
 
-{\em (i) S2W}. In this step, we form the plane-wave expansions at the set of boxes that cover $T_e$. 
-We visit each leaf, and add its contribution to the box it is contained in or to all the boxes it contains. 
-
+{\em (i) S2W}. 
 
 {\em (ii) S2W-Comm.} Because the boxes are partitioned by [RAHUL] and the octree is partitioned by Morton ordering, it is not necessary that the boxes contained in a leaf (or vice-versa) belong to the same processor. Therefore, after the S2W step, we send the plane-wave expansions formed in each processor to the owner of the respective boxes. Then, we visit each box $B \in T_e$ and add all the plane-wave expansions formed at different processors to obtain $\{w_k \}_{|k| \leq p}$.  
 
