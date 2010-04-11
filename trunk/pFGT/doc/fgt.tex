@@ -59,6 +59,45 @@ modified version of the same in Section \ref{sc:sweep}. The total cost of the ex
 \end{algorithmic}
 }
 
+\begin{figure}
+\begin{tikzpicture}[scale=0.5]
+
+\draw[fill=blue!20] (0,8) rectangle +(8,8);
+\draw[fill=blue!20] (8,0) rectangle +(8,8);
+\draw[fill=blue!20] (0,0) rectangle +(4,4);
+\draw[fill=blue!20] (12,12) rectangle +(4,4);
+
+\draw[fill=brown!50] (4,0) rectangle +(4,4);
+\draw[fill=brown!50] (0,4) rectangle +(4,4);
+\draw[fill=brown!50] (4,4) rectangle +(4,4);
+\draw[fill=brown!50] (8,8) rectangle +(4,4);
+\draw[fill=brown!50] (8,12) rectangle +(4,4);
+\draw[fill=brown!50] (12,8) rectangle +(4,4);
+
+
+
+%Draw the initial octree
+\draw[step = 8] (0,0) grid (16,16);
+\draw[step = 4] (8,8) grid(16,16);
+\draw[step = 4] (0,8) grid(8,16);
+\draw[step = 2] (0,4) grid(4,8);
+\draw[step = 2] (4,4) grid (8,8);
+\draw[step = 2] (4,0) grid (8,4);
+\draw[step = 1] (2,4) grid (4,8);    	
+\draw[step = 1] (0,6) grid (2,8);
+\draw[step = 0.5] (2,6) grid (3,7);
+
+\draw[step = 2] (8,8) grid(12,16);
+\draw[step = 2] (12,8) grid (16,12);
+    	    	
+\draw[step = 1] (12,8) grid (14,12);
+\draw[step = 1] (14,8) grid (16,10);
+\draw[step = 0.5] (13,9) grid (14,10);    	    	    	    	
+    	    	    	    	
+\end{tikzpicture}
+\caption{Truncation or Expansion ? }  
+\end{figure}
+
 %\subsection{Kernel independence} 
 %The advantage of the plane-wave expansion (\ref{eqn:ghat}) is that once  
 %If the kernel values are known at the discrete points $\{Lk/p \}_{|k| \leq p}$, then we can compute $\hat{G}$ using discrete Fourier transform. 
