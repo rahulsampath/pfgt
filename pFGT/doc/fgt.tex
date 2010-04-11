@@ -41,10 +41,11 @@ the W2L is executed by simply visiting each box $B$ and translating its plane-wa
 \subsection{Overall algorithm} 
 The translation costs can be reduced dramatically by using the {\em sweeping algorithm} introduced in \cite{greengard98}. We present a 
 modified version of the same in Section \ref{sc:sweep}. The total cost of the expansion algorithm is then typically dominated by the S2W
- and L2T steps. If the points within each FGT box lie on a tensor-product grid, then we incorporate the accelerations described in \cite{fggt}. With these
- accelerations, the cost of the S2W and L2T steps reduces to $\bigO(p^3 N^{\frac{1}{3}})$.
- However, when $\delta$ is lower and/or $\epsilon$ is higher, the cost of the expansion algorithm increases because 
- condensing the sources into plane-waves becomes increasingly futile as the number sources per box gets reduced. On the other hand, the
+ and L2T steps. If the points within each FGT box lie on a tensor-product grid, then we 
+ incorporate the accelerations described in \cite{fggt}. With these accelerations, the cost of the S2W and
+ L2T steps reduces to $\bigO(p N)$. However, when $\delta$ is lower and/or $\epsilon$ is higher, the cost of
+ the expansion algorithm increases because condensing the sources into plane-waves becomes increasingly futile as
+ the number sources per box gets reduced. On the other hand, the
  cost of the truncation algorithm decreases. Hence, we choose between the two algorithms based on the following heuristic:
 
 {\tt
