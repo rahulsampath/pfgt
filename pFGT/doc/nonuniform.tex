@@ -25,7 +25,7 @@ octant is its front lower left corner.
 \subsection{Octree based FGT algorithm}
 \label{sc:octreefgt}
 
- Given a point distribution, we construct a linear octree such that there are no more than $M$ points contained within each leaf; we
+ Given a point distribution, we construct a linear octree such that there are no more than $m$ points contained within each leaf; we
  use the algorithm described in \cite{octPaper08} to do this. Note that regions with sparse point distributions will contain 
  leaves that are large in size and regions with dense point distributions will contain leaves that are small in size. Just as in 
  the uniform case, we partition the domain into FGT boxes of size $h = \sqrt{\delta}$. We denote the size of leaf $\ell$ by $|\ell|$.
@@ -54,16 +54,18 @@ to the plane-wave expansion for the FGT box, $B$, that contains $\ell$ using (\r
 visit each FGT box $B$ that is contained within $\ell$ and form the plane-wave expansion for $B$ using the sources that are contained within $B$
 as shown in (\ref{eqn:s2w}).
 
-\item[\textbf{W2D}] We first evaluate the influence of sources in $T_e$ on targets in $T_d$. Each box $B \in T_e$ visits
- every target point $x \in T_d$ in its interaction list and evaluates the Gauss transform using
-%
-\beq F(x) \, +=\, \sum_{|k| \leq p} e^{-\frac{\norm{z_k}^2}{4}} e^{i z_k \cdot (x - c^B)/\sqrt{\delta}} w_k \eeq
-%
+\item[\textbf{W2D}] Initialize the transform at all targets within some direct leaf to zero. For
+ each target, $x$, within some direct leaf, find all FGT boxes, $B$, such that $\mathcal{I}[B]$ contains $x$ and
+ add the contributions from the respective plane-wave expansion, $w_k$ to the transform at the target as follow: 
+
+\beq F(x) \, +=\, \sum_{|k| \leq p} e^{-\frac{\norm{z_k}^2}{4}} e^{i \lambda k \cdot (x - c^B)} w_k \label{eqn:w2d} \eeq
+
+Note, that for any FGT box, $B$, which is contained within some direct leaf the corresponding $w_k$ is zero.
 
 \item[\textbf{D2D}] Here, we compute the influence of sources in $T_d$ on targets in $T_d$. Each source $y \in T_d$ visits 
 every target $x \in \mathcal[y]$ and updates the potential at $x$ as 
 %  
-\beq F(x) \,+=\, e^{-\frac{\norm{x - y}^2}{\sqrt{\delta}}} f(y) \eeq
+\beq F(x) \,+=\, e^{-\frac{\norm{x - y}^2}{\sqrt{\delta}}} f(y) \label{eqn:d2d} \eeq
 %
 
 \item[\textbf{W2L}] This step is identical to the W2L step discussed in Sections \ref{sc:fgt} and \ref{sc:sweep}.
@@ -71,13 +73,11 @@ every target $x \in \mathcal[y]$ and updates the potential at $x$ as
 \item[\textbf{D2L}] This step is a dual of the W2D. Here, we compute the influence of sources in $T_d$ on targets in $T_e$ by 
 visiting every box $D \in T_e$ in the interaction list of a source $y \in T_d$ and modifying the local expansion as 
 %
-\beq v_k  \,+=\, \, f(y) e^{i z_k \cdot (c^D - y)/\sqrt{\delta}} \eeq
+\beq v_k  \,+=\, \, f(y) e^{i z_k \cdot (c^D - y)/\sqrt{\delta}} \label{eqn:d2l} \eeq
 
 \item[\textbf{L2T}]
 \end{description}
-
-   Now, we have all the information necessary to compute (\ref{gt}) at all the targets in $T_d$. We proceed in the following two steps.
-
+   
 Until now we have evaluated (\ref{gt}) at all the targets in $T_d$. Now, only the targets in $T_e$ remain. First, we execute
  the W2L step and convert all the plane-wave expansions to local expansions at target boxes by using the algorithms of 
  Section \ref{sc:sweep}. This accounts for all the sources in $T_e$. 
@@ -142,7 +142,9 @@ and send its information ($y$ and $f(y)$) to processors that own boxes that are 
 to the processors that own leaf nodes that are contained within this FGT box. 
 
 
-{\em (viii) L2T.} At this stage, all boxes must have formed their local expansions and $F(x)$ must have been computed at the points $x \in T_d$. The only remaining step is to compute $F(x)$ for points in $x \in T_e$ by using (\ref{eqn:l2t}) which can be done independently in each processor. 
+{\em (viii) L2T.} At this stage, all boxes must have formed their local expansions and $F(x)$ must have been computed at
+ the points $x \in T_d$. The only remaining step is to compute $F(x)$ for points in $x \in T_e$ by using (\ref{eqn:l2t}) 
+ which can be done independently in each processor. 
 
 We summarize the overall algorithm and give the complexity estimates for the main steps in Algorithm \ref{a:ofgt}.  
 
@@ -151,13 +153,13 @@ We summarize the overall algorithm and give the complexity estimates for the mai
 \em Parallel FGT for non-uniform distributions}
 {\tt
 \begin{algorithmic}
-\STATE Input: $N$ Points, $\delta$, $\epsilon$, $M$ and $c$
+\STATE Input: $N$ Points, $\delta$, $\epsilon$, $m$ and $c$
 \STATE 1. Create a regular grid of FGT boxes partitioned across processors such that \\
  (A) the size of each box is $h = \sqrt{\delta}$, \\
  (B) each processor owns a sub-grid of boxes and \\
  (C) each box is owned by an unique processor. \\
 
-\STATE 2. Construct a linear octree such that each leaf contains fewer than $M$ points. \\
+\STATE 2. Construct a linear octree such that each leaf contains fewer than $m$ points. \\
 \hfill $\bigO(\frac{N}{n_p} \log{\frac{N}{n_p}} + n_p \log{n_p})$
 
 \STATE 3. Mark each leaf as either ``expand'' or ``direct'' based on $c$ and $\delta$.
