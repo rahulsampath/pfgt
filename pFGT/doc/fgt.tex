@@ -18,7 +18,7 @@ where $k = (k_1, k_2, k_3)$ and the parameters $p$ and $L$ are determined by the
 
 The algorithm begins by partitioning the domain into uniform boxes of size $\sqrt{\delta}$ each. A Gaussian located at the center of a box $B$ decays below $\epsilon$ beyond a fixed number of boxes. We call these boxes the interaction list of $B$, denoted by $\mathcal{I}[B]$. 
 
-In the fast algorithm, a target point $x \in D$ receives information from a source point $y \in B$ via three stages:
+In the fast algorithm, a target point $x \in D$ receives information from a source point $y \in B$ in three steps:
 \begin{description}
 \item[\textbf{S2W}] The influence of all the sources in the box $B$ is condensed into a plane-wave expansion.
             \beq w_k = \sum_{y \in B} f(y) e^{i\lambda k \cdot (c^B - y)} \quad \forall\quad |k| \leq p \eeq
