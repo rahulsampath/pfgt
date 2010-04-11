@@ -109,11 +109,10 @@ every target $x \in \mathcal[y]$ and updates the potential at $x$ as
 
 \item[\textbf{W2L}] This step is identical to the W2L step discussed in Sections \ref{sc:fgt} and \ref{sc:sweep}.
 
-\item[\textbf{D2L}] For each source, $y$, within some direct leaf, find all FGT boxes, $B$, such that $\mathcal{I}[y]$ intersects $B$ and
-modify the local expansion of $B$
-visiting every box $D \in T_e$ in the interaction list of a source $y \in T_d$ and modifying the local expansion as 
-%
-\beq v_k  \,+=\, \, f(y) e^{i z_k \cdot (c^D - y)/\sqrt{\delta}} \label{eqn:d2l} \eeq
+\item[\textbf{D2L}] For each source, $y$, within some direct leaf, find all FGT boxes, $D$, such that $\mathcal{I}[y]$ intersects $D$ and
+modify the local expansion, $v_k$, of $D$ as 
+
+\beq v_k  \,+=\, \, f(y) e^{i \lambda k \cdot (c^D - y)} \label{eqn:d2l} \eeq
 
 \item[\textbf{L2T}] For each target, $x$, within some expand leaf, evaluate the transform using the local 
 expansion of the FGT box, $D$, that contains $x$ using (\ref{eqn:l2t}).
