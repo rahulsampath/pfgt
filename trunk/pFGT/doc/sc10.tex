@@ -92,7 +92,6 @@ Several acceleration techniques for forming and evaluating plane wave expansion 
 {\em
 A few assumptions to simplify our implementation: 
 \begin{enumerate}
-\item Each processor has finite number of FGT boxes. If we also care for the contrary, we would have a box that spans across processors and hence S2W and L2T also need to parallelized. Not a big deal, but simplifies our job for now. 
 \item We will assume that $\delta = 2^{-n}$ for some even number n and FGT box size $h = \sqrt{\delta}$. This will help us in reducing book-keeping: otherwise, in the octree case, we will have FGT boxes cutting across leaf nodes. 
 \end{enumerate}
 }
