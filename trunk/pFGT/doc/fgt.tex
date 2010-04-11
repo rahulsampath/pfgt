@@ -22,9 +22,11 @@ In the fast algorithm, a target point $x \in D$ receives information from a sour
 \begin{description}
 \item[\textbf{S2W}] The influence of all the sources in the box $B$ is condensed into a plane-wave expansion.
             \beq w_k = \sum_{y \in B} f(y) e^{i\lambda k \cdot (c^B - y)} \quad \forall\quad |k| \leq p \eeq
-\item[\textbf{W2L}] The plane-wave expansion of each box $B$ is transmitted to every box $D$ in $\mathcal{I}[B]$. By superposition, the ``local'' plane-wave expansion of $D$ gets modified as
+\item[\textbf{W2L}] The plane-wave expansion of each box $B$ is transmitted to every box $D$ in $\mathcal{I}[B]$. By
+ superposition, the ``local'' plane-wave expansion of $D$ gets modified as
             \beq v_k += w_k e^{i\lambda k \cdot (c^D - c^B)} \label{e:w2l}\eeq
-\item[\textbf{L2T}] The transform (\ref{gt}) is computed at each target by evaluating the local expansion of the box it is                          contained in.
+\item[\textbf{L2T}] The transform (\ref{gt}) is computed at each target by evaluating the local expansion of the 
+box it is contained in.
             \beq F(x) = \sum_{|k| \leq p} \hat{G}(k) v_k e^{i\lambda k \cdot (x - c^D)} \label{eqn:l2t}\eeq
 \end{description} 
 
