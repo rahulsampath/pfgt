@@ -65,6 +65,7 @@ modified version of the same in Section \ref{sc:sweep}. The total cost of the ex
 %If the kernel values are known at the discrete points $\{Lk/p \}_{|k| \leq p}$, then we can compute $\hat{G}$ using discrete Fourier transform. 
 
 \subsection{Parallel truncation algorithm}
+\label{sc:parallelTruncation}
 We divide the unit cube into a regular grid of cuboidal blocks and distribute the blocks across $n_p$ processors
  such that \begin{inparaenum}[\itshape a\upshape)]
 \item each processor owns exactly one block, and, \item each block is owned by an unique processor\end{inparaenum}.
@@ -72,6 +73,7 @@ We divide the unit cube into a regular grid of cuboidal blocks and distribute th
  for that source and send the source to those processors. Each processor then evaluates (\ref{eqn:truncation}) for all its targets.
  
 \subsection{Parallel expansion algorithm} 
+\label{sc:parallelExpansion}
 We create a regular grid of $|B|$ FGT boxes distributed on $n_p$ processors 
 such that {\tt{(a)}} each box is owned by an unique processor and {\tt{(b)}} each processor owns a 
 sub-grid of FGT boxes. For ease of implementation, we assume that $|B| > n_p$. 
