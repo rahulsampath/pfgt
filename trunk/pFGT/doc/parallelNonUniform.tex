@@ -22,7 +22,8 @@ refer to this step as {\textbf{S2W-Comm}}.
 
 In the W2D step, each processor first forms a list of all FGT boxes whose interaction list contains at least one 
 target, $y \in T_d$, owned by this processor. These boxes are sent to the respective processors that own them. The
-owner of an FGT box sends the plane-wave coefficients for that box to the processors that requested them.
+owner of an FGT box sends the plane-wave coefficients for that box to the processors that requested them. After this
+communication, each processor independently computes (\ref{eqn:w2d}).
 
 {\em (iv) D2D.}
 1. For each point (p) within each octant marked as Direct, compute the
