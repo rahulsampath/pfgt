@@ -59,7 +59,10 @@ communication, each processor independently computes (\ref{eqn:w2d}).
  like in the W2L step of the parallel expansion algorithm (Section \ref{sc:parallelExpansion}). Subsequently, each processor 
  independently executes the rest of the W2L step as described in Section \ref{sc:octreefgt}.
 
-In the D2L step, each processor independently computes the contributions
+In the D2L step, each processor first computes its contributions to the local expansions of those FGT boxes that intersect
+ the interaction list of at least one source contained within some direct leaf owned by this processor; this does not 
+ require any communication. Next, we send these contributions to the processors that own the respective FGT boxes. The owner of
+an FGT box will then add the values it receives from other processors to its existing local expansions, $v_k$.
 
 [Rahul - TODO: L2T-Comm, L2T]
 
