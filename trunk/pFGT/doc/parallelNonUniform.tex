@@ -21,7 +21,7 @@ an FGT box will then add the values it receives from other processors to its exi
 refer to this step as {\textbf{S2W-Comm}}.
 
 In the W2D step, each processor first forms a list of all FGT boxes whose interaction list contains at least one 
-target, $y \in T_d$, owned by this processor. These boxes are sent to the respective processors that own them. The
+target, $y \in T_d$, owned by this processor. These boxes are then sent to the respective processors that own them. The
 owner of an FGT box returns the plane-wave coefficients for that box to the processors that requested them. After this
 communication, each processor independently computes (\ref{eqn:w2d}).
 
@@ -86,7 +86,7 @@ We summarize the overall algorithm and give the complexity estimates for the mai
 
 \STATE 11. Execute D2L. 
 
-\STATE 12. Execute L2T-Comm. 
+\STATE 12. Execute L2T-Comm. \hfill $\bigO(p^3\frac{|B|}{n_p})$ 
 
 \STATE 13. Execute L2T. \hfill $\bigO( p^3\frac{N}{n_p})$
 \end{algorithmic}
