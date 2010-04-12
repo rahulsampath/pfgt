@@ -111,7 +111,7 @@ Note, that for any FGT box, $B$, which is contained within some direct leaf the 
   
 \beq F(x) \,+=\, G_\delta(\norm{x - y}) f(y) \label{eqn:d2d} \eeq
 
-We make use of a few properties of the Morton ordering to efficiently search for all targets $x \in T_d \cap \mathcal{I}[y]$. These
+We make use of a few properties of the Morton ordering to search for the targets $x \in T_d \cap \mathcal{I}[y]$ more efficiently. These
 are listed below:
 \begin{enumerate}
 \item Let $r = \sqrt{\delta \ln (\frac{1}{\epsilon})}$, $y_{min} = y - (r, r, r)$ and $y_{max} = y + (r, r, r)$. Then, the Morton id of
@@ -120,6 +120,10 @@ any point in $\mathcal{I}[y]$ will be $\geq$ that of $y_{min}$ and will be $\leq
 \item If the Morton id of a leaf $l_1$ is less than that of another leaf $l_2$, then the Morton id of any point, $z$, which is
  contained within $l_1$ will also be lesser than that of $l_2$.
 \end{enumerate}
+
+ We make use of the above properties along with the fact that $T_d$ is sorted in the Morton ordering and
+ first search for the leaves that contain potential targets rather than searching for the targets directly. After
+ shortlisting the set of candidate leaves, we then search for the relevant targets within them.
 
 \item[\textbf{W2L}] Only the boxes that intersect atleast one leaf node belonging to $T_e$ are non-empty, that is, carry a plane-wave expansion. Based on the distribution of the non-empty boxes, we chose between the modified sweeping algoritms for surface or volume distributions discussed in Section \ref{sc:w2l}. 
 
