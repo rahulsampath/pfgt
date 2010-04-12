@@ -95,12 +95,11 @@ we describe the sequence of steps involved in this algorithm.
 %leaf $\ell \in T_e$ such that $|\ell| > h$, visit each FGT box $B$ that is contained within $\ell$ and
 %form the plane-wave expansion for $B$ using the sources that are contained within $B$ as shown in (\ref{eqn:s2w}).
 
+
+[Add More Motivation here -- Shravan todo] 
 \item[\textbf{S2W}] In this step, we form the plane-wave expansions (\ref{eqn:s2w}) at all the boxes by visiting 
-every leaf node in $T_e$. A particular leaf node $\ell$ can either be contained within a box $B$ or can enclose a
-finite number of boxes\footnote{Since the box size is chosen as $\sqrt{\delta}$, in the general case, there could be cases where boxes and
-leaf nodes overlap partially. Here, we make a simplifying assumption that $\delta = 2^{-n}$ for some positive 
-integer $n$. This assumption can be relaxed easily by setting the box size as $2^{\lfloor \log_2 \sqrt{\delta} \rfloor}$ but
-the error estimates for FGT need to be modified.}. In the former case, we add the contributions from all sources
+every leaf node in $T_e$. A particular leaf node $\ell$ can either be contained within a box $B$ or can enclose multiple number of boxes\footnote{Since the box size is chosen as $\sqrt{\delta}$, in the general case, there could be cases where boxes and leaf nodes overlap partially. Here, we make a simplifying assumption that $\delta = 2^{-n}$ for some positive 
+integer $n$. This assumption can be relaxed easily by setting the box size to be $2^{\lfloor \log_2 \sqrt{\delta} \rfloor}$ correspondinlgy modifying the error estimates for FGT.}. In the former case, we add the contributions from all sources
 within $\ell$ to the plane-wave expansion at $B$. In the latter case, we visit each constituent box $B$ and form 
 its plane-wave expansion using only those sources that are contained in $B$.
 
@@ -117,7 +116,7 @@ Note, that for any FGT box, $B$, which is contained within some direct leaf the 
   
 \beq F(x) \,+=\, G_\delta(\norm{x - y}) f(y) \label{eqn:d2d} \eeq
 
-\item[\textbf{W2L}] This step is identical to the W2L step discussed in Sections \ref{sc:fgt} and \ref{sc:sweep}.
+\item[\textbf{W2L}] Only the boxes that intersect atleast one leaf node belonging to $T_e$ are non-empty, that is, carry a plane-wave expansion. Based on the distribution of the non-empty boxes, we chose between the modified sweeping algoritms for surface or volume distributions discussed in Section \ref{sc:w2l}. 
 
 \item[\textbf{D2L}] For each source, $y$, within some direct leaf, find all FGT boxes, $D$, such that $\mathcal{I}[y]$ intersects $D$ and
 modify the local expansion, $v_k$, of $D$ as: 
