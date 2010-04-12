@@ -64,22 +64,10 @@ In the D2L step, each processor first computes its contributions to the local ex
  require any communication. Next, we send these contributions to the processors that own the respective FGT boxes. The owner of
 an FGT box will then add the values it receives from other processors to its existing local expansions, $v_k$.
 
-[Rahul - TODO: L2T-Comm, L2T]
-
-%{\em (vi) D2L.}  by visiting every box $D \in T_e$ in the interaction list of a source $y \in T_d$ and modifying the local expansion as 
-%%
-%\beq v_k += \, f(y) e^{i z_k \cdot (c^D - y)/\sqrt{\delta}} \eeq
-%%
-%This requires a one-step communication: in each processor, we visit every source $y \in T_d$ 
-%and send its information ($y$ and $f(y)$) to processors that own boxes that are in $\mathcal{I}[y]$.
-%
-%{\em (vii) L2T-Comm.} This step is a dual of S2W-Comm. Here, we send the local expansions formed at boxes in each processor 
-%to the processors that own leaf nodes that are contained within this FGT box. 
-%
-%{\em (viii) L2T.} At this stage, all boxes must have formed their local expansions and $F(x)$ must have been computed at
-% the points $x \in T_d$. The only remaining step is to compute $F(x)$ for points in $x \in T_e$ by using (\ref{eqn:l2t}) 
-% which can be done independently in each processor. 
-
+The local expansions for each FGT box that overlaps at least one expand leaf are then sent to the processors that own
+ the corresponding expand leaf. We refer to this step as {\textbf{L2T-Comm}} and it is like the dual of the S2W-Comm step. 
+ 
+Finally, each processor independently executes the L2T step and computes the transform at all targets within its portion of $T_e$.
 
 We summarize the overall algorithm and give the complexity estimates for the main steps in Algorithm \ref{a:ofgt}.  
 
