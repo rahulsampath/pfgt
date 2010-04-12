@@ -54,12 +54,14 @@ communication, each processor independently computes (\ref{eqn:w2d}).
 %interaction list of p. For each of these points, add the contribution to
 %the Gauss transform from p.
 
- In the W2L step, we communicate the plane-wave expansions of the ``{\em ghost}'' boxes\footnote{We refer to any box that
- is owned by a different CPU but lies in the interaction list of some box owned by this CPU as a ghost box.} 
- as described in Section \ref{sc:parallelExpansion}. Then, each processor independently executes the rest of the W2L step as
- described in Section \ref{sc:octreefgt}.
+ Next, we communicate the plane-wave expansions of the ``{\em ghost}'' boxes\footnote{We refer to any box that
+ is owned by a different CPU but lies in the interaction list of some box owned by this CPU as a ghost box.} just
+ like in the W2L step of the parallel expansion algorithm (Section \ref{sc:parallelExpansion}). Subsequently, each processor 
+ independently executes the rest of the W2L step as described in Section \ref{sc:octreefgt}.
 
-[Rahul - TODO: D2L, L2T-Comm, L2T]
+In the D2L step,
+
+[Rahul - TODO: L2T-Comm, L2T]
 
 %{\em (vi) D2L.} This step is a dual of the W2D. Here, we compute the influence of $T_d$ on $T_e$ by visiting every box $D \in T_e$ in the interaction list of a source $y \in T_d$ and modifying the local expansion as 
 %%
