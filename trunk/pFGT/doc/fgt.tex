@@ -65,16 +65,17 @@ modified version of the same in Section \ref{sc:sweep}. The total cost of the ex
 %If the kernel values are known at the discrete points $\{Lk/p \}_{|k| \leq p}$, then we can compute $\hat{G}$ using discrete Fourier transform. 
 
 \subsection{Parallel truncation algorithm}
-We divide the unit cube into a regular grid of boxes and distribute the boxes across $n_p$ processors
- such that {\tt{(a)}} each processor owns exactly one box and {\tt{(b)}} each box is owned by an unique processor.
- For each source owned by this processor, we find out the processors that contain boxes which intersect the interaction list
+We divide the unit cube into a regular grid of cuboidal blocks and distribute the blocks across $n_p$ processors
+ such that \begin{inparaenum}[\itshape a\upshape)]
+\item each processor owns exactly one block, and, \item each block is owned by an unique processor\end{inparaenum}.
+ For each source owned by this processor, we find out the processors that contain blocks which intersect the interaction list
  for that source and send the source to those processors. Each processor then evaluates (\ref{eqn:truncation}) for all its targets.
  
 \subsection{Parallel expansion algorithm} 
 We create a regular grid of $|B|$ FGT boxes distributed on $n_p$ processors 
 such that {\tt{(a)}} each box is owned by an unique processor and {\tt{(b)}} each processor owns a 
 sub-grid of FGT boxes. For ease of implementation, we assume that $|B| > n_p$. 
- We use PETSc's \cite{petsc-user-ref, petsc-home-page} DA module to manage this distributed regular grid.
+ We use PETSc's \cite{petsc-home-page} DA module to manage this distributed regular grid.
  The S2W and L2T steps are embarassingly parallel; in the former step, each processor independently forms the 
  plane-wave expansions for each box that it owns and in the latter step, each processor
  independently computes the transform (\ref{gt}) for each target contained within some box owned by
