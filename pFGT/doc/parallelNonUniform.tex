@@ -14,13 +14,12 @@ We create a regular grid of FGT boxes partitioned across processors such that
  these steps. So, it is better to have good load balance for the expand and direct leaves independently and hence
  we partition the two sets, $T_d$ and $T_e$, independently.
 
+The plane-wave expansions in the S2W step can be computed independently by each processor, without any communication.
+However, the expand leaves and their corresponding FGT boxes may belong to different processors. So, the plane-wave 
+expansions computed in the S2W step must be sent to the processors that own the corresponding FGT boxes. The owner of
+an FGT box will then add the values it receives from other processors to its existing plane-wave expansions, $w_k$. We 
+refer to this step as {\textbf{S2W-Comm}}.
  
-
-Then the following are the different stages of the parallel algorithm:
-
-{\em (i) S2W}. 
-
-{\em (ii) S2W-Comm.} Because the boxes are partitioned by [RAHUL] and the octree is partitioned by Morton ordering, it is not necessary that the boxes contained in a leaf (or vice-versa) belong to the same processor. Therefore, after the S2W step, we send the plane-wave expansions formed in each processor to the owner of the respective boxes. Then, we visit each box $B \in T_e$ and add all the plane-wave expansions formed at different processors to obtain $\{w_k \}_{|k| \leq p}$.  
 
 {\em (iii) W2D.} At this stage, all processors have finished forming the plane-wave expansions at their respective boxes. 
 Now, we use this information to evaluate the influence of $T_e$ on $T_d$. Each box $B \in T_e$ must visit every target point $x \in T_d$ in its interaction list and evaluate the Gauss transform using
