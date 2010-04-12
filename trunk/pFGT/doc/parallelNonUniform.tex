@@ -22,7 +22,7 @@ refer to this step as {\textbf{S2W-Comm}}.
 
 In the W2D step, each processor first forms a list of all FGT boxes whose interaction list contains at least one 
 target, $y \in T_d$, owned by this processor. These boxes are sent to the respective processors that own them. The
-owner of an FGT box sends the plane-wave coefficients for that box to the processors that requested them. After this
+owner of an FGT box returns the plane-wave coefficients for that box to the processors that requested them. After this
 communication, each processor independently computes (\ref{eqn:w2d}).
 
 [Rahul - TODO: D2D]
@@ -59,11 +59,11 @@ communication, each processor independently computes (\ref{eqn:w2d}).
  like in the W2L step of the parallel expansion algorithm (Section \ref{sc:parallelExpansion}). Subsequently, each processor 
  independently executes the rest of the W2L step as described in Section \ref{sc:octreefgt}.
 
-In the D2L step,
+In the D2L step, each processor independently computes the contributions
 
 [Rahul - TODO: L2T-Comm, L2T]
 
-%{\em (vi) D2L.} This step is a dual of the W2D. Here, we compute the influence of $T_d$ on $T_e$ by visiting every box $D \in T_e$ in the interaction list of a source $y \in T_d$ and modifying the local expansion as 
+%{\em (vi) D2L.}  by visiting every box $D \in T_e$ in the interaction list of a source $y \in T_d$ and modifying the local expansion as 
 %%
 %\beq v_k += \, f(y) e^{i z_k \cdot (c^D - y)/\sqrt{\delta}} \eeq
 %%
