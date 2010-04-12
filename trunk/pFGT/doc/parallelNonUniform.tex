@@ -25,50 +25,54 @@ target, $y \in T_d$, owned by this processor. These boxes are sent to the respec
 owner of an FGT box sends the plane-wave coefficients for that box to the processors that requested them. After this
 communication, each processor independently computes (\ref{eqn:w2d}).
 
-{\em (iv) D2D.}
-1. For each point (p) within each octant marked as Direct, compute the
-point (A) in the -ve corner and the point (B) in the +ve corner of p's
-interaction list. Note, the Morton ids of all points in the interaction
-list of point p will be >= that of point A and <= that of point B.
-2. Gather the Morton id of the first (in the Morton sorted list) direct
-octant on each processor. This will give the smallest Morton id of
-direct octants on each processor. Handle the case where some processors
-do not contain any direct octants.
-3. Figure out the processor with the greatest value <= A in the list
-computed in step 2.
-4. Figure out the processor with the greatest value <= B in the list
-computed in step 2.
-5. Send point p and the corresponding source f to all processors that
-lie between the processors computed in step 3 and step 4. Note, we are 
-using the property that if the Morton id of Octant C < Morton id of 
-Octant D then the Morton id of any point within Octant C is >  Morton
-id of Octant C and is < Morton id of Octant D.
-6. For each point p recieved in step 5, compute the
-point (A) in the -ve corner and the point (B) in the +ve corner of p's
-interaction list. Find the direct octant O1 with the maximum Morton id that
-is <= A and the direct octant O2 with the maximum Morton id that is <=
-B. Loop over the set of Direct octants O with Morton ids >= that of O1
-and <= that of O2. Loop over the set of points within O that lie in the
-interaction list of p. For each of these points, add the contribution to
-the Gauss transform from p.
+[Rahul - TODO: D2D]
+
+%{\em (iv) D2D.}
+%1. For each point (p) within each octant marked as Direct, compute the
+%point (A) in the -ve corner and the point (B) in the +ve corner of p's
+%interaction list. Note, the Morton ids of all points in the interaction
+%list of point p will be >= that of point A and <= that of point B.
+%2. Gather the Morton id of the first (in the Morton sorted list) direct
+%octant on each processor. This will give the smallest Morton id of
+%direct octants on each processor. Handle the case where some processors
+%do not contain any direct octants.
+%3. Figure out the processor with the greatest value <= A in the list
+%computed in step 2.
+%4. Figure out the processor with the greatest value <= B in the list
+%computed in step 2.
+%5. Send point p and the corresponding source f to all processors that
+%lie between the processors computed in step 3 and step 4. Note, we are 
+%using the property that if the Morton id of Octant C < Morton id of 
+%Octant D then the Morton id of any point within Octant C is >  Morton
+%id of Octant C and is < Morton id of Octant D.
+%6. For each point p recieved in step 5, compute the
+%point (A) in the -ve corner and the point (B) in the +ve corner of p's
+%interaction list. Find the direct octant O1 with the maximum Morton id that
+%is <= A and the direct octant O2 with the maximum Morton id that is <=
+%B. Loop over the set of Direct octants O with Morton ids >= that of O1
+%and <= that of O2. Loop over the set of points within O that lie in the
+%interaction list of p. For each of these points, add the contribution to
+%the Gauss transform from p.
 
 
 Then, we execute the W2L step as described in Sections \ref{sc:fgt} and \ref{sc:sweep}. 
 
+[Rahul - TODO: D2L, L2T-Comm, L2T]
 
-{\em (vi) D2L.} This step is a dual of the W2D. Here, we compute the influence of $T_d$ on $T_e$ by visiting every box $D \in T_e$ in the interaction list of a source $y \in T_d$ and modifying the local expansion as 
+%{\em (vi) D2L.} This step is a dual of the W2D. Here, we compute the influence of $T_d$ on $T_e$ by visiting every box $D \in T_e$ in the interaction list of a source $y \in T_d$ and modifying the local expansion as 
+%%
+%\beq v_k += \, f(y) e^{i z_k \cdot (c^D - y)/\sqrt{\delta}} \eeq
+%%
+%This requires a one-step communication: in each processor, we visit every source $y \in T_d$ 
+%and send its information ($y$ and $f(y)$) to processors that own boxes that are in $\mathcal{I}[y]$.
 %
-\beq v_k += \, f(y) e^{i z_k \cdot (c^D - y)/\sqrt{\delta}} \eeq
+%{\em (vii) L2T-Comm.} This step is a dual of S2W-Comm. Here, we send the local expansions formed at boxes in each processor 
+%to the processors that own leaf nodes that are contained within this FGT box. 
 %
-This requires a one-step communication: in each processor, we visit every source $y \in T_d$ 
-and send its information ($y$ and $f(y)$) to processors that own boxes that are in $\mathcal{I}[y]$.
+%{\em (viii) L2T.} At this stage, all boxes must have formed their local expansions and $F(x)$ must have been computed at
+% the points $x \in T_d$. The only remaining step is to compute $F(x)$ for points in $x \in T_e$ by using (\ref{eqn:l2t}) 
+% which can be done independently in each processor. 
 
-{\em (vii) L2T-Comm.} This step is a dual of S2W-Comm. Here, we send the local expansions formed at boxes in each processor 
-to the processors that own leaf nodes that are contained within this FGT box. 
-
-{\em (viii) L2T.} At this stage, all boxes must have formed their local expansions and $F(x)$ must have been computed at
- the points $x \in T_d$. The only remaining step is to compute $F(x)$ for points in $x \in T_e$ by using (\ref{eqn:l2t}) 
- which can be done independently in each processor. 
 
 We summarize the overall algorithm and give the complexity estimates for the main steps in Algorithm \ref{a:ofgt}.  
 
