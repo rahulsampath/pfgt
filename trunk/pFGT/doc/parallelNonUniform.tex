@@ -25,36 +25,16 @@ target, $y \in T_d$, owned by this processor. These boxes are sent to the respec
 owner of an FGT box returns the plane-wave coefficients for that box to the processors that requested them. After this
 communication, each processor independently computes (\ref{eqn:w2d}).
 
-[Rahul - TODO: D2D]
+Next, gather the Morton id of the first (in the sorted list) direct leaf on each processor. Let this list
+be denoted by $S$; this will be used to identify the processor that owns a given leaf/point. Each 
+processor then sends each source, $y$, that lies within its portion of $T_d$ to those processors 
+that contain direct leaves with Morton ids that overlap with the range $[\mathcal{Z}(y_{min}), \mathcal{Z}(y_{max})]$, where
+ $y_{min}$ and $y_{max}$ are defined as in Section \ref{sc:octreefgt}. We identify these processors 
+ by first finding $s_1$ and $s_2$ such that $s_1$ is the greatest value in $S$ that is $\leq \mathcal{Z}(y_{min})$ and 
+ $s_2$ is the greatest value in $S$ that is $\leq \mathcal{Z}(y_{max})$ and then selecting all processors that contain
+ direct leaves with Morton ids that lie in $[s_1, s_2]$. Each processor then computes (\ref{eqn:d2d}) independently.
 
-%{\em (iv) D2D.}
-%1. For each point (p) within each octant marked as Direct, compute the
-%point (A) in the -ve corner and the point (B) in the +ve corner of p's
-%interaction list. Note, the Morton ids of all points in the interaction
-%list of point p will be >= that of point A and <= that of point B.
-%2. Gather the Morton id of the first (in the Morton sorted list) direct
-%octant on each processor. This will give the smallest Morton id of
-%direct octants on each processor. Handle the case where some processors
-%do not contain any direct octants.
-%3. Figure out the processor with the greatest value <= A in the list
-%computed in step 2.
-%4. Figure out the processor with the greatest value <= B in the list
-%computed in step 2.
-%5. Send point p and the corresponding source f to all processors that
-%lie between the processors computed in step 3 and step 4. Note, we are 
-%using the property that if the Morton id of Octant C < Morton id of 
-%Octant D then the Morton id of any point within Octant C is >  Morton
-%id of Octant C and is < Morton id of Octant D.
-%6. For each point p recieved in step 5, compute the
-%point (A) in the -ve corner and the point (B) in the +ve corner of p's
-%interaction list. Find the direct octant O1 with the maximum Morton id that
-%is <= A and the direct octant O2 with the maximum Morton id that is <=
-%B. Loop over the set of Direct octants O with Morton ids >= that of O1
-%and <= that of O2. Loop over the set of points within O that lie in the
-%interaction list of p. For each of these points, add the contribution to
-%the Gauss transform from p.
-
- Next, we communicate the plane-wave expansions of the ``{\em ghost}'' boxes\footnote{We refer to any box that
+ We then communicate the plane-wave expansions of the ``{\em ghost}'' boxes\footnote{We refer to any box that
  is owned by a different CPU but lies in the interaction list of some box owned by this CPU as a ghost box.} just
  like in the W2L step of the parallel expansion algorithm (Section \ref{sc:parallelExpansion}). Subsequently, each processor 
  independently executes the rest of the W2L step as described in Section \ref{sc:octreefgt}.
