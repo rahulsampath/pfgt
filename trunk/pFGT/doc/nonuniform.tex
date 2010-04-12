@@ -80,16 +80,24 @@ octant is its front lower left corner.
 \draw[step = 0.5] (13,9) grid (14,10);    	    	    	    	
     	    	    	    	
 \end{tikzpicture}
-\caption{\label{f:directExpand} An example of a tree whose leaf nodes are distinguished based 
-on their size. The ``large'' leaf nodes shown in brown color belong to $T_d$ and 
-the ``small'' leaf nodes shown in blue color belong to $T_e$.}  
+\caption{\label{f:directExpand} An example of a quadtree (2D analogue of octree) whose leaf nodes are distinguished based 
+on their size. The ``large'' leaf nodes shown in blue color belong to $T_d$ and 
+the ``small'' leaf nodes shown in brown color belong to $T_e$.}  
 \end{center}
 \end{figure}
 
-We denote the set of direct leaves by $T_d$ and use $T_e$ to represent the set of expand leaves. Next,
-we describe the sequence of steps involved in this algorithm.
+We denote the set of direct leaves by $T_d$ and use $T_e$ to represent the set of expand leaves. In order to achieve optimal complexity, the orginial FGT \cite{fgt} choses different schemes for transmitting the source information to the targets 
+depending on the sources and target distributions. It, however, did not consider the case where $\delta$ is small, wherein, it will generate large number of boxes and thereby higher computational cost. An advantange of our octree based algorithm is that all these cases including the small $\delta$ case can be efficiently handled with just the one spatial decomposition into direct and expand leaves. We first summarize how the information is transmitted from a source $y$ to a target $x$ and then describe in detail all the steps involved in this algorithm.
 
-[Add More Motivation here -- Shravan todo] 
+\bean
+y & x &  \\
+T_e & T_e & y \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\textbf{W2L}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} x  \\
+T_e & T_d & y \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\textbf{W2D}} x  \\
+T_d & T_e & y \xrightarrow[]{\textbf{D2L}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} x  \\
+T_d & T_d & y \xrightarrow[]{\textbf{D2D}} x  \\
+\eean
+
+
 
 \begin{description}
 \item[\textbf{S2W}] In this step, we form the plane-wave expansions (\ref{eqn:s2w}) at all the boxes by visiting 
@@ -98,14 +106,10 @@ integer $n$. This assumption can be relaxed easily by setting the box size to be
 within $\ell$ to the plane-wave expansion at $B$. In the latter case, we visit each constituent box $B$ and form 
 its plane-wave expansion using only those sources that are contained in $B$.
 
-\item[\textbf{W2D}] Initialize the transform at all targets within some direct leaf to zero. For
- each target, $x$, within some direct leaf, find all FGT boxes, $B$, such that $\mathcal{I}[B]$ contains $x$ and
- add the contributions from the respective plane-wave expansion, $w_k$ to the transform at the target as: 
-
+\item[\textbf{W2D}] In this step, the influence of all the sources in $T_e$ is accumulated at all the targets in $T_d$. First, we initialize the transform at all targets in $T_d$ to zero. Then, for each target $x \in T_d$, we find all FGT boxes $B \in T_e$ that are within the support of the kernel centered at $x$. We add the contribution of sources in $B$ to the transform at the $x$ using its plane-wave expansion: 
+%
 \beq F(x) \, +=\, \sum_{|k| \leq p} \hat{G}(k)  w_k e^{i \lambda k \cdot (x - c^B)} \label{eqn:w2d} \eeq
-
-Note, for any FGT box, $B$, which is contained within some direct leaf the corresponding $w_k$ is zero.
-
+%
 \item[\textbf{D2D}] For each source $y \in T_d$, find all targets $x \in T_d$ such that $x \in \mathcal{I}[y]$ and
  modify the transform at $x$ as:
   
@@ -113,30 +117,28 @@ Note, for any FGT box, $B$, which is contained within some direct leaf the corre
 
 We make use of a few properties of the Morton ordering to search for the targets $x \in T_d \cap \mathcal{I}[y]$ more efficiently. These
 are listed below:
-\begin{enumerate}
-\item Let $r = \sqrt{\delta \ln (\frac{1}{\epsilon})}$, $y_{min} = y - (r, r, r)$ and $y_{max} = y + (r, r, r)$. Then, the Morton id of
-any point in $\mathcal{I}[y]$ will be $\geq$ that of $y_{min}$ and will be $\leq$ that of $y_{max}$.
+\begin{itemize}
+\item Let $r = \sqrt{\delta \ln (\frac{1}{\epsilon})}$, $y_{min} = y - (r, r, r)$ and $y_{max} = y + (r, r, r)$. Then, the Morton id of any point in $\mathcal{I}[y]$ will be greater than or equal to the Morton id of $y_{min}$ and less than or equal to that of $y_{max}$.
 \item If a point, $z$, is contained within a leaf, $\ell$, then the Morton id of $z$ will be greater than that of $\ell$.
 \item If the Morton id of a leaf $l_1$ is less than that of another leaf $l_2$, then the Morton id of any point, $z$, which is
  contained within $l_1$ will also be lesser than that of $l_2$.
-\end{enumerate}
+\end{itemize}
 
  We make use of the above properties along with the fact that $T_d$ is sorted in the Morton ordering and
- first search for the leaves that contain potential targets rather than searching for the targets directly. After
+ search for the leaves that contain potential targets rather than searching for the targets directly. After
  shortlisting the set of candidate leaves, we then search for the relevant targets within them.
 
-\item[\textbf{W2L}] Only the boxes that share sources with atleast one leaf node belonging to $T_e$ are non-empty, that is,
+\item[\textbf{W2L}] Only the boxes that share sources with atleast one expand leaf node are non-empty, that is,
  carry a plane-wave expansion. Based on the distribution of the non-empty boxes, we choose between the modified sweeping
- algoritms for surface or volume distributions discussed in Section \ref{sc:sweep}. 
+ algorithms for surface or volume distributions discussed in Section \ref{sc:sweep}. 
 
-\item[\textbf{D2L}] This step is the dual of the W2D step. Here, we compute the influence of $T_d$ on $T_e$. 
-For each source, $y$, within some direct leaf, we find all FGT boxes, $D$, such that $\mathcal{I}[y]$ intersects $D$ and
-modify the local expansion, $v_k$, of $D$ as: 
+\item[\textbf{D2L}] This step is the dual of the W2D step. Here, we accumulate the influence of sources in $T_d$ at the targets in $T_e$. For each source $y \in T_d$, we find every box $D$ that is within the support of the kernel centered at $y$ and
+modify its local expansion as: 
 
 \beq v_k  \,+=\, \, f(y) e^{i \lambda k \cdot (c^D - y)} \label{eqn:d2l} \eeq
 
-\item[\textbf{L2T}] For each target, $x$, within some expand leaf, evaluate the transform using the local 
-expansion of the FGT box, $D$, that contains $x$ using (\ref{eqn:l2t}).
+\item[\textbf{L2T}] For each target $x \in T_e$, we evaluate the transform using the local 
+expansion of the box $D$ that contains $x$ using equation (\ref{eqn:l2t}).
 \end{description}
 
 
