@@ -80,7 +80,9 @@ octant is its front lower left corner.
 \draw[step = 0.5] (13,9) grid (14,10);    	    	    	    	
     	    	    	    	
 \end{tikzpicture}
-\caption{\label{f:directExpand} The direct and expand leaves are colored in blue and brown, respectively.}  
+\caption{\label{f:directExpand} An example of a tree whose leaf nodes are distinguished based 
+on their size. The ``large'' leaf nodes shown in brown color belong to $T_d$ and 
+the ``small'' leaf nodes shown in blue color belong to $T_e$.}  
 \end{center}
 \end{figure}
 
@@ -88,10 +90,19 @@ We denote the set of direct leaves by $T_d$ and use $T_e$ to represent the set o
 we describe the sequence of steps involved in this algorithm.
 
 \begin{description}
-\item[\textbf{S2W}] For each leaf $\ell \in T_e$ such that $|\ell| \leq h$, add the contributions from all sources within $\ell$
-to the plane-wave expansion for the FGT box, $B$, that contains $\ell$ using (\ref{eqn:s2w}). For each leaf $\ell \in T_e$ such that $|\ell| > h$,
-visit each FGT box $B$ that is contained within $\ell$ and form the plane-wave expansion for $B$ using the sources that are contained within $B$
-as shown in (\ref{eqn:s2w}).
+%\item[\textbf{S2W}] For each leaf $\ell \in T_e$ such that $|\ell| \leq h$, add the contributions from all sources within $\ell$
+%to the plane-wave expansion for the FGT box, $B$, that contains $\ell$ using (\ref{eqn:s2w}). For each 
+%leaf $\ell \in T_e$ such that $|\ell| > h$, visit each FGT box $B$ that is contained within $\ell$ and
+%form the plane-wave expansion for $B$ using the sources that are contained within $B$ as shown in (\ref{eqn:s2w}).
+
+\item[\textbf{S2W}] In this step, we form the plane-wave expansions (\ref{eqn:s2w}) at all the boxes by visiting 
+every leaf node in $T_e$. A particular leaf node $\ell$ can either be contained within a box $B$ or can enclose a
+finite number of boxes\footnote{Since the box size is chosen as $\sqrt{\delta}$, in the general case, there could be cases where boxes and
+leaf nodes overlap partially. Here, we make a simplifying assumption that $\delta = 2^{-n}$ for some positive 
+integer $n$. This assumption can be relaxed easily by setting the box size as $2^{\lfloor \log_2 \sqrt{\delta} \rfloor}$ but
+the error estimates for FGT need to be modified.}. In the former case, we add the contributions from all sources
+within $\ell$ to the plane-wave expansion at $B$. In the latter case, we visit each constituent box $B$ and form 
+its plane-wave expansion using only those sources that are contained in $B$.
 
 \item[\textbf{W2D}] Initialize the transform at all targets within some direct leaf to zero. For
  each target, $x$, within some direct leaf, find all FGT boxes, $B$, such that $\mathcal{I}[B]$ contains $x$ and
