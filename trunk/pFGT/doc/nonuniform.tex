@@ -125,7 +125,7 @@ any point in $\mathcal{I}[y]$ will be $\geq$ that of $y_{min}$ and will be $\leq
  first search for the leaves that contain potential targets rather than searching for the targets directly. After
  shortlisting the set of candidate leaves, we then search for the relevant targets within them.
 
-\item[\textbf{W2L}] Only the boxes that intersect atleast one leaf node belonging to $T_e$ are non-empty, that is, carry a plane-wave expansion. Based on the distribution of the non-empty boxes, we chose between the modified sweeping algoritms for surface or volume distributions discussed in Section \ref{sc:w2l}. 
+\item[\textbf{W2L}] Only the boxes that share sources with atleast one leaf node belonging to $T_e$ are non-empty, that is, carry a plane-wave expansion. Based on the distribution of the non-empty boxes, we chose between the modified sweeping algoritms for surface or volume distributions discussed in Section \ref{sc:sweep}. 
 
 \item[\textbf{D2L}] For each source, $y$, within some direct leaf, find all FGT boxes, $D$, such that $\mathcal{I}[y]$ intersects $D$ and
 modify the local expansion, $v_k$, of $D$ as: 
