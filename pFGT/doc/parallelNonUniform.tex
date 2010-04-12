@@ -19,7 +19,6 @@ However, the expand leaves and their corresponding FGT boxes may belong to diffe
 expansions computed in the S2W step must be sent to the processors that own the corresponding FGT boxes. The owner of
 an FGT box will then add the values it receives from other processors to its existing plane-wave expansions, $w_k$. We 
 refer to this step as {\textbf{S2W-Comm}}.
- 
 
 {\em (iii) W2D.} At this stage, all processors have finished forming the plane-wave expansions at their respective boxes. 
 Now, we use this information to evaluate the influence of $T_e$ on $T_d$. Each box $B \in T_e$ must visit every target point $x \in T_d$ in its interaction list and evaluate the Gauss transform using
@@ -55,7 +54,8 @@ and <= that of O2. Loop over the set of points within O that lie in the
 interaction list of p. For each of these points, add the contribution to
 the Gauss transform from p.
 
-{\em (v) W2L.} To allow execution of the sweeping algorithm independently on each processor, we exchange the plane-wave expansions of $\lfloor K/2 \rfloor ^3$ boundary boxes across adjacent processors. 
+
+Then, we execute the W2L step as described in Sections \ref{sc:fgt} and \ref{sc:sweep}. 
 
 
 {\em (vi) D2L.} This step is a dual of the W2D. Here, we compute the influence of $T_d$ on $T_e$ by visiting every box $D \in T_e$ in the interaction list of a source $y \in T_d$ and modifying the local expansion as 
@@ -67,7 +67,6 @@ and send its information ($y$ and $f(y)$) to processors that own boxes that are 
 
 {\em (vii) L2T-Comm.} This step is a dual of S2W-Comm. Here, we send the local expansions formed at boxes in each processor 
 to the processors that own leaf nodes that are contained within this FGT box. 
-
 
 {\em (viii) L2T.} At this stage, all boxes must have formed their local expansions and $F(x)$ must have been computed at
  the points $x \in T_d$. The only remaining step is to compute $F(x)$ for points in $x \in T_e$ by using (\ref{eqn:l2t}) 
