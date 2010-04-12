@@ -20,12 +20,9 @@ expansions computed in the S2W step must be sent to the processors that own the 
 an FGT box will then add the values it receives from other processors to its existing plane-wave expansions, $w_k$. We 
 refer to this step as {\textbf{S2W-Comm}}.
 
-{\em (iii) W2D.} At this stage, all processors have finished forming the plane-wave expansions at their respective boxes. 
-Now, we use this information to evaluate the influence of $T_e$ on $T_d$. Each box $B \in T_e$ must visit every target point $x \in T_d$ in its interaction list and evaluate the Gauss transform using
-%
-\beq F(x) = \sum_{|k| \leq p} e^{-\frac{\norm{z_k}^2}{4}} e^{i z_k \cdot (x - c^B)/\sqrt{\delta}} w_k \eeq
-%
-We perform a two-step communication to achieve this. In the first step, we send requests to the owners of boxes that are in the interaction lists of targets in $T_d$. In the second step, the owners send the plane-wave coefficients \footnote{ If $T_d$ receives any requests, it simply sends zero plane-wave coefficients. This can be avoided by an extra communication step}. 
+In the W2D step, each processor first forms a list of all FGT boxes whose interaction list contains at least one 
+target, $y \in T_d$, owned by this processor. These boxes are sent to the respective processors that own them. The
+owner of an FGT box sends the plane-wave coefficients for that box to the processors that requested them.
 
 {\em (iv) D2D.}
 1. For each point (p) within each octant marked as Direct, compute the
