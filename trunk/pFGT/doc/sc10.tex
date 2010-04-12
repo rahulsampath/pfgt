@@ -85,7 +85,7 @@ citecolor = {blue}
 
 \section{Conclusions}
 \label{sc:conclusions}
-We will release the code under GPL in the near future. 
+We have presented fast adaptive parallel algorithms to compute the sum of $N$ Gaussians at $N$ points. The parallel time complexity estimates for our algorithms are $ \mathcal{O} \left(\frac{N}{n_p} \right)$ for uniform point distributions and $ \mathcal{O} \left(\frac{N}{n_p}\log \frac{N}{n_p} + n_p \log n_p\right)$ for nonuniform distributions using $n_p$ CPUs. We incorporate a plane-wave representation of the Gaussian kernel which permits ``diagonal translation''. We use parallel octrees and a new scheme for translating the plane-waves to efficiently handle nonuniform distributions. We presented results that verify the overall scalability of our code. The code developed as part of this paper will be made publically available under the terms of the GNU general public license (GPL). 
 
 %\texbf{Periodic kernels.} If the kernel $G_\delta(x,y)$ is periodic in the unit cube, the fast Fourier transform (FFT) can be used for the fast computation of (\ref{gt}) assuming regular grids. 
 %Several acceleration techniques for forming and evaluating plane wave expansion were introduced in \cite{fggt}. We will incorporate these in our final submission. When the sources come from a tensor product grid in each octant, the expansion constants can be reduced from exponential to linear in dimension. In the sequential case, this speed-up will make the cost of the algorithm comparable to that of fast Fourier transform (FFT). Since the parallel performance of FFT has been sub-optimal till date, we believe that our parallel FGT would be the method of choice even for regular grids. 
