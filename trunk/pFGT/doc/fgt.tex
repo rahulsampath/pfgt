@@ -22,7 +22,7 @@ Central to the expansion algorithm is the finite-term plane-wave expansion of th
 where $k = (k_1, k_2, k_3)$ and the parameters $p$ and $L$ are determined by the required precision. $\hat{G}$ is the discrete Fourier transform of the kernel. For the Gaussian kernel, it is given by
 \beq \hat{G}(k) = \left(\frac{L }{2p\sqrt{\pi}}\right)^3 e^{-\frac{\lambda^2 |k|^2 \delta}{4}}. \label{eqn:ghat}\eeq
 
-The algorithm begins by partitioning the domain into uniform boxes of size $\sqrt{\delta}$ each. The total number of boxes denoted by $|B|$ are then given by $|B| = (1/\sqrt{\delta})^3$. The kernel located at the center of a box $B$ decays below $\epsilon$ beyond a fixed number of boxes. By $K$, we denote this fixed number in 1D ($K^d$ in $d$ dimensions). 
+The algorithm begins by partitioning the domain into uniform boxes of size $\sqrt{\delta}$ each. The total number of boxes denoted by $|B|$ are then given by $|B| = (1/\sqrt{\delta})^3$. The kernel located at the center of a box $B$ decays below $\epsilon$ beyond a fixed number of boxes. We denote this fixed number in 1D by $K$ ($K^d$ in $d$ dimensions). 
 
 \begin{mydef}[Interaction list] {\em The interaction list of a box $B$ denoted by $\mathcal{I}[B]$ is the set of all boxes that are covered by the support of the kernel located at the center of $B$. }
 \end{mydef} 
@@ -63,9 +63,10 @@ The translation costs can be reduced dramatically by using the {\em sweeping alg
 \end{algorithmic}
 }
 
-%\subsection{Kernel independence} 
-%The advantage of the plane-wave expansion (\ref{eqn:ghat}) is that once  
-%If the kernel values are known at the discrete points $\{Lk/p \}_{|k| \leq p}$, then we can compute $\hat{G}$ using discrete Fourier transform. 
+The complexity of the overall algorithm, therefore, is $\bigO(p^3 N)$ independent of $\delta$ (or $|\omega|$).  
+
+\textbf{Kernel independence.} All the steps we have described so far are applicable for any Gaussian-type kernel. 
+Only the L2T step requires the Fourier transform of the kernel, the rest are the same for all the kernels. Given the kernel values at the discrete points $\{Lk/p \}_{|k| \leq p}$, we can compute $\hat{G}$ using the discrete Fourier transform. The parameters $L, p$ and $K$, however, need to be tuned for desired accuracy based on the kernel \cite{fggt}. 
 
 \subsection{Parallel truncation algorithm}
 \label{sc:parallelTruncation}
