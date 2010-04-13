@@ -29,26 +29,19 @@ the recent past. Starting from the earlier work of Greengard and Strain \cite{fg
   function (RBF) interpolation using Gaussians and the latter for pricing weather derivatives. The scheme of \cite{rio09} is based on 
   truncating the sum locally and does not generalize to the case where the Gaussian spread is large. In \cite{yusaku06}, only
    smaller ($N, M = \bigO(100)$) one-dimensional problems were considered and they do not report scalability results beyond $n_p = 16$. 
-To our knowledge, there have been no parallel implementations to date that compute (\ref{gt}) for highly non-uniform
+To our knowledge, there have been no parallel implementations to date that compute (\ref{gt}) for highly nonuniform
  distributions and that are scalable in all parameter ranges. 
 
 {\em Contributions.} The main contributions of this work are summarized below.
 \begin{itemize} 
 %
-\item We present a parallel algorithm for the fast Gauss transform (FGT). For uniform tensor-product grids, we incorporate
- the accelerations introduced in \cite{fggt}. Therefore, the complexity constants in our scheme scale linearly with 
- the number of dimensions as opposed to exponential growth. We demonstrate the scalability of our algorithm using 
- upto 120 billion points. To our knowledge, the Gauss tranform of such a large number of points has not been computed before.
-%
 \item We describe a novel scheme for the translation of plane wave expansions; this is one of the steps in the
- sequential FGT. Our new scheme reduces the storage and computational costs required for this step compared to
-  previous implementations, especially for highly non-uniform point distributions.
+ sequential fast Gausss transform (FGT). Our new scheme reduces the storage and computational costs required for this step compared to previous implementations, especially for highly nonuniform point distributions.
 %
-\item We extend our algorithms to work with non-uniform distributions by using the linear octree data structure. To our knowledge,
-this is the first octree based FGT algorithm. This is an extension of the tree-splitting scheme proposed 
- in \cite{veerapaneni08} for computing continuous Gauss transforms. While the standard FGT could also be used with
- non-uniform distributions its cost increases as $\delta$ decreases; in contrast,
- our octree based algorithm scales well in all ranges of the parameters.
+\item For uniform tensor-product grids, we incorporate the accelerations introduced in \cite{fggt}. Thereby, the complexity constants in our scheme scale linearly with  the number of dimensions as opposed to exponential growth. We present a parallel version of FGT for uniform distributions. We demonstrate the scalability of our algorithm using  upto 120 billion points. To our knowledge, the Gauss transform of such a large number of points has not been computed before.
+%
+\item We extend our algorithms to work with nonuniform distributions by using the linear octree data structure. To our knowledge, this is the first octree based FGT algorithm. This is an extension of the tree-splitting scheme proposed 
+ in \cite{veerapaneni08} for computing continuous Gauss transforms. The cost of the original FGT algorithm increases as $\delta$ decreases; in contrast, our octree based algorithm scales well in all ranges of the parameters.
 
 \item We also present a parallel implementation of our octree based FGT algorithm.
 %
@@ -57,10 +50,9 @@ this is the first octree based FGT algorithm. This is an extension of the tree-s
 The rest of the paper is organized as follows. In Section \ref{sc:fgt}, we present a short description of the
  standard FGT algorithm and discuss our parallel implementation of the same. We introduce a novel translation scheme 
  in Section \ref{sc:sweep}. This scheme significantly improves the computational and storage costs for 
- non-uniform distributions over the {\em sweeping algorithm} described in \cite{greengard98}. In Section \ref{sc:nonuniform}, we present a 
- new octree-based FGT algorithm for non-uniform point distributions; we also discuss
+ nonuniform distributions over the {\em sweeping algorithm} described in \cite{greengard98}. In Section \ref{sc:nonuniform}, we present an octree-based FGT algorithm for nonuniform point distributions; we also discuss
  its parallel implementation. Finally, in Section \ref{sc:results}, we demonstrate the scalability of our algorithms 
- for uniform as well as non-uniform point distributions. In the rest of the paper, we assume the following: (i) the 
+ for uniform as well as nonuniform point distributions. In the rest of the paper, we assume the following: (i) the 
  sources and targets coincide, (ii) all points lie within the unit cube $[0, 1]^3$, and (iii) the kernel $G_\delta$ is a Gaussian. These
  assumptions are purely for ease of exposition, all the algorithms are valid in the general case too. 
  
