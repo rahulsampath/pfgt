@@ -118,7 +118,7 @@ The main idea, however, is similar: once a local expansion is formed at a partic
 
 \begin{prob}[Optimal Traversal] {\em Find an ordering $\{ B_1, B_2, \ldots, B_{|B|}\}$ so that 
 %
-\beq |\mathcal{I}[B_1]| + \sum_{j=1}^{|B|-1} |\mathcal{I}(B_j)\cup\mathcal{I}(B_{j+1}) - \mathcal{I}(B_j)\cap\mathcal{I}(B_{j+1})| \label{eqn:OT}\eeq
+\beq |\mathcal{I}[B_1]| + \sum_{j=1}^{|B|-1} |\mathcal{I}(B_j)\cup\mathcal{I}(B_{j+1}) \setminus \mathcal{I}(B_j)\cap\mathcal{I}(B_{j+1})| \label{eqn:OT}\eeq
 %
 is minimized.}
 \end{prob}
@@ -130,18 +130,22 @@ The first term in equation (\ref{eqn:OT}) is the translation cost of the first b
 {\em Construct a weighted graph $G = (V, E)$ with the non-empty FGT boxes as its vertices. 
 An edge is introduced between vertices $v_i$ and $v_j$ if and only if $B_i \in \mathcal{I}[B_j]$. The weight of an edge between boxes $B_i$ and $B_j$ is given by
 %
-\beq w_{ij} = |\mathcal{I}(B_i)\cup\mathcal{I}(B_{j}) - \mathcal{I}(B_j)\cap\mathcal{I}(B_{j})|. \eeq
+\beq w_{ij} = |\mathcal{I}(B_i)\cup\mathcal{I}(B_{j}) \setminus \mathcal{I}(B_j)\cap\mathcal{I}(B_{j})|. \eeq
 %
 Introduce an additional vertex $v*$ which connects to every vertex $v_i$ in the graph by an edge whose weight is equal to $|\mathcal{I}[B_i]|$. Find the minimum spanning tree of $G$.}
 \end{prob}
 
 The vertex $v*$ encodes the cost of the direct computation at the boxes. We compute the minimum spanning tree of this graph using Kruskal's algorithm \cite{kruskal56} whose complexity is $\mathcal{O}(|E| \log |V|)$, which in our case becomes $\mathcal{O}(K^2 |B| \log |B|)$ because $|E| = K^2 |B|$ and $|V| = |B|$. From a practical perspective, it is sufficient to add the edges for the immediate neighbors of a vertex $v_i$, resulting in $|E| = 13 |B|$ in 3D.\footnote{This can result in an increased cost due to direct computation for isolated boxes.} This approach brings down the complexity of determining the optimal path to $\mathcal{O}(|B| \log |B|)$. 
 
-The traversal is then defined by the tree rooted at $v*$. Depending on how the data is stored, the tree can be traversed in a depth-first or a breadth-first fashion. In our implementation, we use a breadth-first traversal. 
+The traversal is then defined by the tree rooted at $v*$. Depending on how the data is stored, the tree can be traversed in a depth-first or a breadth-first fashion. In our implementation, we use a breadth-first traversal. Once the optimal ordering is computed by solving the Problem \ref{prob:mst}, the traslation step is carried out by traversing the tree and forming the local expansion at the box $B_{j+1}$ using the local expansion at $B_j$ and by substracting the contributions of boxes in \[\mathcal{I}[B_j] \setminus \mathcal{I}(B_j)\cap\mathcal{I}(B_{j+1}) \]
+and adding the contributions of boxes in 
+\[ \mathcal{I}[B_{j+1}] \setminus \mathcal{I}(B_j)\cap\mathcal{I}(B_{j+1}).\] 
+The average time complexity of this scheme is $\bigO(K p^3 |B|)$. 
+We demonstrate the speed-ups achieved for non-empty box distributions on a sphere in Table \ref{tab:ratio}, Figures \ref{fig:speedup} and \ref{fig:sphere}.
    
 %Each of the remaining vertices (FGT boxes) are connected to a maximum of $26$ other vertices (corresponding to the immediate non-zero neighbors of the box). 
 
-{\em A priori cost estimation} For a given non-empty box distribution, we can estimate the cost of the propogation algorithm  described in Section \ref{sec:sweep} by visiting each non-empty box and counting the number of empty boxes in its interaction list. The worst case complexity of this estimation algorithm is $\bigO(K^3 |B|)$. The operation count for the W2L step via propogation algorithm is $15 p^3 |B_{\text{total}}|$ where $|B_{\text{total}}|$ is the number of non-empty boxes plus the number of empty boxes in their interaction lists. 
+{\em A priori cost estimation.} For a given non-empty box distribution, we can estimate the cost of the propogation algorithm  described in Section \ref{sec:sweep} by visiting each non-empty box and counting the number of empty boxes in its interaction list. The worst case complexity of this estimation algorithm is $\bigO(K^3 |B|)$. The operation count for the W2L step via propogation algorithm is $15 p^3 |B_{\text{total}}|$ where $|B_{\text{total}}|$ is the number of non-empty boxes plus the number of empty boxes in their interaction lists. 
 
 The operation count for the W2L step via MST algorithm is $p^3 \mathcal{C}$ where $\mathcal{C}$ is given by (\ref{eqn:OT}). This can be estimated by solving Problem \ref{prob:mst}. Therefore, with a worst case complexity of $\displaystyle \bigO \left((K^3 + \log |B|) |B|\right)$, we can precisely estimate the operation counts for both the algorithms and chose the one with the lowest cost. 
 
@@ -165,7 +169,7 @@ The operation count for the W2L step via MST algorithm is $p^3 \mathcal{C}$ wher
         100K & 20.16M & 2.46M & 8.18 \\  
        1M &   200.56M & 24.5M & 8.18 \\   
 \hline
-\end{tabular}
+\end{tabular} \label{tab:ratio}
 \end{table}
 
 \begin{figure}
@@ -186,13 +190,9 @@ The operation count for the W2L step via MST algorithm is $p^3 \mathcal{C}$ wher
 
     \end{axis}
   \end{tikzpicture}
-  \caption{Speedup obtained for increasing values of the size of the interaction list, $K$, for a fixed geometry. The speedup is proportional to $K$ and the complexity of computing the translations is reduced from $\mathcal{O}(K^2|B|)$ to $\mathcal{O}(K|B|)$.}  
+  \caption{Speedup obtained for increasing values of the size of the interaction list, $K$, for a fixed geometry. The speedup is proportional to $K$ and the complexity of computing the translations is reduced from $\mathcal{O}(K^2|B|)$ to $\mathcal{O}(K|B|)$.}  \label{fig:speedup}
 \end{figure}  
-
-
-
-
-
+%
 \begin{figure}
 \centering 	
 
@@ -229,6 +229,6 @@ table[x=xc,y=yc,z=zc]{sphere_mst.dat};
 \end{tikzpicture}
 
 % \includegraphics[width=0.4\textwidth]{figs/sphere_mst}
-\caption{The cost of translations for the optimal traversal path for a spherical shell distribution ($K=9$). The boxes $B_i$ are color coded based on the cost of performing the translation. For comparison the average cost for direct translations in this case is $99$.}
+\caption{The cost of translations for the optimal traversal path for a spherical shell distribution ($K=9$). The boxes $B_i$ are color coded based on the cost of performing the translation. For comparison the average cost for direct translations in this case is $99$.} \label{fig:sphere}
 \end{figure}
 

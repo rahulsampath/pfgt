@@ -42,7 +42,7 @@ box it is contained in:
 \end{description} 
 
 First, the S2W step is executed separately in each box with $\bigO(p^3 N)$ work. In a {\em direct scheme}, 
-the W2L is executed by simply visiting each box $B$ and translating its plane-wave expansion to all the boxes
+the W2L is executed by simply visiting each box $B$ and {\em translating} its plane-wave expansion to all the boxes
  in $\mathcal{I}[B]$. Assuming the size of interaction list is $K^3$, this algorithm requires $\bigO(K^3 p^3 |B|)$ work 
  to form local expansions at all the boxes. Finally, the L2T is executed by visiting each box and evaluating the 
  local expansion at the targets, requiring $\bigO(p^3 N)$ work. Therefore, the overall cost of the algorithm is $\bigO(p^3 N + K^3 p^3 |B|)$.  
