@@ -85,20 +85,24 @@ citecolor = {blue}
 \section{Conclusions}
 \label{sc:conclusions}
 We have presented fast adaptive parallel algorithms to compute discrete spatial transforms with Gaussian-type kernels.
-We introduced a novel translation scheme that leads to significant speed-ups for nonuniform distributions. We have presented new paradigm for achieving optimal complexity for nonuniform distributions. We used our previous parallel octree implementation \cite{dendro} to efficiently handle distributed data sets. We presented results that verify the overall scalability of our code.  The code developed as part of this paper will be made publicly available under the terms of the GNU general public license (GPL). 
+We introduced a novel translation scheme that leads to significant speed-ups for non-uniform distributions. We described a
+ new paradigm that uses octrees to compute these transforms on non-uniform distributions with optimal complexity. 
+ We demonstrated the good scalability of our implementation for both uniform as well as non-uniform distributions. The
+ code developed as part of this paper will be made publicly available under the terms of the GNU general public license (GPL). 
 
-There are, however, several accelerations that we have not incorporated. Most important is the Hermite to plane-wave conversion scheme of \cite{fggt} which is known to yield significant speed-ups. Another important direction is overlapping communication with computation, which can be done for almost all of the communication steps. For example, the plane-wave expansions can be formed at the inter-processor boundaries first and while they are being communicated across processors, plane-wave expansions can be formed at the interior boxes.   
+There are, however, several accelerations that we have not incorporated. Most important of these is the Hermite to 
+plane-wave conversion scheme of \cite{fggt} which is known to yield significant speed-ups. Another important direction
+ is overlapping communication with computation, which can be done for almost all of the communication steps. For example, 
+ the plane-wave expansions can be formed at the inter-processor boundaries first and while they are being communicated 
+ across processors, plane-wave expansions can be formed at the interior boxes. 
 
 % future directions
 [HARI: GPU?]
 
-Apart from the parallel algorithms described in this paper, fast solvers for linear parabolic PDEs require convolutions with certain nonstandard kernels \cite{li09, skv09}. We are currently investigating fast parallel algorithms for those kernels. Together, we believe, they will provide promising alternatives for applications in high-performance computing. 
- 
-
-%\texbf{Periodic kernels.} If the kernel $G_\delta(x,y)$ is periodic in the unit cube, the fast Fourier transform (FFT) can be used for the fast computation of (\ref{gt}) assuming regular grids. 
-%Several acceleration techniques for forming and evaluating plane wave expansion were introduced in \cite{fggt}. We will incorporate these in our final submission. When the sources come from a tensor product grid in each octant, the expansion constants can be reduced from exponential to linear in dimension. In the sequential case, this speed-up will make the cost of the algorithm comparable to that of fast Fourier transform (FFT). Since the parallel performance of FFT has been sub-optimal till date, we believe that our parallel FGT would be the method of choice even for regular grids. 
-
-
+Apart from the parallel algorithms described in this paper, fast solvers for linear parabolic PDEs 
+require convolutions with certain nonstandard kernels \cite{li09, skv09}. We are currently investigating fast 
+parallel algorithms for those kernels. Together, we believe, they will provide promising alternatives 
+for applications in high-performance computing. 
 
 \section*{Acknowledgments}
 \input acknowledge.tex
