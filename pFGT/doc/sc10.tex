@@ -94,7 +94,8 @@ There are a few more accelerations that we can include in our implementation. Mo
 plane-wave conversion scheme of \cite{fggt} which is known to yield significant speed-ups. Another important direction
  is overlapping communication with computation, which can be done for almost all of the communication steps. For example, 
  the plane-wave expansions can be formed at the inter-processor boundaries first and while they are being communicated 
- across processors, plane-wave expansions can be formed at the interior boxes. In addition, we plan to port the local operations to OpenCL \cite{opencl} to enable the code to run on heterogeneous platforms including multicore CPUs and GPUs.
+ across processors, plane-wave expansions can be formed at the interior boxes. In addition, we plan to port
+ the local operations to OpenCL \cite{opencl} to enable the code to run on heterogeneous platforms including multicore CPUs and GPUs.
 
 Apart from the parallel algorithms described in this paper, fast solvers for linear parabolic PDEs 
 require convolutions with certain non-standard kernels \cite{li09, skv09}. We are currently investigating fast 
