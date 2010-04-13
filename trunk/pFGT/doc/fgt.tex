@@ -41,8 +41,8 @@ box it is contained in:
             \beq F(x) = \sum_{|k| \leq p} \hat{G}(k) v_k e^{i\lambda k \cdot (x - c^D)} \label{eqn:l2t}\eeq
 \end{description} 
 
-First, the S2W step is executed seperately in each box with $\bigO(p^3 N)$ work. In a {\em direct scheme}, 
-the W2L is executed by simply visiting each box $B$ and translating its plane-wave expasion to all the boxes
+First, the S2W step is executed separately in each box with $\bigO(p^3 N)$ work. In a {\em direct scheme}, 
+the W2L is executed by simply visiting each box $B$ and translating its plane-wave expansion to all the boxes
  in $\mathcal{I}[B]$. Assuming the size of interaction list is $K^3$, this algorithm requires $\bigO(K^3 p^3 |B|)$ work 
  to form local expansions at all the boxes. Finally, the L2T is executed by visiting each box and evaluating the 
  local expansion at the targets, requiring $\bigO(p^3 N)$ work. Therefore, the overall cost of the algorithm is $\bigO(p^3 N + K^3 p^3 |B|)$.  
@@ -82,7 +82,7 @@ We create a regular grid of $|B|$ FGT boxes distributed on $n_p$ processors
 such that {\tt{(a)}} each box is owned by an unique processor and {\tt{(b)}} each processor owns a 
 sub-grid of FGT boxes. For ease of implementation, we assume that $|B| > n_p$. 
  We use PETSc's \cite{petsc-home-page} DA module to manage this distributed regular grid.
- The S2W and L2T steps are embarassingly parallel; in the former step, each processor independently forms the 
+ The S2W and L2T steps are embarrassingly parallel; in the former step, each processor independently forms the 
  plane-wave expansions for each box that it owns and in the latter step, each processor
  independently computes the transform (\ref{gt}) for each target contained within some box owned by
   that processor using the local expansion for that box. Hence, the cost for these two steps is 
