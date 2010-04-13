@@ -65,8 +65,8 @@ The translation costs can be reduced dramatically by using the {\em sweeping alg
 
 The complexity of the overall algorithm, therefore, is $\bigO(p^3 N)$ independent of $\delta$ (or $|\omega|$).  
 
-\textbf{Kernel independence.} All the steps we have described so far are applicable for any Gaussian-type kernel. 
-Only the L2T step requires the Fourier transform of the kernel, the rest are the same for all the kernels. Given the kernel values at the discrete points $\{Lk/p \}_{|k| \leq p}$, we can compute $\hat{G}$ using the discrete Fourier transform. The parameters $L, p$ and $K$, however, need to be tuned for desired accuracy based on the kernel \cite{fggt}. 
+{\em Kernel independence.} All the steps we have described so far are applicable for any Gaussian-type kernel. 
+In fact, except the L2T step which requires the Fourier transform of the kernel, the remaining steps are the same for all the kernels. Given the kernel values at the discrete points $\{Lk/p \}_{|k| \leq p}$, we can compute $\hat{G}$ using the discrete Fourier transform. The parameters $L, p$ and $K$, however, need to be tuned for desired accuracy based on the kernel \cite{fggt}. 
 
 \subsection{Parallel truncation algorithm}
 \label{sc:parallelTruncation}

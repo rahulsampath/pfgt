@@ -1,7 +1,4 @@
-Translation, as we have seen in Section \ref{sc:fgt}, is forming the local expansion at a target box by combining the plane-wave expansions of all source boxes in its interaction list.  The cost of the direct scheme (\ref{e:w2l}) is $\bigO(K^3 p^3 |B|)$. The {\em sweeping algorithm} introduced in \cite{greengard98} and extended to multi-dimensions in \cite{fggt} brings down the complexity to $\bigO(9p^3 |B|)$. The novelty of this scheme is that it when a local expansion is formed at a particular box, it uses this information to maximum extent by m
-Consider a 1D array of FGT boxes $\{B_i\}_{i=1}^{|B|}$. 
-an in practice, it gives excellent speed-ups because its highly localized computation. 
-
+Translation, as we have seen in Section \ref{sc:fgt}, is forming the local expansion at a target box by combining the plane-wave expansions of all source boxes in its interaction list.  The cost of the direct scheme (\ref{e:w2l}) is $\bigO(K^3 p^3 |B|)$. For uniform distributions, the {\em sweeping algorithm} introduced in \cite{greengard98} and extended to multi-dimensions in \cite{fggt} brings down the complexity to $\bigO(9p^3 |B|)$. 
 
 For nonuniform distributions, we do not form plane-wave expansions at all the boxes (we give more details in the Section \ref{sc:nonuniform}). For example, if there are no sources in a particular box, there is no need for executing the S2W step in this box. We shall call the boxes where the plane-wave expansions are formed as {\em non-empty} and the others as {\em empty}. Predominantly, there are two kinds of non-empty box distributions:
 %
@@ -30,16 +27,16 @@ The algorithm is illustrated in Figure \ref{fig:w2l}. The steps involved in the
 algorithm are as follows, 
 \begin{enumerate}    
   \item First compute the local expansions at the outermost layer of the FGT
-    boxes. Full computation ($K^dp^d$) is only required for the first box, as
+    boxes. Full computation with a complexity $\bigO(K^d p^d)$ is only required for the first box, as
     the local expansions for the other boxes can be computed by adding and
     subtracting layers from the expansions of the already computed boxes. 
   
   \item We propagate the local expansions from this initial layer to subsequent
     layers. Consider the case shown in Figure \ref{fig:w2l} where we need to
     compute the local expansion of the Green box ( $B(i+1,j+1)$), given the
-    local expansions of the adjacent boxes (in Orange).  
+    local expansions of the adjacent boxes (colored in orange).  
   
-  \item The local expansion $v_k^{B(i+1, j+1)}$ can be written in terms for the
+  \item The local expansion $v_k$ of the box $B(i+1, j+1)$ can be written in terms for the
     local expansions of the $2^d -1$ neighbors $B(i,j), B(i+1,j)$ and
     $B(i,j+1)$, along with corrections terms from the $2^d$ corners.
     These are marked in Figure \ref{fig:w2l} assuming $K=3$. Consider the box $B_j$ with $2^d -1$ neighbors at offsets $\xi$ and having $2^d$ corners at offsets $\chi$. The local expansion can therefore be computed as,
@@ -144,9 +141,9 @@ The traversal is then defined by the tree rooted at $v*$. Depending on how the d
    
 %Each of the remaining vertices (FGT boxes) are connected to a maximum of $26$ other vertices (corresponding to the immediate non-zero neighbors of the box). 
 
-\paragraph{A priori cost estimation} For a given non-empty box distribution, we can estimate the cost of the propogation algorithm  described in Section \ref{sec:sweep} by visiting each non-empty box and counting the number of empty boxes in its interaction list. The worst case complexity of this estimation algorithm is $\bigO(K^3 |B|)$. The operation count for the W2L step via propogation algorithm is $15 p^3 |B_{\text{total}}|$ where $|B_{\text{total}}|$ is the number of non-empty boxes plus the number of empty boxes in their interaction lists. 
+{\em A priori cost estimation} For a given non-empty box distribution, we can estimate the cost of the propogation algorithm  described in Section \ref{sec:sweep} by visiting each non-empty box and counting the number of empty boxes in its interaction list. The worst case complexity of this estimation algorithm is $\bigO(K^3 |B|)$. The operation count for the W2L step via propogation algorithm is $15 p^3 |B_{\text{total}}|$ where $|B_{\text{total}}|$ is the number of non-empty boxes plus the number of empty boxes in their interaction lists. 
 
-The operation count for the W2L step via MST algorithm is $p^3 |B_{\text{total}}|$ where $|B_{\text{total}}|$ is given by (\ref{eqn:OT}). This can be estimated by solving Problem \ref{prob:mst}. Therefore, with a worst case complexity of $\displaystyle \bigO \left((K^3 + \log |B|) |B|\right)$, we can precisely estimate the operation counts for both the algorithms and chose the one with the lowest cost. 
+The operation count for the W2L step via MST algorithm is $p^3 \mathcal{C}$ where $\mathcal{C}$ is given by (\ref{eqn:OT}). This can be estimated by solving Problem \ref{prob:mst}. Therefore, with a worst case complexity of $\displaystyle \bigO \left((K^3 + \log |B|) |B|\right)$, we can precisely estimate the operation counts for both the algorithms and chose the one with the lowest cost. 
 
 \begin{table}
 \caption{The reduction in the complexity of computing the plane-wave translations by using optimal traversal compared to direct computations. Results are presented for $K=9$ and $K=13$. It can be seen that the speedup is proportional to $K$ and scales with $|B|$.}
