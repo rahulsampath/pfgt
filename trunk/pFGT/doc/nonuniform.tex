@@ -105,8 +105,10 @@ T_d & T_d & y \xrightarrow[]{\textbf{D2D}} x  \\
 
 \begin{description}
 \item[\textbf{S2W}] In this step, we form the plane-wave expansions (\ref{eqn:s2w}) at all the boxes by visiting 
-every leaf node in $T_e$. A particular leaf node $\ell$ can either be contained within a box $B$ or can enclose multiple number of boxes\footnote{Since the box size is chosen as $\sqrt{\delta}$, in the general case, there could be cases where boxes and leaf nodes overlap partially. Here, we make a simplifying assumption that $\delta = 2^{-n}$ for some positive 
-integer $n$. This assumption can be relaxed easily by setting the box size to be $2^{\lfloor \log_2 \sqrt{\delta} \rfloor}$ correspondinlgy modifying the error estimates for FGT.}. In the former case, we add the contributions from all sources
+every leaf node in $T_e$. A particular leaf $\ell$ can either be contained within a box $B$ or can enclose several boxes.\footnote{Since the box size is chosen as $\sqrt{\delta}$, in the general case, there could be cases where boxes and leaf nodes overlap partially. Here,
+ we make a simplifying assumption that $\delta = 2^{-n}$ for some positive integer $n$. This assumption 
+ can be relaxed easily by setting the box size to be $2^{\lfloor \log_2 \sqrt{\delta} \rfloor}$ and 
+ modifying the error estimates for FGT appropriately.} In the former case, we add the contributions from all sources
 within $\ell$ to the plane-wave expansion at $B$. In the latter case, we visit each constituent box $B$ and form 
 its plane-wave expansion using only those sources that are contained in $B$.
 
