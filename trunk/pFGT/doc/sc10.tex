@@ -90,13 +90,12 @@ We introduced a novel translation scheme that leads to significant speed-ups for
  We demonstrated the good scalability of our implementation for both uniform as well as non-uniform distributions. The
  code developed as part of this paper will be made publicly available under the terms of the GNU general public license (GPL). 
 
-There are, however, several accelerations that we have not incorporated. Most important of these is the Hermite to 
+There are a few more accelerations that we can include in our implementation. Most important of these is the Hermite to 
 plane-wave conversion scheme of \cite{fggt} which is known to yield significant speed-ups. Another important direction
  is overlapping communication with computation, which can be done for almost all of the communication steps. For example, 
  the plane-wave expansions can be formed at the inter-processor boundaries first and while they are being communicated 
  across processors, plane-wave expansions can be formed at the interior boxes. 
 
-% future directions
 [HARI: GPU?]
 
 Apart from the parallel algorithms described in this paper, fast solvers for linear parabolic PDEs 
