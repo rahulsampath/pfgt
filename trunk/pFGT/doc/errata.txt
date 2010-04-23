@@ -1,0 +1,4 @@
+
+1) Fig 2:  the + and - signs are mixed up
+
+   only the top-right must be a plus and the rest all must be minuses 
