@@ -413,9 +413,9 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
   std::vector<unsigned int> scanLy(npy);
   std::vector<unsigned int> scanLz(npz);
 
-  scanLx[0] = 0.0;
-  scanLy[0] = 0.0;
-  scanLz[0] = 0.0;
+  scanLx[0] = 0;
+  scanLy[0] = 0;
+  scanLz[0] = 0;
   for(int i = 1; i < npx; i++) {
     scanLx[i] = scanLx[i - 1] + lx[i - 1];
   }
