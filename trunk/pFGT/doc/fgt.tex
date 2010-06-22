@@ -1,16 +1,18 @@
 
-The design of fast algorithms for (\ref{gt}) is strongly dependent on three independent parameters viz., the number of sources $N$, the bandwidth $\delta$ and desired accuracy $\epsilon$. A Gaussian centered at a source location interacts with targets that are within its support. If there are fewer targets than a threshold value $n^*$, we use a simple {\em truncation algorithm}, otherwise, we use a {\em expansion algorithm}. The threshold  value depends on all three independent parameters and we will discuss its choice after introducing both algorithms. 
+The design of fast algorithms for (\ref{gt}) is strongly dependent on three independent parameters viz., the number of sources $N$, the bandwidth $\delta$ and desired accuracy $\epsilon$. A Gaussian centered at a source location interacts with targets that are within its support. If there are fewer targets than a threshold value $n^*$, we use {\em truncation algorithm}, otherwise, we use  {\em expansion algorithm}. The threshold  value depends on all three independent parameters and we will discuss its choice after introducing both algorithms. 
 
 \subsection{Truncation algorithm} 
 We introduce a few definitions first.
-\begin{mydef}[Support of the kernel] {\em The region around a target $x$ where the kernel centered at $x$ is greater than $\epsilon$ is called the support of the kernel and we denote it by $\omega$. For the Gaussian kernel, the volume of the support  $\displaystyle |\omega| = \left(2 \sqrt{\delta \ln (1/\epsilon)} \right)^3$.  }
+\begin{mydef}[Support of the kernel] {\em The region around a target $x$ where the kernel centered at $x$ is greater than $\epsilon$ is called the support of the kernel and we denote it by $\omega$.}
 \end{mydef}
+
+Support of the Gaussian kernel, for instance, is the cube centered at $x$ with side length $2 \sqrt{\delta \ln (1/\epsilon)}$. We denote the volume enclosed by the $\omega$ as $|\omega|$.
 
 \begin{mydef}[Interaction list] {\em For any target point $x$, all the sources that are within the support of the kernel centered at $x$ belong to the interaction list of $x$ denoted by $\mathcal{I}[x]$.}
 \end{mydef}
 In the truncation algorithm, we simply truncate the sum (\ref{gt}) to
 %
-\beq F(x_j) = \sum_{y_k \in \mathcal{I}[x_j]} \kernel f(y_k) \label{eqn:truncation} \eeq
+\beq F(x_j) = \sum_{y_k \in \mathcal{I}[x_j]} \kernel f(y_k). \label{eqn:truncation} \eeq
 %
 There are $\bigO(N |\omega|)$ sources inside $\mathcal{I}[x_j]$ and hence, the complexity of this algorithm is $\bigO(N^2 |\omega|)$. When the bandwidth $\delta$ is small and/or the $\epsilon$ is large, the support $\omega$ shrinks and the complexity approaches asymptotically to $\bigO(N)$. This is a common technique used in the graphics community (Gaussian blurring). When $\omega$ is comparable to the size of the domain (unit cube) or when fraction of points within the support grows beyond a threshold $n^*$, clearly, the cost of this algorithm grows quadratically. The expansion algorithm leads to optimal complexity in those cases. We discuss this next.
 
@@ -30,18 +32,18 @@ The algorithm begins by partitioning the domain into uniform boxes of size $\sqr
 Using these definitions, we are now ready to state the algorithm. A target $x \in D$ receives information from a source $y \in B$ in three steps:
 \begin{description}
 \item[\textbf{S2W}] The influence of all the sources in the box $B$ is condensed into a plane-wave expansion:
-            \beq w_k = \sum_{y \in B} f(y) e^{i\lambda k \cdot (c^B - y)} \quad \forall\quad |k| \leq p  \label{eqn:s2w} \eeq
+            \beq w_k = \sum_{y \in B} f(y) e^{i\lambda k \cdot (c^B - y)} \quad \forall\quad |k| \leq p.  \label{eqn:s2w} \eeq
             
 \item[\textbf{W2L}] The plane-wave expansion of each box $B$ is transmitted to every box $D$ in $\mathcal{I}[B]$. By
- superposition, the ``local'' plane-wave expansion of $D$ gets modified as
-            \beq v_k += w_k e^{i\lambda k \cdot (c^D - c^B)} \label{e:w2l}\eeq
+ superposition, the ``local'' plane-wave expansion of $D$, denoted by $v_k$ for $|k| \leq p$, gets modified as
+            \beq v_k += w_k e^{i\lambda k \cdot (c^D - c^B)}. \label{e:w2l}\eeq
             
 \item[\textbf{L2T}] The transform (\ref{gt}) is computed at each target by evaluating the local expansion of the 
 box it is contained in:
-            \beq F(x) = \sum_{|k| \leq p} \hat{G}(k) v_k e^{i\lambda k \cdot (x - c^D)} \label{eqn:l2t}\eeq
+            \beq F(x) = \sum_{|k| \leq p} \hat{G}(k) v_k e^{i\lambda k \cdot (x - c^D)}. \label{eqn:l2t}\eeq
 \end{description} 
 
-First, the S2W step is executed separately in each box with $\bigO(p^3 N)$ work. In a {\em direct scheme}, 
+First, the S2W step is executed separately in each box with $\bigO(p^3 N)$ work. In a {\em direct translation scheme}, 
 the W2L is executed by simply visiting each box $B$ and {\em translating} its plane-wave expansion to all the boxes
  in $\mathcal{I}[B]$. Assuming the size of interaction list is $K^3$, this algorithm requires $\bigO(K^3 p^3 |B|)$ work 
  to form local expansions at all the boxes. Finally, the L2T is executed by visiting each box and evaluating the 
@@ -66,15 +68,14 @@ The translation costs can be reduced dramatically by using the {\em sweeping alg
 The complexity of the overall algorithm, therefore, is $\bigO(p^3 N)$ independent of $\delta$ (or $|\omega|$).  
 
 {\em Kernel independence.} All the steps we have described so far are applicable for any Gaussian-type kernel. 
-In fact, except the L2T step which requires the Fourier transform of the kernel, the remaining steps are the same for all the kernels. Given the kernel values at the discrete points $\{Lk/p \}_{|k| \leq p}$, we can compute $\hat{G}$ using the discrete Fourier transform. The parameters $L, p$ and $K$, however, need to be tuned for desired accuracy based on the kernel \cite{fggt}. 
+In fact, except the L2T step which requires the Fourier transform of the kernel, the formulas in the remaining steps are the same for any kernel. Given the kernel values at the discrete points $\{Lk/p \}_{|k| \leq p}$, we can compute $\hat{G}$ using the discrete Fourier transform. The parameters $L, p$ and $K$, however, need to be tuned for desired accuracy based on the kernel \cite{fggt}. 
 
 \subsection{Parallel truncation algorithm}
 \label{sc:parallelTruncation}
 We divide the unit cube into a regular grid of cuboidal blocks and distribute the blocks across $n_p$ processors
  such that \begin{inparaenum}[\itshape a\upshape)]
 \item each processor owns exactly one block, and, \item each block is owned by an unique processor\end{inparaenum}.
- For each source owned by this processor, we find out the processors that contain blocks which intersect the interaction list
- for that source and send the source to those processors. Each processor then evaluates (\ref{eqn:truncation}) for all its targets.
+ For each target owned by a particular processor, we find the processors that contain blocks which intersect the interaction list of that target and send the source information to those processors. Each processor then evaluates (\ref{eqn:truncation}) at all its targets.
  
 \subsection{Parallel expansion algorithm} 
 \label{sc:parallelExpansion}
