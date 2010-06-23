@@ -40,7 +40,7 @@ To our knowledge, there have been no parallel implementations to date that compu
 %
 \item We present a parallel version of FGT for uniform distributions incorporating the accelerations introduced in \cite{fggt} for tensor-product grids. We demonstrate the scalability of our algorithm using  upto 120 billion points. To our knowledge, the Gauss transform of such a large number of points has not been computed before.
 %
-\item We extend our algorithms to work with nonuniform distributions by using the linear octree data structure. This is an extension of the tree-splitting scheme proposed in \cite{veerapaneni08} for computing continuous Gauss transforms. The cost of the original FGT algorithm increases as $\delta$ decreases; in contrast, our octree based algorithm scales well in all ranges of the parameters.
+\item We extend our algorithms to work with nonuniform distributions by using the linear octree data structure. This was motivated by the tree-splitting scheme used in \cite{veerapaneni08} for computing continuous Gauss transforms. The cost of the original FGT algorithm increases as $\delta$ decreases; in contrast, our octree based algorithm scales well in all ranges of the parameters.
 
 \item We also present a parallel implementation of our octree based FGT algorithm.
 %
