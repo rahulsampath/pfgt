@@ -17,7 +17,7 @@ We create a regular grid of FGT boxes partitioned across processors such that
 The plane-wave expansions in the S2W step can be computed independently by each processor, without any communication.
 However, the expand leaves and their corresponding FGT boxes may belong to different processors. So, the plane-wave 
 expansions computed in the S2W step must be sent to the processors that own the corresponding FGT boxes. The owner of
-an FGT box will then add the values it receives from other processors to its existing plane-wave expansions, $w_k$. We 
+a FGT box will then add the values it receives from other processors to its existing plane-wave expansions. We 
 refer to this step as {\textbf{S2W-Comm}}.
 
 In the W2D step, each processor first forms a list of all FGT boxes whose interaction list contains at least one 
