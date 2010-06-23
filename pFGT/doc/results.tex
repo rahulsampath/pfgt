@@ -1,5 +1,5 @@
 
-In this section, we present scalability results using a couple of test cases.  All the scalability experiments were performed 
+In this section, we present scalability results using two test cases.  All the scalability experiments were performed 
 on the {\it{Jaguar}} supercomputer at Oak Ridge National Laboratory (ORNL). The architectural details for this supercomputer
  can be found in \cite{jaguar}. The code is written in the C++ language and built on top of \texttt{PETSc} and \texttt{DENDRO} packages. 
  Specifically, we use \texttt{DENDRO} for managing linear octrees and \texttt{PETSc} for managing distributed regular grids and profiling. 
@@ -46,7 +46,7 @@ major factor is that the point distribution is random and we cannot use the tens
   \item In this example, we have set $c = 1$. From Figure \ref{f:isoGaussian}, it is clear that the tree $T_d$ is taking disproportionately 
   more time than $T_e$. There exists an optimal value for the $c$ depending on the free parameters $m$, $\delta$ and $\epsilon$, below which
  the timings are higher because of higher cost for the truncation algorithm and above which, the timings are higher because
- there will be fewer points for FGT box. However, we did not compute this optimal value for this experiment; our choice of $c$ for this experiment
+ there will be fewer points for FGT box. However, we did not compute the optimal value for this experiment; our choice of $c$ for this experiment
  was rather arbitrary.
 \end{itemize}
 

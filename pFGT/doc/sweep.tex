@@ -18,10 +18,10 @@ In this section, we propose two algorithms, one for volume and the other for sur
 Instead of sweeping along each dimension one-by-one as proposed 
 in \cite{fggt}, our algorithm visits each box only once and computes the full plane-wave
 translation based on its neighbors which have already been visited. The
-plane-wave expansions at a box $B_i$ can be represented as a combination of the
+plane-wave expansion at any particular box is represented as a combination of the
 plane-wave expansions of its $2^{d} -1$ neighbors, along with corrections for
-$2^d$ boxes. We start with direct computation of the outermost layer, and then propagate it inwards, layer by layer, as illustrated in Figure \ref{fig:sweep}. This results in an overall complexity of the sweep algorithm as $\mathcal{O}((2^{d+1} -1)p^d|B|)$. The constant in the complexity for this step increases from $3d\rightarrow2^{d+1} - 1$, which is
-from $6\rightarrow7$ for $d=2$ and from $9\rightarrow15$ for $d=3$. This enables us to reduce the storage cost from $\mathcal{O}(n_b^3)$ to $\mathcal{O}(|B| + n_b^2)$.
+$2^d$ boxes. We start with direct computation of the outermost layer, and then propagate it inwards, layer by layer, as illustrated in Figure \ref{fig:sweep}. This results in an overall complexity of $\mathcal{O}((2^{d+1} -1)p^d|B|)$. The constant in the complexity for this step increases from $3d\rightarrow2^{d+1} - 1$, which is
+from $6\rightarrow7$ for $d=2$ and from $9\rightarrow15$ for $d=3$. On the other hand, this enables us to reduce the storage cost from $\mathcal{O}(n_b^3)$ to $\mathcal{O}(|B| + n_b^2)$.
 
 The algorithm is illustrated in Figure \ref{fig:w2l}. The steps involved in the
 algorithm are as follows, 
@@ -51,7 +51,7 @@ algorithm are as follows,
   
   \item The propagation can then be used to compute the local expansions at the remaining boxes in
     the new propagation layer. At any given stage only the values of the current 
-    propagation layer needs to be stored. The reduces the storage cost for the new algorithm from
+    propagation layer needs to be stored. This reduces the storage cost for the new algorithm from
     $\mathcal{O}(n_b^3)$ to $\mathcal{O}(|B| + n_b^2)$.
 
 \end{enumerate}
