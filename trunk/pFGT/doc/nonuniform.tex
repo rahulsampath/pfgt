@@ -12,14 +12,14 @@
  
 {\em Primer on octrees.} An octree is a tree data structure that is used for spatial decomposition. Every
 node of an octree has a maximum of eight children. An octant with no children is
-called a ``{\em leaf}'' and an octant with one or more children is
-called an ``{\em interior octant}''. The only octant with no parent is the
- ``{\em root}'' and all other octants have exactly one parent. The depth of an octant 
- from the root is referred to as its ``{\em level}''. We use a ``{\em linear}'' octree
-representation (i.e., we exclude interior octants) using the ``{\em
-Morton encoding}'' scheme \cite{morton66}. Any octant in the domain can be uniquely
-identified by specifying one of its vertices, also known as its ``{\em
-anchor}'', and its level in the tree. By convention, the anchor of an
+called a {\em leaf} and an octant with one or more children is
+called an {\em interior octant}. The only octant with no parent is the
+ {\em root} and all other octants have exactly one parent. The depth of an octant 
+ from the root is referred to as its {\em level}. We use a {\em linear} octree
+representation (i.e., we exclude interior octants) using the {\em
+Morton encoding} scheme \cite{morton66}. Any octant in the domain can be uniquely
+identified by specifying one of its vertices, also known as its {\em
+anchor}, and its level in the tree. By convention, the anchor of an
 octant is its front lower left corner. 
 
 \subsection{Octree based FGT algorithm}
@@ -130,7 +130,7 @@ We make use of a few properties of the Morton ordering to search for the targets
 are listed below:
 \begin{itemize}
 \item Let $r = \sqrt{\delta \ln (\frac{1}{\epsilon})}$, $y_{min} = y - (r, r, r)$ and $y_{max} = y + (r, r, r)$. Then, the Morton id of any point in $\mathcal{I}[y]$ will be greater than or equal to the Morton id of $y_{min}$ and less than or equal to that of $y_{max}$.
-\item If a point, $z$, is contained within a leaf, $\ell$, then the Morton id of $z$ will be greater than that of $\ell$.
+\item If a point $z$ is contained within a leaf $\ell$, then the Morton id of $z$ will be greater than that of $\ell$.
 \item If the Morton id of a leaf $l_1$ is less than that of another leaf $l_2$, then the Morton id of any point, $z$, which is
  contained within $l_1$ will also be lesser than that of $l_2$.
 \end{itemize}
