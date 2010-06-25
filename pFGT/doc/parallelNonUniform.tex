@@ -34,7 +34,7 @@ that contain direct leaves with Morton ids that overlap with the range $[\mathca
  $s_2$ is the greatest value in $S$ that is $\leq \mathcal{Z}(y_{max})$ and then selecting all processors that contain
  direct leaves with Morton ids that lie in $[s_1, s_2]$. Each processor then computes (\ref{eqn:d2d}) independently.
 
- We then communicate the plane-wave expansions of the ``{\em ghost}'' boxes\footnote{We refer to any box that
+ We then communicate the plane-wave expansions of the {\em ghost} boxes\footnote{We refer to any box that
  is owned by a different CPU but lies in the interaction list of some box owned by this CPU as a ghost box.} just
  like in the W2L step of the parallel expansion algorithm (Section \ref{sc:parallelExpansion}). Subsequently, each processor 
  independently executes the rest of the W2L step as described in Section \ref{sc:octreefgt}.
