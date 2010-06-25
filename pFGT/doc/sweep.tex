@@ -42,9 +42,9 @@ algorithm are as follows,
     These are marked in Figure \ref{fig:w2l} assuming $K=3$. Consider the box $B_j$ with $2^d -1$ neighbors at offsets $\xi$ and having $2^d$ corners at offsets $\chi$. The local expansion can therefore be computed as,
     \begin{eqnarray} 
     % v_k^{i+1,j+1} &=& \sum_{\eta_{i,j} = 0,1} (-1)^{1 + d + |\eta|_1} e^{i\lambda k\cdot\eta} v_k^{i+\eta_i, j+\eta_j} \\
-    v_k^j &=& \sum_{\xi} (-1)^{1 + d + |\xi|_1} e^{i\lambda k\cdot\xi} v_k^{j+\xi} \nonumber\\
+    v_k^{(i+1,j+1)} &=& \sum_{\xi} (-1)^{1 + d + |\xi|_1} e^{i\lambda k\cdot\xi} v_k^{(i,j)+\xi} \nonumber\\
     % & +& \sum_{\eta_{i,j}= 0,1} (-1)^{1 + d + |\eta|_1} e^{iz_k\eta ns/\sqrt{\delta}} w_k^{i+\eta_i, j+\eta_j}.
-    & +& \sum_{\chi} (-1)^{1 + d + |\chi|_1} e^{i\lambda k\cdot \chi} w_k^{j+\chi}. \label{eqn:sweep}
+    & +& \sum_{\chi} (-1)^{1 + d + |\chi|_1} e^{i\lambda k\cdot \chi} w_k^{(i,j)+\chi}. \label{eqn:sweep}
     \end{eqnarray}
     
  %   e^{iz_k s/\sqrt{\delta}} v_k^{i+1,j} + e^{iz_k s/\sqrt{\delta}} v_k^{i,j+1} - e^{iz_k s/\sqrt{\delta}} v_k^{i,j} - e^{iz_k ns/\sqrt{\delta}} w_k^{i+n+1,j+n+1} + e^{-iz_k ns/\sqrt{\delta}} w_k^{i-n,j-n}
@@ -114,7 +114,7 @@ algorithm are as follows,
 \label{sec:mst}
 For surface distributions, the algorithm introduced in the previous section suffers from the same problem as the sweeping algorithm in that it generates large number of additional non-empty boxes and consequently it becomes computationally more expensive than the direct scheme. We introduce a new approach here that does not generate any extra non-empty boxes and performs better than the direct scheme. 
 
-The main idea, however, is similar: once a local expansion is formed at a particular box, we use this information to minimize the translation cost at a subsequently visited box. At the first box $B_1$ we form the local expansion directly with $\displaystyle \mathcal{O}\left(\,|\mathcal{I} [B_1]| \, p^3\right)$ work, where $|\cdot|$ is the size of the set. For subsequent boxes, we only need to add/subtract the plane-wave expansions of the boxes that are not present in both the interaction lists of the current box and that of the previously visited box. The problem is therefore to determine the optimal traversal such that the overall cost is reduced.
+The main idea, however, is similar: once a local expansion is formed at a particular box, we use this information to minimize the translation cost at a subsequently visited box. Let us assume that the boxes are ordered as $\left\{B_k | k = 1,\ldots, |B|\right\}$. At the first box $B_1$ we form the local expansion directly with $\displaystyle \mathcal{O}\left(\,|\mathcal{I} [B_1]| \, p^3\right)$ work, where $|\cdot|$ is the size of the set. For subsequent boxes, we only need to add/subtract the plane-wave expansions of the boxes that are not present in both the interaction lists of the current box and that of the previously visited box. The problem is therefore to determine the optimal traversal such that the overall cost is reduced.
 
 \begin{prob}[Optimal Traversal] {\em Find an ordering $\{ B_1, B_2, \ldots, B_{|B|}\}$ so that 
 %
