@@ -7,15 +7,15 @@ We create a regular grid of FGT boxes partitioned across processors such that
  {\tt{(c)}} each box is owned by an unique processor.  We use \texttt{PETSc}'s \cite{petsc-user-ref, petsc-home-page} DA
  module to manage this distributed regular grid. We construct a parallel linear octree such that each leaf
  contains fewer than $m$ points; we use \texttt{DENDRO} \cite{dendro} to do this. We then mark the leaves as either
- ``Expand'' or ``Direct''; this step is embarrassingly parallel. The direct leaves are then partitioned across 
+ ``Expand'' or ``Direct''; this step is embarrassingly parallel. The Direct leaves are then partitioned across 
  the processors such that {\tt{(a)}} they are globally sorted in the Morton ordering and {\tt{(b)}} each leaf 
- is owned by an unique processor. Similarly, we partition the expand leaves across the processors. The expand
- and direct leaves are used at different steps in the algorithm and there are collective communications between
- these steps. So, it is better to have good load balance for the expand and direct leaves independently and hence
+ is owned by an unique processor. Similarly, we partition the Expand leaves across the processors. The Expand
+ and Direct leaves are used at different steps in the algorithm and there are collective communications between
+ these steps. So, it is better to have good load balance for the Expand and Direct leaves independently and hence
  we partition the two sets, $T_d$ and $T_e$, independently.
 
 The plane-wave expansions in the S2W step can be computed independently by each processor, without any communication.
-However, the expand leaves and their corresponding FGT boxes may belong to different processors. So, the plane-wave 
+However, the Expand leaves and their corresponding FGT boxes may belong to different processors. So, the plane-wave 
 expansions computed in the S2W step must be sent to the processors that own the corresponding FGT boxes. The owner of
 a FGT box will then add the values it receives from other processors to its existing plane-wave expansions. We 
 refer to this step as {\textbf{S2W-Comm}}.
@@ -25,14 +25,14 @@ target, $y \in T_d$, owned by this processor. These boxes are then sent to the r
 owner of an FGT box returns the plane-wave coefficients for that box to the processors that requested them. After this
 communication, each processor independently computes (\ref{eqn:w2d}).
 
-Next, gather the Morton id of the first (in the sorted list) direct leaf on each processor. Let this list
+Next, gather the Morton id of the first (in the sorted list) Direct leaf on each processor. Let this list
 be denoted by $S$; this will be used to identify the processor that owns a given leaf/point. Each 
 processor then sends each source, $y$, that lies within its portion of $T_d$ to those processors 
-that contain direct leaves with Morton ids that overlap with the range $[\mathcal{Z}(y_{min}), \mathcal{Z}(y_{max})]$, where
+that contain Direct leaves with Morton ids that overlap with the range $[\mathcal{Z}(y_{min}), \mathcal{Z}(y_{max})]$, where
  $y_{min}$ and $y_{max}$ are defined as in Section \ref{sc:octreefgt}. We identify these processors 
  by first finding $s_1$ and $s_2$ such that $s_1$ is the greatest value in $S$ that is $\leq \mathcal{Z}(y_{min})$ and 
  $s_2$ is the greatest value in $S$ that is $\leq \mathcal{Z}(y_{max})$ and then selecting all processors that contain
- direct leaves with Morton ids that lie in $[s_1, s_2]$. Each processor then computes (\ref{eqn:d2d}) independently.
+ Direct leaves with Morton ids that lie in $[s_1, s_2]$. Each processor then computes (\ref{eqn:d2d}) independently.
 
  We then communicate the plane-wave expansions of the {\em ghost} boxes\footnote{We refer to any box that
  is owned by a different CPU but lies in the interaction list of some box owned by this CPU as a ghost box.} just
@@ -40,12 +40,12 @@ that contain direct leaves with Morton ids that overlap with the range $[\mathca
  independently executes the rest of the W2L step as described in Section \ref{sc:octreefgt}.
 
 In the D2L step, each processor first computes its contributions to the local expansions of those FGT boxes that intersect
- the interaction list of at least one source contained within some direct leaf owned by this processor; this does not 
+ the interaction list of at least one source contained within some Direct leaf owned by this processor; this does not 
  require any communication. Next, we send these contributions to the processors that own the respective FGT boxes. The owner of
 an FGT box will then add the values it receives from other processors to its existing local expansions, $v_k$.
 
-The local expansions for each FGT box that overlaps at least one expand leaf are then sent to the processors that own
- the corresponding expand leaf. We refer to this step as {\textbf{L2T-Comm}} and it is like the dual of the S2W-Comm step. 
+The local expansions for each FGT box that overlaps at least one Expand leaf are then sent to the processors that own
+ the corresponding Expand leaf. We refer to this step as {\textbf{L2T-Comm}} and it is like the dual of the S2W-Comm step. 
  
 Finally, each processor independently executes the L2T step and computes the transform at all targets within its portion of $T_e$.
 
@@ -65,13 +65,13 @@ We summarize the overall algorithm and give the complexity estimates for the mai
 \STATE 2. Construct a linear octree such that each leaf contains fewer than $m$ points. \\
 \hfill $\bigO(\frac{N}{n_p} \log{\frac{N}{n_p}} + n_p \log{n_p})$
 
-\STATE 3. Mark each leaf as either ``expand'' or ``direct'' based on $c$ and $\delta$.
+\STATE 3. Mark each leaf as either ``Expand'' or ``Direct'' based on $c$ and $\delta$.
 
-\STATE 4. Partition the direct leaves across processors such that \\
+\STATE 4. Partition the Direct leaves across processors such that \\
   (A) they are globally sorted in the Morton ordering and \\
   (B) each leaf is owned by an unique processor.
 
-\STATE 5. Partition the expand leaves across processors. 
+\STATE 5. Partition the Expand leaves across processors. 
 
 \STATE 6. Execute S2W. \hfill $\bigO(p^3 \frac{N}{n_p})$
 
