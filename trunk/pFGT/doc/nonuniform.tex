@@ -86,11 +86,11 @@ the ``small'' leaf nodes shown in brown color belong to $T_e$.}
 \end{center}
 \end{figure}
 
-We denote the set of direct leaves by $T_d$ and use $T_e$ to represent the set of expand leaves. In order to achieve optimal complexity, the 
+We denote the set of Direct leaves by $T_d$ and use $T_e$ to represent the set of Expand leaves. In order to achieve optimal complexity, the 
 orginial FGT \cite{fgt} chooses different schemes for transmitting the source information to the targets 
 depending on the sources and target distributions. It, however, did not consider the case where $\delta$ is small, wherein, it will generate a
 large number of boxes and thereby incur higher computational cost. An advantange of our octree based algorithm is that all these cases including 
-the small $\delta$ case can be efficiently handled with just the one spatial decomposition into direct and expand leaves. We first summarize 
+the small $\delta$ case can be efficiently handled with just the one spatial decomposition into Direct and Expand leaves. We first summarize 
 how the information is transmitted from a source $y$ to a target $x$ and then describe in detail all the steps involved in this algorithm.
 
 \bean
@@ -119,7 +119,7 @@ its plane-wave expansion using only those sources that are contained in $B$.
 %
 \beq F(x) \, +=\, \sum_{|k| \leq p} \hat{G}(k)  w_k e^{i \lambda k \cdot (x - c^B)} \label{eqn:w2d} \eeq
 %
-Note that for any FGT box $B$ which is contained within some direct leaf, the corresponding $w_k$ is zero.
+Note that for any FGT box $B$ that is contained within some Direct leaf, the corresponding $w_k$ is zero.
 
 \item[\textbf{D2D}] For each source $y \in T_d$, find all targets $x \in T_d$ such that $x \in \mathcal{I}[y]$ and
  modify the transform at $x$ as:
@@ -139,7 +139,7 @@ are listed below:
  search for the leaves that contain potential targets rather than searching for the targets directly. After
  shortlisting the set of candidate leaves, we then search for the relevant targets within them.
 
-\item[\textbf{W2L}] Only the boxes that share sources with atleast one expand leaf node are non-empty, that is,
+\item[\textbf{W2L}] Only the boxes that share sources with atleast one Expand leaf node are non-empty, that is,
  carry a plane-wave expansion. Based on the distribution of the non-empty boxes, we choose between the modified sweeping
  algorithms for surface or volume distributions as discussed in Section \ref{sc:sweep}. 
 
