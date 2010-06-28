@@ -1,5 +1,6 @@
 %{{{ setup
 \documentclass[conference]{IEEEtran}
+%\documentclass[journal]{IEEEtran}
 \usepackage{amsmath,url,color,soul, amssymb}
 \usepackage{setspace, graphicx}
 \usepackage[x11names,rgb]{xcolor}
@@ -33,8 +34,7 @@ citecolor = {blue}
 
 \begin{document}
 
-\title{Parallel Fast Gauss Transform}  
-
+\title{Parallel Fast Gauss Transform} 
 
 \author{\IEEEauthorblockN{Rahul S. Sampath}
 \IEEEauthorblockA{Oak Ridge National Laboratory\\
@@ -56,6 +56,13 @@ citecolor = {blue}
 
 \date{}
 
+%\IEEEpubid{\copyright 2010 IEEE Personal use of this material is permitted.}
+%\IEEEpubid{However, permission to reprint/republish this material for advertising or 
+%promotional purposes or for creating new collective works for resale or 
+%redistribution to servers or lists, or to reuse any copyrighted
+%component of this work in other works must be obtained from the IEEE.}
+%\IEEEpubid{SC10 November 2010, New Orleans, Louisiana, USA 978-1-4244-7558-2/10/\$26.00}
+
 \maketitle
 
 \begin{abstract}
@@ -65,15 +72,15 @@ citecolor = {blue}
 \section{Introduction}  
 \label{s:intro}
 \input intro.tex
-%
+
 \section{Overview of FGT for uniform distributions} 
 \label{sc:fgt}
 \input fgt.tex
-%
+
 \section{Translation scheme} 
 \label{sc:sweep}
 \input sweep.tex
-%
+
 \section{FGT for non-uniform distributions} 
 \label{sc:nonuniform}
 \input nonuniform.tex
