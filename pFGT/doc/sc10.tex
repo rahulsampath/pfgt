@@ -1,6 +1,5 @@
 %{{{ setup
 \documentclass[conference]{IEEEtran}
-%\documentclass[journal]{IEEEtran}
 \usepackage{amsmath,url,color,soul, amssymb}
 \usepackage{setspace, graphicx}
 \usepackage[x11names,rgb]{xcolor}
@@ -14,6 +13,7 @@
 \usetikzlibrary{patterns}
 \usepackage{pgfplots}
 \usepackage{balance}
+\usepackage{fancyhdr}
 \usepackage[cm]{fullpage}
 \usepackage[scriptsize,tight]{subfigure}
 \usepackage{url}
@@ -29,9 +29,6 @@ citecolor = {blue}
 \graphicspath{{figs/}}
 
 \input macros.tex
-\newcommand{\peq}{+\!\!=}
-\newtheorem{prob}{Problem}[section]
-\newtheorem{mydef}{Definition}[section]
 
 \begin{document}
 
@@ -57,14 +54,20 @@ citecolor = {blue}
 
 \date{}
 
-%\IEEEpubid{\copyright 2010 IEEE Personal use of this material is permitted.}
-%\IEEEpubid{However, permission to reprint/republish this material for advertising or 
-%promotional purposes or for creating new collective works for resale or 
-%redistribution to servers or lists, or to reuse any copyrighted
-%component of this work in other works must be obtained from the IEEE.}
-%\IEEEpubid{SC10 November 2010, New Orleans, Louisiana, USA 978-1-4244-7558-2/10/\$26.00}
-
 \maketitle
+
+\thispagestyle{fancy}
+\lhead{}
+\rhead{}
+\chead{}
+\lfoot{\footnotesize{\copyright 2010 IEEE Personal use of this material is permitted. However, permission to reprint/republish this material for advertising or 
+promotional purposes or for creating new collective works for resale or redistribution to servers or lists, or to reuse any copyrighted 
+component of this work in other works must be obtained from the IEEE. \newline 
+SC10 November 2010, New Orleans, Louisiana, USA 978-1-4244-7558-2/10/\$26.00}}
+\rfoot{}
+\cfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
 
 \begin{abstract}
 \input abstract.tex
@@ -117,6 +120,7 @@ for applications in high-performance computing.
 
 \balance
 
+\bibliographystyle{IEEEtran}
 \bibliography{sc10}
-\bibliographystyle{siam}
+
 \end{document} 
