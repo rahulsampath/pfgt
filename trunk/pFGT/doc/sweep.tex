@@ -15,6 +15,33 @@ In this section, we propose two algorithms, one for volume and the other for sur
 \subsection{Modified sweeping algorithm for volume distributions} 
 \label{sec:sweep}
 
+\begin{figure}
+\centering
+\begin{tikzpicture}[scale=0.5]
+	
+	\draw[fill=orange!30] (0,0) rectangle +(8,2);
+	\draw[fill=orange!30] (0,2) rectangle +(2,6);
+
+	\draw[fill=green!30!black!50] (2,2) rectangle +(6,2);
+	\draw[fill=green!30!black!50] (2,4) rectangle +(2,4);
+	
+	\draw[fill=green!50!black!30] (4,4) rectangle +(4,2);
+	\draw[fill=green!50!black!30] (4,6) rectangle +(2,2);
+	
+	\draw[fill=green!20] (6,6) rectangle +(2,2);
+	
+	% arrows ...
+	\draw[blue, thick, ->] (1,1) -- (7,7) node[above] {$r$}; 
+												
+	% the grid ...
+	\draw[step=2cm] (0,0) grid (8,8);	
+	
+\end{tikzpicture}
+\caption{\small The outermost layer is shown in orange, for which the local expansions are computed directly. The other layers (in green) are computed by propagation. The direction of propagation ($r$) is shown using the arrow and by the shade of the layers, lighter being later in time. 
+}
+\label{fig:sweep}
+\end{figure}
+
 Instead of sweeping along each dimension one-by-one as proposed 
 in \cite{fggt}, our algorithm visits each box only once and computes the full plane-wave
 translation based on its neighbors which have already been visited. The
@@ -22,6 +49,32 @@ plane-wave expansion at any particular box is represented as a combination of th
 plane-wave expansions of its $2^{d} -1$ neighbors, along with corrections for
 $2^d$ boxes. We start with direct computation of the outermost layer, and then propagate it inwards, layer by layer, as illustrated in Figure \ref{fig:sweep}. This results in an overall complexity of $\mathcal{O}((2^{d+1} -1)p^d|B|)$. The constant in the complexity for this step increases from $3d\rightarrow2^{d+1} - 1$, which is
 from $6\rightarrow7$ for $d=2$ and from $9\rightarrow15$ for $d=3$. On the other hand, this enables us to reduce the storage cost from $\mathcal{O}(n_b^3)$ to $\mathcal{O}(|B| + n_b^2)$.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[scale=0.6]
+	
+	\draw[fill=orange!30] (2,2) rectangle +(4,2);
+	\draw[fill=orange!30] (2,2) rectangle +(2,4);
+	
+	\draw[fill=green!50!black!30] (4,4) rectangle +(2,2);		
+	% the grid ...
+	\draw[step=2cm] (0,0) grid (8,8);	
+	
+  \draw (3,3) node {$_{i, j}$};
+  \draw (5,3) node {$_{i+1, j}$};
+  \draw (3,5) node {$_{i, j+1}$};
+  \draw (5,5) node { $_{i+1, j+1}$};
+	
+	\draw (1,1) node {$-$};
+	\draw (7,7) node {$+$};
+	\draw (1,7) node {$-$};
+	\draw (7,1) node {$-$};
+			
+\end{tikzpicture}
+\caption{\small Illustration of the modified sweeping. The local expansions of the boxes shown in orange color are used for computing the local expansion at the box shown in green color. The stencil is given in equation (\ref{eqn:sweep}). Assuming $K = 3$, a simple inspection of the interaction lists reveal that the contributions of boxes marked by ``+'' must be added and those marked by ``-'' must be substracted. }
+\label{fig:w2l}
+\end{figure}
 
 The algorithm is illustrated in Figure \ref{fig:w2l}. The steps involved in the
 algorithm are as follows, 
@@ -55,60 +108,6 @@ algorithm are as follows,
     $\mathcal{O}(n_b^3)$ to $\mathcal{O}(|B| + n_b^2)$.
 
 \end{enumerate}
-
-
-\begin{figure}
-\centering
-\begin{tikzpicture}[scale=0.5]
-	
-	\draw[fill=orange!30] (0,0) rectangle +(8,2);
-	\draw[fill=orange!30] (0,2) rectangle +(2,6);
-
-	\draw[fill=green!30!black!50] (2,2) rectangle +(6,2);
-	\draw[fill=green!30!black!50] (2,4) rectangle +(2,4);
-	
-	\draw[fill=green!50!black!30] (4,4) rectangle +(4,2);
-	\draw[fill=green!50!black!30] (4,6) rectangle +(2,2);
-	
-	\draw[fill=green!20] (6,6) rectangle +(2,2);
-	
-	% arrows ...
-	\draw[blue, thick, ->] (1,1) -- (7,7) node[above] {$r$}; 
-												
-	% the grid ...
-	\draw[step=2cm] (0,0) grid (8,8);	
-	
-\end{tikzpicture}
-\caption{\small The outermost layer is shown in orange, for which the local expansions are computed directly. The other layers (in green) are computed by propagation. The direction of propagation ($r$) is shown using the arrow and by the shade of the layers, lighter being later in time. 
-}
-\label{fig:sweep}
-\end{figure}
-
-\begin{figure}
-\centering
-\begin{tikzpicture}[scale=0.6]
-	
-	\draw[fill=orange!30] (2,2) rectangle +(4,2);
-	\draw[fill=orange!30] (2,2) rectangle +(2,4);
-	
-	\draw[fill=green!50!black!30] (4,4) rectangle +(2,2);		
-	% the grid ...
-	\draw[step=2cm] (0,0) grid (8,8);	
-	
-  \draw (3,3) node {$_{i, j}$};
-  \draw (5,3) node {$_{i+1, j}$};
-  \draw (3,5) node {$_{i, j+1}$};
-  \draw (5,5) node { $_{i+1, j+1}$};
-	
-	\draw (1,1) node {$-$};
-	\draw (7,7) node {$+$};
-	\draw (1,7) node {$-$};
-	\draw (7,1) node {$-$};
-			
-\end{tikzpicture}
-\caption{\small Illustration of the modified sweeping. The local expansions of the boxes shown in orange color are used for computing the local expansion at the box shown in green color. The stencil is given in equation (\ref{eqn:sweep}). Assuming $K = 3$, a simple inspection of the interaction lists reveal that the contributions of boxes marked by ``+'' must be added and those marked by ``-'' must be substracted. }
-\label{fig:w2l}
-\end{figure}
 
 \subsection{Modified sweeping algorithm for surface distributions} 
 \label{sec:mst}
@@ -145,57 +144,8 @@ We demonstrate the speed-ups achieved for non-empty box distributions on a spher
    
 %Each of the remaining vertices (FGT boxes) are connected to a maximum of $26$ other vertices (corresponding to the immediate non-zero neighbors of the box). 
 
-{\em A priori cost estimation.} For a given non-empty box distribution, we can estimate the cost of the propogation algorithm  described in Section \ref{sec:sweep} by visiting each non-empty box and counting the number of empty boxes in its interaction list. The worst case complexity of this estimation algorithm is $\bigO(K^3 |B|)$. The operation count for the W2L step via propogation algorithm is $15 p^3 |B_{\text{total}}|$ where $|B_{\text{total}}|$ is the number of non-empty boxes plus the number of empty boxes in their interaction lists. 
-
-The operation count for the W2L step via MST algorithm is $p^3 \mathcal{C}$ where $\mathcal{C}$ is given by (\ref{eqn:OT}). This can be estimated by solving Problem \ref{prob:mst}. Therefore, with a worst case complexity of $\displaystyle \bigO \left((K^3 + \log |B|) |B|\right)$, we can precisely estimate the operation counts for both the algorithms and chose the one with the lowest cost. 
-
-\begin{table}
-\caption{The reduction in the complexity of computing the plane-wave translations by using optimal traversal compared to direct computations. Results are presented for $K=9$ and $K=13$. It can be seen that the speedup is proportional to $K$ and scales with $|B|$.}
-\centering
-\begin{tabular}{cccc} \hline
-        $|B|$  &  direct & MST & ratio \\ \hline       
-        \multicolumn{4}{c}{}  \\
-        \multicolumn{4}{c}{ {\small $K =  9 \quad (\epsilon = 10^{-6})$}}  \\
-        \multicolumn{4}{c}{}  \\
-         1K & 114K & 18K & 6.3 \\  
-        10K & 1M & 182K & 5.88 \\  
-       100K & 9.65M & 1.7M & 5.68 \\  
-       1M & 96.8M & 17.1M & 5.68 \\  
-       \multicolumn{4}{c}{}  \\
-       \multicolumn{4}{c}{ {\small $K =  13 \quad (\epsilon = 10^{-12})$}}  \\
-       \multicolumn{4}{c}{}  \\
-             1K & 238K & 24K & 9.65 \\  
-        10K & 2.24M & 264K & 8.48 \\  
-        100K & 20.16M & 2.46M & 8.18 \\  
-       1M &   200.56M & 24.5M & 8.18 \\   
-\hline
-\end{tabular} \label{tab:ratio}
-\end{table}
-
-\begin{figure}
-  \begin{tikzpicture}
-    \begin{axis}[
-      xlabel=$K$,
-      ylabel=$Speedup$]
-      \addplot[smooth,mark=*,blue] plot coordinates {
-      (9, 5.88)
-      (13, 8.5)
-      (17, 11.16)
-      (21, 14.01)
-      (25, 16.9535)
-      (29, 20.0165)
-      (33, 23.3387)
-      };
-      % \addlegendentry{Direct}
-
-    \end{axis}
-  \end{tikzpicture}
-  \caption{Speedup obtained for increasing values of the size of the interaction list, $K$, for a fixed geometry. The speedup is proportional to $K$ and the complexity of computing the translations is reduced from $\mathcal{O}(K^2|B|)$ to $\mathcal{O}(K|B|)$.}  \label{fig:speedup}
-\end{figure}  
-%
 \begin{figure}
 \centering 	
-
 \begin{tikzpicture}
 \begin{axis}[
 	view={120}{40},
@@ -227,8 +177,55 @@ draw=mapped color,fill=mapped color!70},
 table[x=xc,y=yc,z=zc]{sphere_mst.dat};
 \end{axis}
 \end{tikzpicture}
-
-% \includegraphics[width=0.4\textwidth]{figs/sphere_mst}
 \caption{The cost of translations for the optimal traversal path for a spherical shell distribution ($K=9$). The boxes $B_i$ are color coded based on the cost of performing the translation. For comparison the average cost for direct translations in this case is $99$.} \label{fig:sphere}
 \end{figure}
+
+\begin{table}
+\caption{The reduction in the complexity of computing the plane-wave translations by using optimal traversal compared to direct computations. Results are presented for $K=9$ and $K=13$. It can be seen that the speedup is proportional to $K$ and scales with $|B|$.}
+\centering
+\begin{tabular}{cccc} \hline
+        $|B|$  &  direct & MST & ratio \\ \hline       
+        \multicolumn{4}{c}{}  \\
+        \multicolumn{4}{c}{ {\small $K =  9 \quad (\epsilon = 10^{-6})$}}  \\
+        \multicolumn{4}{c}{}  \\
+         1K & 114K & 18K & 6.3 \\  
+        10K & 1M & 182K & 5.88 \\  
+       100K & 9.65M & 1.7M & 5.68 \\  
+       1M & 96.8M & 17.1M & 5.68 \\  
+       \multicolumn{4}{c}{}  \\
+       \multicolumn{4}{c}{ {\small $K =  13 \quad (\epsilon = 10^{-12})$}}  \\
+       \multicolumn{4}{c}{}  \\
+             1K & 238K & 24K & 9.65 \\  
+        10K & 2.24M & 264K & 8.48 \\  
+        100K & 20.16M & 2.46M & 8.18 \\  
+       1M &   200.56M & 24.5M & 8.18 \\   
+\hline
+\end{tabular} \label{tab:ratio}
+\end{table}
+
+{\em A priori cost estimation.} For a given non-empty box distribution, we can estimate the cost of the propogation algorithm  described in Section \ref{sec:sweep} by visiting each non-empty box and counting the number of empty boxes in its interaction list. The worst case complexity of this estimation algorithm is $\bigO(K^3 |B|)$. The operation count for the W2L step via propogation algorithm is $15 p^3 |B_{\text{total}}|$ where $|B_{\text{total}}|$ is the number of non-empty boxes plus the number of empty boxes in their interaction lists. 
+
+The operation count for the W2L step via MST algorithm is $p^3 \mathcal{C}$ where $\mathcal{C}$ is given by (\ref{eqn:OT}). This can be estimated by solving Problem \ref{prob:mst}. Therefore, with a worst case complexity of $\displaystyle \bigO \left((K^3 + \log |B|) |B|\right)$, we can precisely estimate the operation counts for both the algorithms and chose the one with the lowest cost. 
+
+\begin{figure}
+  \begin{tikzpicture}
+    \begin{axis}[
+      xlabel=$K$,
+      ylabel=$Speedup$]
+      \addplot[smooth,mark=*,blue] plot coordinates {
+      (9, 5.88)
+      (13, 8.5)
+      (17, 11.16)
+      (21, 14.01)
+      (25, 16.9535)
+      (29, 20.0165)
+      (33, 23.3387)
+      };
+      % \addlegendentry{Direct}
+
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Speedup obtained for increasing values of the size of the interaction list, $K$, for a fixed geometry. The speedup is proportional to $K$ and the complexity of computing the translations is reduced from $\mathcal{O}(K^2|B|)$ to $\mathcal{O}(K|B|)$.}  \label{fig:speedup}
+\end{figure}  
+%
 
