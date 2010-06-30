@@ -7,6 +7,8 @@ We refer to the points $ x_j, y_k \in \mathbb{R}^3 $ as the targets and sources 
  smooth exponentially decaying function in both the physical and Fourier domains. We shall call such kernels as {\em Gaussian-type}.
   The parameter $\delta$ controls how rapidly the kernel decays.  In the Gauss transform case, $\kernel = e^{-\frac{\norm{x_j - y_k}^2}{\delta}}$. 
 
+\balance
+
 Discrete sums of the form (\ref{gt}) are encountered in a variety of disciplines including computational physics,
  machine learning, computational finance and computer graphics \cite{strain94adap, elgammal03, broadie03, kim05, veerapaneni08}. The
  motivation for the present work comes from {\em potential theory} \cite{kress99} applied to  solving linear constant-coefficient
@@ -39,7 +41,8 @@ To our knowledge, there have been no parallel implementations to date that compu
 \item We describe a novel scheme for the translation of plane wave expansions; this is one of the steps in the
  sequential fast Gausss transform (FGT). Our new scheme reduces the storage and computational costs required for this step compared to previous implementations, especially for highly nonuniform point distributions.
 \item We present a parallel version of FGT for uniform distributions incorporating the accelerations introduced in \cite{fggt} for tensor-product grids. We demonstrate the scalability of our algorithm using  upto 120 billion points. To our knowledge, the Gauss transform of such a large number of points has not been computed before.
-\item We extend our algorithms to work with nonuniform distributions by using the linear octree data structure. This was motivated by the tree-splitting scheme used in \cite{veerapaneni08} for computing continuous Gauss transforms. The cost of the original FGT algorithm increases as $\delta$ decreases; in contrast, our octree based algorithm scales well in all ranges of the parameters.
+\item We extend our algorithms to work with nonuniform distributions by using the linear octree data structure. This was motivated by the tree-splitting scheme used in \cite{veerapaneni08} for computing continuous Gauss transforms. The cost of the  \newpage 
+original FGT algorithm increases as $\delta$ decreases; in contrast, our octree based algorithm scales well in all ranges of the parameters.
 \item We also present a parallel implementation of our octree based FGT algorithm.
 \end{itemize}
 
