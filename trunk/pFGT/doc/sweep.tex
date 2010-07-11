@@ -8,7 +8,7 @@ For nonuniform distributions, we do not form plane-wave expansions at all the bo
  \item Surface distribution, in which, each source box on an average has $\bigO(K^2)$ target boxes in its interaction list. These arise when the sources reside on two-dimensional manifolds (eg., a sphere) embedded in the volume. 
 \end{itemize}
 
-Suppose the unit cube $[0, 1]^3$ is partitioned into $n_b^3$ regular boxes and $|B|$ of them are non-empty. There are two main drawbacks to the sweeping algorithm. First, a naive implementation stores data in all the $n_b^3$ boxes. This could be detrimental both for the volume and the surface distributions as, potentially, $|B| <\!< n_b^3$. Second, its performance is worse than the direct scheme for surface distributions. For example, consider the case where the sources reside on the sphere. The sweeping algorithm fills in $\bigO(K^3)$ empty boxes around each non-empty box increasing the count of non-empty boxes from $|B|$ to $\bigO(K^3 |B|)$. Thereby, the overall cost of sweeping algorithm is $\bigO(9 p^3 K^3 |B|)$. The direct scheme, on the other hand, requires $\bigO(p^3 K^2 |B|)$ because each source box has only $\bigO(K^2)$ target boxes in its interaction list. 
+Suppose the unit cube $[0, 1]^3$ is partitioned into $n_b^3$ regular boxes and $|B|$ of them are non-empty. There are two main drawbacks to the sweeping algorithm. First, a na\"{\i}ve implementation stores data in all the $n_b^3$ boxes. This could be detrimental both for the volume and the surface distributions as, potentially, $|B| <\!< n_b^3$. Second, its performance is worse than the direct scheme for surface distributions. For example, consider the case where the sources reside on the sphere. The sweeping algorithm fills in $\bigO(K^3)$ empty boxes around each non-empty box increasing the count of non-empty boxes from $|B|$ to $\bigO(K^3 |B|)$. Thereby, the overall cost of sweeping algorithm is $\bigO(9 p^3 K^3 |B|)$. The direct scheme, on the other hand, requires $\bigO(p^3 K^2 |B|)$ because each source box has only $\bigO(K^2)$ target boxes in its interaction list. 
 
 In this section, we propose two algorithms, one for volume and the other for surface distributions, that achieve optimal complexity and have minimal storage requirements. Given any arbitrary source distribution, it could be hard to distinguish which category the resulting non-empty box distribution falls into. We present a computationally inexpensive method to compute the cost of both algorithms {\em a priori} and pick the optimal of the two. 
 
@@ -99,7 +99,7 @@ algorithm are as follows,
     % & +& \sum_{\eta_{i,j}= 0,1} (-1)^{1 + d + |\eta|_1} e^{iz_k\eta ns/\sqrt{\delta}} w_k^{i+\eta_i, j+\eta_j}.
     & +& \sum_{\chi} (-1)^{1 + d + |\chi|_1} e^{i\lambda k\cdot \chi} w_k^{(i,j)+\chi}. \label{eqn:sweep}
     \end{eqnarray}
-    
+    The offsets $\chi, \xi$ represent the (positive) offsets of neighbors or the corners with respect to $B(i+1, j+1)$ on the unit cube defined at that scale. $|\chi|_1, |\xi|_1$ is the ordinal of the contributing neighbor or corner, which in turn determines whether the contribution is positive or negative. 
  %   e^{iz_k s/\sqrt{\delta}} v_k^{i+1,j} + e^{iz_k s/\sqrt{\delta}} v_k^{i,j+1} - e^{iz_k s/\sqrt{\delta}} v_k^{i,j} - e^{iz_k ns/\sqrt{\delta}} w_k^{i+n+1,j+n+1} + e^{-iz_k ns/\sqrt{\delta}} w_k^{i-n,j-n}
   
   \item The propagation can then be used to compute the local expansions at the remaining boxes in
