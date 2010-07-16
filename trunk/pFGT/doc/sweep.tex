@@ -95,11 +95,11 @@ algorithm are as follows,
     These are marked in Figure \ref{fig:w2l} assuming $K=3$. Consider the box $B_j$ with $2^d -1$ neighbors at offsets $\xi$ and having $2^d$ corners at offsets $\chi$. The local expansion can therefore be computed as,
     \begin{eqnarray} 
     % v_k^{i+1,j+1} &=& \sum_{\eta_{i,j} = 0,1} (-1)^{1 + d + |\eta|_1} e^{i\lambda k\cdot\eta} v_k^{i+\eta_i, j+\eta_j} \\
-    v_k^{(i+1,j+1)} &=& \sum_{\xi} (-1)^{1 + d + |\xi|_1} e^{i\lambda k\cdot\xi} v_k^{(i,j)+\xi} \nonumber\\
+    v_k^{(i+1,j+1)} &=& \sum_{\xi} (-1)^{1 + d + \mathcal{M}(\xi)} e^{i\lambda k\cdot\xi} v_k^{(i,j)+\xi} \nonumber\\
     % & +& \sum_{\eta_{i,j}= 0,1} (-1)^{1 + d + |\eta|_1} e^{iz_k\eta ns/\sqrt{\delta}} w_k^{i+\eta_i, j+\eta_j}.
-    & +& \sum_{\chi} (-1)^{1 + d + |\chi|_1} e^{i\lambda k\cdot \chi} w_k^{(i,j)+\chi}. \label{eqn:sweep}
+    & +& \sum_{\chi} (-1)^{1 + d + \mathcal{M}(\chi)} e^{i\lambda k\cdot \chi} w_k^{(i,j)+\chi}. \label{eqn:sweep}
     \end{eqnarray}
-    The offsets $\chi, \xi$ represent the (positive) offsets of neighbors or the corners with respect to $B(i+1, j+1)$ on the unit cube defined at that scale. $|\chi|_1, |\xi|_1$ is the ordinal of the contributing neighbor or corner, which in turn determines whether the contribution is positive or negative. 
+    The offsets $\chi, \xi$ represent the offsets of neighbors or the corners with respect to $B(i+1, j+1)$ on the unit cube defined at that scale. $\mathcal{M}(\chi), \mathcal{M}(\xi)$ is the ordinal of the contributing neighbor or corner, which in turn determines whether the contribution is positive or negative. The ordinal is simply the manhattan distance from the top-right corner on the unit cube at that scale. Therefore the top-right corner is 0, the corners one step away are $1$, and so on.
  %   e^{iz_k s/\sqrt{\delta}} v_k^{i+1,j} + e^{iz_k s/\sqrt{\delta}} v_k^{i,j+1} - e^{iz_k s/\sqrt{\delta}} v_k^{i,j} - e^{iz_k ns/\sqrt{\delta}} w_k^{i+n+1,j+n+1} + e^{-iz_k ns/\sqrt{\delta}} w_k^{i-n,j-n}
   
   \item The propagation can then be used to compute the local expansions at the remaining boxes in
