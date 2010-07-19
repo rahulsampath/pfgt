@@ -99,7 +99,9 @@ algorithm are as follows,
     % & +& \sum_{\eta_{i,j}= 0,1} (-1)^{1 + d + |\eta|_1} e^{iz_k\eta ns/\sqrt{\delta}} w_k^{i+\eta_i, j+\eta_j}.
     & +& \sum_{\chi} (-1)^{1 + d + \mathcal{M}(\chi)} e^{i\lambda k\cdot \chi} w_k^{(i,j)+\chi}. \label{eqn:sweep}
     \end{eqnarray}
-    The offsets $\chi, \xi$ represent the offsets of neighbors or the corners with respect to $B(i+1, j+1)$ on the unit cube defined at that scale. $\mathcal{M}(\chi), \mathcal{M}(\xi)$ is the ordinal of the contributing neighbor or corner, which in turn determines whether the contribution is positive or negative. The ordinal is simply the Manhattan distance from the top-right corner on the unit cube at that scale. Therefore the top-right corner is 0, the corners one step away are $1$, and so on.
+    The offsets $\chi, \xi$ represent the offsets of neighbors or the corners with respect to $B(i+1, j+1)$. $\mathcal{M}(\chi), \mathcal{M}(\xi)$ is the ordinal of the contributing neighbor or corner, which in turn determines whether the contribution is positive or negative. $\mathcal{M}(\chi)$ is the number of dimensions in which $\chi$ is different from the top-right (most extreme in $n$-D) corner or neighbour. In the example shown in Figure \ref{fig:w2l}, the ordinal of $B(i+1, j+1)$ is $0$ and that of $B(i, j)$ is $2$. 
+%The ordinal is simply the manhattan distance from the top-right corner on the unit cube at that scale. Therefore the top-right corner is 0, the corners one step away are $1$, and so on.
+
  %   e^{iz_k s/\sqrt{\delta}} v_k^{i+1,j} + e^{iz_k s/\sqrt{\delta}} v_k^{i,j+1} - e^{iz_k s/\sqrt{\delta}} v_k^{i,j} - e^{iz_k ns/\sqrt{\delta}} w_k^{i+n+1,j+n+1} + e^{-iz_k ns/\sqrt{\delta}} w_k^{i-n,j-n}
   
   \item The propagation can then be used to compute the local expansions at the remaining boxes in
