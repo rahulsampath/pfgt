@@ -89,10 +89,10 @@ algorithm are as follows,
     compute the local expansion of the Green box ( $B(i+1,j+1)$), given the
     local expansions of the adjacent boxes (colored in orange).  
   
-  \item The local expansion $v_k$ of the box $B(i+1, j+1)$ can be written in terms of the
+  \item The local expansion $\{v_k^{(i+1, j+1)}, |k| \leq p\}$ of the box $B(i+1, j+1)$ can be written in terms of the
     local expansions of the $2^d -1$ neighbors $B(i,j), B(i+1,j)$ and
     $B(i,j+1)$, along with corrections terms from the $2^d$ corners.
-    These are marked in Figure \ref{fig:w2l} assuming $K=3$. Consider the box $B_j$ with $2^d -1$ neighbors at offsets $\xi$ and having $2^d$ corners at offsets $\chi$. The local expansion can therefore be computed as,
+    These are marked in Figure \ref{fig:w2l} assuming $K=3$. Consider the box $B(i+1, j+1)$ with $2^d -1$ neighbors at offsets $\xi$ and having $2^d$ corners at offsets $\chi$. The local expansion can therefore be computed as,
     \begin{eqnarray} 
     % v_k^{i+1,j+1} &=& \sum_{\eta_{i,j} = 0,1} (-1)^{1 + d + |\eta|_1} e^{i\lambda k\cdot\eta} v_k^{i+\eta_i, j+\eta_j} \\
     v_k^{(i+1,j+1)} &=& \sum_{\xi} (-1)^{1 + d + \mathcal{M}(\xi)} e^{i\lambda k\cdot\xi} v_k^{(i,j)+\xi} \nonumber\\
