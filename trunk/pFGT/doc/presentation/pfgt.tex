@@ -31,12 +31,7 @@
 
 
 \title{Parallel Fast Gauss Transform}
-\author{Shravan K. Veerapaneni}
-\institute{Courant Institute of Mathematical Sciences \\
-            \vspace{.1in}
-%          \hspace{0.62in} \includegraphics[width = 2in]{nyu.jpg} \vspace{0.5in}   \\$\quad$}
-             \includegraphics[width = 1.3in]{nyulogo.jpg} \vspace{0.5in}   \\$\quad$}
-\date{11 October 2010}             
+\date{16 November 2010}             
 
 \AtBeginSection[]
  {
@@ -60,34 +55,19 @@
 \end{frame}
 
 \section{Introduction}
+\input intro.tex
 
-\begin{frame}
-\frametitle{Parallel Generalized Gauss Transforms }
-\begin{block}{}
-\[ 
-F(x) = \int_\Omega \norm{x - y}^{2n} e^{-\frac{\norm{x - y}^2}{\delta}} f(y) \, d\Omega
- \] 
-\end{block}
+\section{Translation}
+\input translation.tex
 
-\begin{columns}
-\begin{column}{.6\textwidth}
-\begin{block}{}
-\begin{itemize}
- \item Naive algorithm is $\mathcal{O}(N^2)$
- \item Extension of FGT {\tiny \texttt{(Greengard-Strain,1990)}}
- \item Works for several ``Gaussian-type'' kernels that arise from parabolic PDEs
- \item Supports highly non-uniform point distributions 
- \item 120 billion points computation in 140 sec on 4096 cores 
-\end{itemize}
-\end{block}
-		\end{column}
-		\begin{column}{.4\textwidth}
-			\begin{center}\includegraphics[width = 1.7in]{pfgt.jpg} \end{center}
-		\end{column}
-	\end{columns}
-$\quad$\\
-\texttt{{\tiny Sampath, Sundar and Veerapaneni, Supercomputing 2010 (Best Paper Award Finalist)}}		
-\end{frame}
+\section{Octree}
+\input octree.tex
+
+\section{Results}
+\input  results.tex
+
+\section{Conclusions}
+\input conclusion.tex
 
 
 
