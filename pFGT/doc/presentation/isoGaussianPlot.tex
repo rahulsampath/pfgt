@@ -17,46 +17,37 @@
  \draw (-0.4, \label\yscale) node {\scriptsize{\label}};
 }
 
-\draw[very thin, color=gray, xstep=1, ystep=0.5] (0, -7.0) grid (5, -0.5);
 
-\draw[fill=cyan, fill opacity=0.5] (-1.75, -1.0) rectangle +(1.75, 0.5);
-\draw (-0.875, -0.75) node {\scriptsize{D2L}};
+\draw[fill=olive, fill opacity=0.5] (5.375, 4.25) rectangle +(2.375, 0.5);
+\draw (6.5, 4.5) node {\scriptsize{Total}};
 
-\draw[fill=brown, fill opacity=0.5] (-1.75, -1.5) rectangle +(1.75, 0.5);
-\draw (-0.875, -1.25) node {\scriptsize{W2D}};
+\draw[fill=magenta, fill opacity=0.5] (5.375, 3.5) rectangle +(1.0, 0.5);
+\draw (5.875, 3.75) node {\scriptsize{S2W}};
 
-\draw[fill=blue, fill opacity=0.5] (-1.75, -2.0) rectangle +(1.75, 0.5);
-\draw (-0.875, -1.75) node {\scriptsize{D2D}};
+\draw[fill=lime, fill opacity=0.5] (5.375, 2.75) rectangle +(1.0, 0.5);
+\draw (5.875, 3.0) node {\scriptsize{L2T}};
 
-\draw[fill=lime, fill opacity=0.5] (-1.75, -2.5) rectangle +(1.75, 0.5);
-\draw (-0.875, -2.25) node {\scriptsize{L2T}};
+\draw[fill=red, fill opacity=0.5] (5.375, 2.0) rectangle +(1.0, 0.5);
+\draw (5.875, 2.25) node {\scriptsize{W2L}};
 
-\draw[fill=magenta, fill opacity=0.5] (-1.75, -3.0) rectangle +(1.75, 0.5);
-\draw (-0.875, -2.75) node {\scriptsize{S2W}};
+\draw[fill=cyan, fill opacity=0.5] (6.75, 3.5) rectangle +(1.0, 0.5);
+\draw (7.25, 3.75) node {\scriptsize{D2L}};
 
-\draw[fill=orange, fill opacity=0.5] (-1.75, -3.5) rectangle +(1.75, 0.5);
-\draw (-0.875, -3.25) node {\scriptsize{S2W-Comm}};
+\draw[fill=brown, fill opacity=0.5] (6.75, 2.75) rectangle +(1.0, 0.5);
+\draw (7.25, 3.0) node {\scriptsize{W2D}};
 
-\draw[fill=teal, fill opacity=0.5] (-1.75, -4.0) rectangle +(1.75, 0.5);
-\draw (-0.875, -3.75) node {\scriptsize{L2T-Comm}};
+\draw[fill=blue, fill opacity=0.5] (6.75, 2.0) rectangle +(1.0, 0.5);
+\draw (7.25, 2.25) node {\scriptsize{D2D}};
 
-\draw[fill=red, fill opacity=0.5] (-1.75, -4.5) rectangle +(1.75, 0.5);
-\draw (-0.875, -4.25) node {\scriptsize{W2L}};
+\draw[fill=orange, fill opacity=0.5] (5.75, 1.25) rectangle +(1.5, 0.5);
+\draw (6.5, 1.5) node {\scriptsize{S2W-Comm}};
 
-\draw[fill=olive, fill opacity=0.5] (-1.75, -5.0) rectangle +(1.75, 0.5);
-\draw (-0.875, -4.75) node {\scriptsize{\textbf{Total}}};
+\draw[fill=teal, fill opacity=0.5] (5.75, 0.5) rectangle +(1.5, 0.5);
+\draw (6.5, 0.75) node {\scriptsize{L2T-Comm}};
 
-\draw (-1.75, -5.5) rectangle +(1.75, 0.5);
-\draw (-0.875, -5.25) node {\scriptsize{Expand Octants}};
+\draw[red, ultra thick] (1.5, -1.25) rectangle +(2.5, 0.5);
+\draw (2.75, -1.0) node {\scriptsize{$\approx$ 300K Points/CPU}};
 
-\draw (-1.75, -6.0) rectangle +(1.75, 0.5);
-\draw (-0.875, -5.75) node {\scriptsize{Direct Octants}};
-
-\draw (-1.75, -6.5) rectangle +(1.75, 0.5);
-\draw (-0.875, -6.25) node {\scriptsize{Points}};
-
-\draw (-1.75, -7.0) rectangle +(1.75, 0.5);
-\draw (-0.875, -6.75) node {\scriptsize{$\delta$}};
 
 \newdimen\mypos
 \newdimen\myoff
@@ -71,20 +62,6 @@
 
 \mypos=\pos cm
 \advance \mypos by 0.5 cm
-
-\draw (\mypos, -0.75 cm) node {\scriptsize{\vala}};
-\draw (\mypos, -1.25 cm) node {\scriptsize{\valb}};
-\draw (\mypos, -1.75 cm) node {\scriptsize{\valc}};
-\draw (\mypos, -2.25 cm) node {\scriptsize{\vald}};
-\draw (\mypos, -2.75 cm) node {\scriptsize{\vale}};
-\draw (\mypos, -3.25 cm) node {\scriptsize{\valf}};
-\draw (\mypos, -3.75 cm) node {\scriptsize{\valg}};
-\draw (\mypos, -4.25 cm) node {\scriptsize{\valh}};
-\draw (\mypos, -4.75 cm) node {\scriptsize{\textbf{\vali}}};
-\draw (\mypos, -5.25 cm) node {\scriptsize{\valj}};
-\draw (\mypos, -5.75 cm) node {\scriptsize{\valk}};
-\draw (\mypos, -6.25 cm) node {\scriptsize{\vall}};
-\draw (\mypos, -6.75 cm) node {\scriptsize{\valm}};
 
 \advance \mypos by -0.4 cm
 \myoff=0 cm
