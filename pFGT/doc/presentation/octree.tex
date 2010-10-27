@@ -1,0 +1,47 @@
+
+\begin{frame}
+\frametitle{Expansion or Truncation?}
+\begin{itemize}
+\item Many sources per FGT box - Expansion
+\newline
+\item Few sources per FGT box - Truncation
+\newline
+\item Non-uniform distributions - Hybrid
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Octree based FGT}
+\begin{columns}[T]
+\begin{column}{0.4\textwidth}
+\begin{itemize}
+\item Max. of $m$ points per octant
+\only<2->{
+\item Higher point density $\Rightarrow$ finer octants
+}
+\only<3>{
+\item Large leaves $\Rightarrow$ Truncation ({\color{blue}{Direct}})
+\item Small leaves $\Rightarrow$ Expansion ({\color{green}{Expand}})
+}
+\end{itemize}
+\end{column}
+\begin{column}{0.6\textwidth}
+\only<1> {
+\input{pointsDemoIn}
+}
+\only<2> {
+\input{pointsDemoOut}
+}
+\only<3> {
+\input{markedOctree}
+}
+\end{column}
+\end{columns}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Octree based FGT}
+\framesubtitle{}
+\end{frame}
