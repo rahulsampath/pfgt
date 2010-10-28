@@ -17,9 +17,9 @@
 \begin{columns}[T]
 \begin{column}{0.4\textwidth}
 \begin{itemize}
-\item Max. of $m$ points per octant
+\item Max. of $m$ points per leaf
 \only<2->{
-\item Higher point density $\Rightarrow$ finer octants
+\item Higher point density $\Rightarrow$ finer leaves
 }
 \only<3>{
 \item Large leaves $\Rightarrow$ Truncation ({\color{blue}{Direct}})
@@ -96,8 +96,31 @@ y & x &  \\
 
 \end{frame}
 
+\begin{frame}
+\frametitle{Octree based FGT}
+\framesubtitle{Data Partition}
+\begin{itemize}
+\item Distributed regular grid of FGT boxes
+\begin{itemize}
+\item Each box owned by unique CPU
+\item Each CPU owns a sub-grid of boxes
+\newline
+\end{itemize}
+\item Distributed octree
+\begin{itemize}
+\item Each leaf owned by unique CPU
+\item Leaves sorted using Space-filling curve (Morton curve)
+\item Direct and Expand trees partitioned independently
+\newline
+\end{itemize}
+\item Distributed points - mapped to enclosing leaf
+\end{itemize}
+\end{frame}
 
 \begin{frame}
 \frametitle{Octree based FGT}
-\framesubtitle{Parallel Implementation}
+\framesubtitle{Parallel Algorithm}
+\begin{enumerate}
+\item S2W
+\end{enumerate}
 \end{frame}
