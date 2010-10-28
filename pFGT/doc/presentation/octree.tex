@@ -2,11 +2,11 @@
 \begin{frame}
 \frametitle{Expansion or Truncation?}
 \begin{itemize}
-\item Many sources per FGT box - Expansion
+\item Many sources per FGT box $-$ Expansion
 \newline
-\item Few sources per FGT box - Truncation
+\item Few sources per FGT box $-$ Truncation
 \newline
-\item Non-uniform distributions - Hybrid
+\item Non-uniform distributions $-$ Hybrid
 \end{itemize}
 \end{frame}
 
@@ -23,7 +23,7 @@
 }
 \only<3>{
 \item Large leaves $\Rightarrow$ Truncation ({\color{blue}{Direct}})
-\item Small leaves $\Rightarrow$ Expansion ({\color{green}{Expand}})
+\item Small leaves $\Rightarrow$ Expansion ({\color{green!65!black}{Expand}})
 }
 \end{itemize}
 \end{column}
@@ -48,8 +48,8 @@
 \begin{itemize}
 \item Source - $y$
 \item Target - $x$
-\item Direct tree - $T_d$
-\item Expand tree - $T_e$
+\item {\color{blue}{Direct}} tree - {\color{blue}{$T_d$}}
+\item {\color{green!65!black}{Expand}} tree - {\color{green!65!black}{$T_e$}}
 \end{itemize}
 
 \vspace{-0.25cm}
@@ -57,40 +57,40 @@
 \only<1> {
 \bean
 y & x &  \\
-T_e & T_e & y \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\textbf{W2L}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} x  \\
-T_e & T_d & y \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\textbf{W2D}} x  \\
-T_d & T_e & y \xrightarrow[]{\textbf{D2L}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} x  \\
-T_d & T_d & y \xrightarrow[]{\textbf{D2D}} x  \\
+{\color{green!65!black}{T_e}} & {\color{green!65!black}{T_e}} & {\color{green!65!black}{y}} \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\textbf{W2L}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} {\color{green!65!black}{x}}  \\
+{\color{green!65!black}{T_e}} & {\color{blue}{T_d}} & {\color{green!65!black}{y}} \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\textbf{W2D}} {\color{blue}{x}}  \\
+{\color{blue}{T_d}} & {\color{green!65!black}{T_e}} & {\color{blue}{y}} \xrightarrow[]{\textbf{D2L}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} {\color{green!65!black}{x}}  \\
+{\color{blue}{T_d}} & {\color{blue}{T_d}} & {\color{blue}{y}} \xrightarrow[]{\textbf{D2D}} {\color{blue}{x}}  \\
 \eean
 }
 
 \only<2> {
 \bean
 y & x &  \\
-T_e & T_e & y \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\textbf{W2L}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} x  \\
-T_e & T_d & y \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\color{red}{\textbf{W2D}}} x \, \color{red}{\left[ F(x) \, +=\, \sum_{|k| \leq p} \hat{G}(k)  w_k e^{i \lambda k \cdot (x - c^B)} \right]} \\
-T_d & T_e & y \xrightarrow[]{\textbf{D2L}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} x  \\
-T_d & T_d & y \xrightarrow[]{\textbf{D2D}} x  \\
+{\color{green!65!black}{T_e}} & {\color{green!65!black}{T_e}} & {\color{green!65!black}{y}} \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\textbf{W2L}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} {\color{green!65!black}{x}}  \\
+{\color{green!65!black}{T_e}} & {\color{blue}{T_d}} & {\color{green!65!black}{y}} \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\color{red}{\textbf{W2D}}} {\color{blue}{x}} \, \color{red}{\left[ F(x) \, +=\, \sum_{|k| \leq p} \hat{G}(k)  w_k e^{i \lambda k \cdot (x - c^B)} \right]} \\
+{\color{blue}{T_d}} & {\color{green!65!black}{T_e}} & {\color{blue}{y}} \xrightarrow[]{\textbf{D2L}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} {\color{green!65!black}{x}}  \\
+{\color{blue}{T_d}} & {\color{blue}{T_d}} & {\color{blue}{y}} \xrightarrow[]{\textbf{D2D}} {\color{blue}{x}}  \\
 \eean
 }
 
 \only<3> {
 \bean
 y & x &  \\
-T_e & T_e & y \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\textbf{W2L}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} x  \\
-T_e & T_d & y \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\color{red}{\textbf{W2D}}} x \, \color{red}{\left[ F(x) \, +=\, \sum_{|k| \leq p} \hat{G}(k)  w_k e^{i \lambda k \cdot (x - c^B)} \right]} \\
-T_d & T_e & y \xrightarrow[]{\color{red}{\textbf{D2L}}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} x \, \color{red}{\left[ v_k  \,+=\, \, f(y) e^{i \lambda k \cdot (c^D - y)} \right]} \\
-T_d & T_d & y \xrightarrow[]{\textbf{D2D}} x  \\
+{\color{green!65!black}{T_e}} & {\color{green!65!black}{T_e}} & {\color{green!65!black}{y}} \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\textbf{W2L}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} {\color{green!65!black}{x}}  \\
+{\color{green!65!black}{T_e}} & {\color{blue}{T_d}} & {\color{green!65!black}{y}} \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\color{red}{\textbf{W2D}}} {\color{blue}{x}} \, \color{red}{\left[ F(x) \, +=\, \sum_{|k| \leq p} \hat{G}(k)  w_k e^{i \lambda k \cdot (x - c^B)} \right]} \\
+{\color{blue}{T_d}} & {\color{green!65!black}{T_e}} & {\color{blue}{y}} \xrightarrow[]{\color{red}{\textbf{D2L}}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} {\color{green!65!black}{x}} \, \color{red}{\left[ v_k  \,+=\, \, f(y) e^{i \lambda k \cdot (c^D - y)} \right]} \\
+{\color{blue}{T_d}} & {\color{blue}{T_d}} & {\color{blue}{y}} \xrightarrow[]{\textbf{D2D}} {\color{blue}{x}}  \\
 \eean
 }
 
 \only<4> {
 \bean
 y & x &  \\
-T_e & T_e & y \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\textbf{W2L}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} x  \\
-T_e & T_d & y \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\color{red}{\textbf{W2D}}} x \, \color{red}{\left[ F(x) \, +=\, \sum_{|k| \leq p} \hat{G}(k)  w_k e^{i \lambda k \cdot (x - c^B)} \right]} \\
-T_d & T_e & y \xrightarrow[]{\color{red}{\textbf{D2L}}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} x \, \color{red}{\left[ v_k  \,+=\, \, f(y) e^{i \lambda k \cdot (c^D - y)} \right]} \\
-T_d & T_d & y \xrightarrow[]{\color{red}{\textbf{D2D}}} x \, \color{red}{\left[ F(x) \,+=\, G_\delta(\norm{x - y}) f(y) \right]} \\
+{\color{green!65!black}{T_e}} & {\color{green!65!black}{T_e}} & {\color{green!65!black}{y}} \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\textbf{W2L}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} {\color{green!65!black}{x}}  \\
+{\color{green!65!black}{T_e}} & {\color{blue}{T_d}} & {\color{green!65!black}{y}} \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\color{red}{\textbf{W2D}}} {\color{blue}{x}} \, \color{red}{\left[ F(x) \, +=\, \sum_{|k| \leq p} \hat{G}(k)  w_k e^{i \lambda k \cdot (x - c^B)} \right]} \\
+{\color{blue}{T_d}} & {\color{green!65!black}{T_e}} & {\color{blue}{y}} \xrightarrow[]{\color{red}{\textbf{D2L}}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} {\color{green!65!black}{x}} \, \color{red}{\left[ v_k  \,+=\, \, f(y) e^{i \lambda k \cdot (c^D - y)} \right]} \\
+{\color{blue}{T_d}} & {\color{blue}{T_d}} & {\color{blue}{y}} \xrightarrow[]{\color{red}{\textbf{D2D}}} {\color{blue}{x}} \, \color{red}{\left[ F(x) \,+=\, G_\delta(\norm{x - y}) f(y) \right]}  \\
 \eean
 }
 
