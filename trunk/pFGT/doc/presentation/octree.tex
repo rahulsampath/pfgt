@@ -121,6 +121,25 @@ y & x &  \\
 \frametitle{Octree based FGT}
 \framesubtitle{Parallel Algorithm}
 \begin{enumerate}
-\item S2W
+\item<1-> S2W 
+\only<1>{
+\begin{enumerate}[(A)]
+\item CPUs containing {\color{green!65!black}{Expand}} sources compute plane wave expansions
+\item Communicate expansions to owners of respective FGT boxes
+\item Add received values to existing plane wave expansions
+\end{enumerate}
+}
+\item<2-> W2D
+\only<2>{
+\begin{enumerate}[(A)]
+\item CPUs containing {\color{blue}{Direct}} targets form a list of required FGT boxes
+\item Get plane wave expansions for these FGT boxes from their owners
+\item Update transform at {\color{blue}{Direct}} targets using received values
+\end{enumerate}
+}
+\item<3-> D2D
+\item<4-> W2L
+\item<5-> D2L
+\item<6> L2T
 \end{enumerate}
 \end{frame}
