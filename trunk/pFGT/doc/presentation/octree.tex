@@ -46,10 +46,10 @@
 \frametitle{Octree based FGT}
 \framesubtitle{Flow of Information}
 \begin{itemize}
-\item Source - $y$
-\item Target - $x$
-\item {\color{blue}{Direct}} tree - {\color{blue}{$T_d$}}
-\item {\color{green!65!black}{Expand}} tree - {\color{green!65!black}{$T_e$}}
+\item Source $-$ $y$
+\item Target $-$ $x$
+\item {\color{blue}{Direct}} tree $-$ {\color{blue}{$T_d$}}
+\item {\color{green!65!black}{Expand}} tree $-$ {\color{green!65!black}{$T_e$}}
 \end{itemize}
 
 \vspace{-0.25cm}
@@ -113,7 +113,7 @@ y & x &  \\
 \item Direct and Expand trees partitioned independently
 \newline
 \end{itemize}
-\item Distributed points - mapped to enclosing leaf
+\item Distributed points $-$ mapped to enclosing leaf
 \end{itemize}
 \end{frame}
 
@@ -125,15 +125,15 @@ y & x &  \\
 \only<1>{
 \begin{enumerate}[(A)]
 \item CPUs containing {\color{green!65!black}{Expand}} sources compute plane wave expansions
-\item Communicate expansions to owners of respective FGT boxes
+\item Send expansions to owners of respective FGT boxes
 \item Add received values to existing plane wave expansions
 \end{enumerate}
 }
 \item<2-> W2D
 \only<2>{
 \begin{enumerate}[(A)]
-\item CPUs containing {\color{blue}{Direct}} targets form a list of required FGT boxes
-\item Get plane wave expansions for these boxes from their owners
+\item CPUs containing {\color{blue}{Direct}} targets form a list of {\em{relevant}} FGT boxes
+\item Request plane wave expansions for these boxes from their owners
 \item Update transform at {\color{blue}{Direct}} targets using received values
 \end{enumerate}
 }
@@ -154,13 +154,16 @@ y & x &  \\
 \item<5-> D2L
 \only<5>{
 \begin{enumerate}[(A)]
-\item 
+\item CPUs containing {\color{blue}{Direct}} sources compute their contributions to {\em{relevant}} FGT boxes
+\item Send these contributions to owners of respective FGT boxes
+\item Update local expansions using received values 
 \end{enumerate}
 }
 \item<6> L2T
 \only<6>{
 \begin{enumerate}[(A)]
-\item 
+\item Send local expansions to CPUs containing {\em{relevant}} {\color{green!65!black}{Expand}} targets
+\item Compute transform at {\color{green!65!black}{Expand}} targets using received values
 \end{enumerate}
 }
 \end{enumerate}
