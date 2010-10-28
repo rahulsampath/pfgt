@@ -68,9 +68,29 @@ T_d & T_d & y \xrightarrow[]{\textbf{D2D}} x  \\
 \bean
 y & x &  \\
 T_e & T_e & y \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\textbf{W2L}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} x  \\
-T_e & T_d & y \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\color{red}{\textbf{W2D}}} x  \\
-T_d & T_e & y \xrightarrow[]{\color{red}{\textbf{D2L}}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} x  \\
-T_d & T_d & y \xrightarrow[]{\color{red}{\textbf{D2D}}} x  \\
+T_e & T_d & y \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\color{red}{\textbf{W2D}}} x \, \color{red}{\left[ F(x) \, +=\, \sum_{|k| \leq p} \hat{G}(k)  w_k e^{i \lambda k \cdot (x - c^B)} \right]} \\
+T_d & T_e & y \xrightarrow[]{\textbf{D2L}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} x  \\
+T_d & T_d & y \xrightarrow[]{\textbf{D2D}} x  \\
+\eean
+}
+
+\only<3> {
+\bean
+y & x &  \\
+T_e & T_e & y \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\textbf{W2L}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} x  \\
+T_e & T_d & y \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\color{red}{\textbf{W2D}}} x \, \color{red}{\left[ F(x) \, +=\, \sum_{|k| \leq p} \hat{G}(k)  w_k e^{i \lambda k \cdot (x - c^B)} \right]} \\
+T_d & T_e & y \xrightarrow[]{\color{red}{\textbf{D2L}}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} x \, \color{red}{\left[ v_k  \,+=\, \, f(y) e^{i \lambda k \cdot (c^D - y)} \right]} \\
+T_d & T_d & y \xrightarrow[]{\textbf{D2D}} x  \\
+\eean
+}
+
+\only<4> {
+\bean
+y & x &  \\
+T_e & T_e & y \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\textbf{W2L}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} x  \\
+T_e & T_d & y \xrightarrow[]{\textbf{S2W}} \{ w_k\} \xrightarrow[]{\color{red}{\textbf{W2D}}} x \, \color{red}{\left[ F(x) \, +=\, \sum_{|k| \leq p} \hat{G}(k)  w_k e^{i \lambda k \cdot (x - c^B)} \right]} \\
+T_d & T_e & y \xrightarrow[]{\color{red}{\textbf{D2L}}} \{ v_k \}\xrightarrow[]{\textbf{L2T}} x \, \color{red}{\left[ v_k  \,+=\, \, f(y) e^{i \lambda k \cdot (c^D - y)} \right]} \\
+T_d & T_d & y \xrightarrow[]{\color{red}{\textbf{D2D}}} x \, \color{red}{\left[ F(x) \,+=\, G_\delta(\norm{x - y}) f(y) \right]} \\
 \eean
 }
 
