@@ -133,13 +133,35 @@ y & x &  \\
 \only<2>{
 \begin{enumerate}[(A)]
 \item CPUs containing {\color{blue}{Direct}} targets form a list of required FGT boxes
-\item Get plane wave expansions for these FGT boxes from their owners
+\item Get plane wave expansions for these boxes from their owners
 \item Update transform at {\color{blue}{Direct}} targets using received values
 \end{enumerate}
 }
 \item<3-> D2D
+\only<3>{
+\begin{enumerate}[(A)]
+\item Send {\color{blue}{Direct}} sources to CPUs containing {\em{relevant}} {\color{blue}{Direct}} leaves
+\item Update transform at {\color{blue}{Direct}} targets using received values
+\end{enumerate}
+}
 \item<4-> W2L
+\only<4>{
+\begin{enumerate}[(A)]
+\item Communicate plane wave expansions of {\em{ghost}} FGT boxes
+\item Execute translation/sweeping algorithm
+\end{enumerate}
+}
 \item<5-> D2L
+\only<5>{
+\begin{enumerate}[(A)]
+\item 
+\end{enumerate}
+}
 \item<6> L2T
+\only<6>{
+\begin{enumerate}[(A)]
+\item 
+\end{enumerate}
+}
 \end{enumerate}
 \end{frame}
