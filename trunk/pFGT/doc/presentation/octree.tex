@@ -99,22 +99,26 @@ y & x &  \\
 \begin{frame}
 \frametitle{Octree based FGT}
 \framesubtitle{Data Partition}
+\begin{columns}[T]
+\begin{column}{0.6\textwidth}
 \begin{itemize}
 \item Distributed regular grid of FGT boxes
 \begin{itemize}
-\item Each box owned by unique CPU
+\item Each box owned by an unique CPU
 \item Each CPU owns a sub-grid of boxes
 \newline
 \end{itemize}
 \item Distributed octree
 \begin{itemize}
-\item Each leaf owned by unique CPU
-\item Leaves sorted using Space-filling curve (Morton curve)
+\item Each leaf owned by an unique CPU
+\item Sorted in Morton (space-filling) order
 \item Direct and Expand trees partitioned independently
 \newline
 \end{itemize}
 \item Distributed points $-$ mapped to enclosing leaf
 \end{itemize}
+\end{column}
+\end{columns}
 \end{frame}
 
 \begin{frame}
