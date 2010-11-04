@@ -106,14 +106,14 @@ y & x &  \\
 \begin{itemize}
 \item Each box owned by an unique CPU
 \item Each CPU owns a sub-grid of boxes
-\newline
+\item PETSc package
 \end{itemize}
 \item Distributed octree
 \begin{itemize}
 \item Each leaf owned by an unique CPU
 \item Sorted in Morton (space-filling) order
-\item Direct and Expand trees partitioned independently
-\newline
+\item {\color{red!40!black}{Direct}} and Expand trees partitioned independently
+\item Dendro package 
 \end{itemize}
 \item Distributed points $-$ mapped to enclosing leaf
 \end{itemize}
@@ -121,7 +121,6 @@ y & x &  \\
 \begin{column}{0.4\textwidth}
 \input{gridPartition}
 \newline
-%\input{octreePartition}
 \input{expandDirectPartition}
 \end{column}
 \end{columns}
