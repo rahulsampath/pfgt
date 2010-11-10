@@ -71,10 +71,30 @@ Navier-Stokes &  $\partial_t \mbu  + \mbu \nabla \mbu = \triangle \mbu + \nabla 
 \frametitle{Introduction }
 \framesubtitle{Related Work}
 \begin{block}{Sequential}
-
+{\footnotesize
+\begin{table}[htbp]
+\centering
+\begin{tabular}{ll} 
+\texttt{Greengard \& Strain, 1991} & FGT -- Hermite expansions \\
+\texttt{Greengard \& Sun, 1998} & Plane wave expansions \\
+\texttt{Sun \& Bao, 2002} & Kronecker-product rep. \\
+\texttt{Yang et al., 2003} & high-dimensional FGT for KDEs \\ 
+\texttt{Spivak et al., 2010} & Generalized FGT \\
+\end{tabular}
+\end{table}
+}
 \end{block}
 
 \begin{block}{Parallel}
+{\footnotesize
+\begin{table}[htbp]
+\centering
+\begin{tabular}{ll} 
+\texttt{Yamamato, 2006} & 1D \\
+\texttt{Yokota et al., 2009} & RBFs, low bandwidth \\
+\end{tabular}
+\end{table}
+}
 
 \end{block}
 \end{frame}
