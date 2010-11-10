@@ -8,12 +8,26 @@
 
 \draw (0,0) rectangle (2,2);
 
+\foreach \ypos in {0.25, 0.5, ..., 1.75} {
+ \draw (0, \ypos) -- (2, \ypos);
+}
+
+\foreach \xpos in {0.25, 0.5, ..., 1.75} {
+ \draw (\xpos, 0) -- (\xpos, 2);
+}
 
 \draw (2.4, 0.9) node {\huge{$\Rightarrow$}};
 \draw (2.4, 1.25) node {\scriptsize{{\color{red}{S}}2{\color{green}{W}}}};
 
-
 \draw (2.75,0) rectangle (4.75,2);
+
+\foreach \ypos in {0.25, 0.5, ..., 1.75} {
+ \draw (2.75, \ypos) -- (4.75, \ypos);
+}
+
+\foreach \xpos in {3.0, 3.25, ..., 4.5} {
+ \draw (\xpos, 0) -- (\xpos, 2);
+}
 
 
 \draw (5.15, 0.9) node {\huge{$\Rightarrow$}};
