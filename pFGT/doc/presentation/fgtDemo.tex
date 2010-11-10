@@ -6,13 +6,14 @@
 
 \begin{tikzpicture}[scale=1.2]
 
-\draw (0,0) rectangle +(2,2);
+\draw (0,0) rectangle (2,2);
+
 
 \draw (2.4, 0.9) node {\huge{$\Rightarrow$}};
 \draw (2.4, 1.25) node {\scriptsize{{\color{red}{S}}2{\color{green}{W}}}};
 
 
-\draw (2.75,0) rectangle +(2,2);
+\draw (2.75,0) rectangle (4.75,2);
 
 
 \draw (5.15, 0.9) node {\huge{$\Rightarrow$}};
@@ -22,8 +23,20 @@
 \draw (7.8, 0.9) node {\huge{$\Rightarrow$}};
 \draw (7.8, 1.25) node {\scriptsize{{\color{brown}{L}}2{\color{blue}{T}}}};
 
-
 \end{tikzpicture}
+
+\vspace{0.5cm}
+
+\begin{description}
+\item[{\textbf{{\color{red}{S}}{\color{black}{2}}{\color{green}{W}}}} \hspace{1cm}] 
+$ {\color{green}{w_k}} = \sum_{{\color{red}{y}} \in {\color{green}{B}}} f({\color{red}{y}}) e^{i\lambda k \cdot ({\color{green}{c^B}} - {\color{red}{y}})} \quad \forall\quad |k| \leq p $            
+\newline
+\item[{\textbf{{\color{green}{W}}{\color{black}{2}}{\color{brown}{L}}}} \hspace{1cm}] 
+$ {\color{brown}{v_k}} += {\color{green}{w_k}} e^{i\lambda k \cdot ({\color{brown}{c^D}} - {\color{green}{c^B}})} $            
+\newline
+\item[{\textbf{{\color{brown}{L}}{\color{black}{2}}{\color{blue}{T}}}} \hspace{1cm}] 
+$ F({\color{blue}{x}}) = \sum_{|k| \leq p} \hat{G}(k) {\color{brown}{v_k}} e^{i\lambda k \cdot ({\color{blue}{x}} - {\color{brown}{c^D}})} $
+\end{description} 
 
 
 \end{frame}
