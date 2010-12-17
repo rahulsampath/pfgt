@@ -20,11 +20,12 @@ int main(int argc, char ** argv ) {
 
   FILE* fp = fopen("inpType2_0_1.txt", "r");
 
-  int ptGridSizeWithinBox, nx, ny, nz, xs, ys, zs;
+  int dummyInt;
+  int ptGridSizeWithinBox, nx, ny, nz;
 
-  fscanf(fp, "%d", &xs);
-  fscanf(fp, "%d", &ys);
-  fscanf(fp, "%d", &zs);
+  fscanf(fp, "%d", &dummyInt);
+  fscanf(fp, "%d", &dummyInt);
+  fscanf(fp, "%d", &dummyInt);
   fscanf(fp, "%d", &nx);
   fscanf(fp, "%d", &ny);
   fscanf(fp, "%d", &nz);
@@ -56,9 +57,9 @@ int main(int argc, char ** argv ) {
         unsigned int sourceOffset = (boxId*ptGridSizeWithinBox*ptGridSizeWithinBox*ptGridSizeWithinBox);
 
         //Anchor of the box
-        double ax =  h*(static_cast<double>(xi + xs));
-        double ay =  h*(static_cast<double>(yi + ys));
-        double az =  h*(static_cast<double>(zi + zs));
+        double ax =  h*(static_cast<double>(xi));
+        double ay =  h*(static_cast<double>(yi));
+        double az =  h*(static_cast<double>(zi));
 
         for(int j3 = 0, ptId = 0; j3 < ptGridSizeWithinBox; j3++) {
           for(int j2 = 0; j2 < ptGridSizeWithinBox; j2++) {
@@ -78,6 +79,13 @@ int main(int argc, char ** argv ) {
 
   std::vector<double> directResults (trueLocalNumPts);
 
+  for(int j = 0; j < trueLocalNumPts; j++) {
+    directResults[j] = 0;
+    for(int k = 0; k < trueLocalNumPts; k++) {
+      directResults[j] += (sources[k]*exp(-( ((px[j] - px[k])*(px[j] - px[k])) 
+              + ((py[j] - py[k])*(py[j] - py[k])) + ((pz[j] - pz[k])*(pz[j] - pz[k])) )/delta));
+    }//end for k
+  }//end for j
 
   //Free some memory
 
@@ -90,8 +98,26 @@ int main(int argc, char ** argv ) {
 
   std::vector<double> fgtResults (trueLocalNumPts);
 
+  fp = fopen("outType2_0_1.txt", "r");
+  fscanf(fp, "%d\n", &dummyInt);
+  for(int i = 0, k = 0; i < (nx*ny*nz); i++) {
+    fscanf(fp, "%d\n", &dummyInt);
+    for(int j = 0; j < (ptGridSizeWithinBox*ptGridSizeWithinBox*ptGridSizeWithinBox); j++, k++) {
+      fscanf(fp, "%lf \n", &(fgtResults[k]));
+    }//end for j
+  }//end for i
+  fclose(fp);
+
+
   // Compute Error
   double maxErr = 0;
+
+  for(int i = 0; i < trueLocalNumPts; i++) {
+    double err = fabs(directResults[i] - fgtResults[i]);
+    if(err > maxErr) {
+      maxErr = err;
+    }
+  }//end for i
 
   std::cout<<"Max Error = "<<maxErr<<std::endl;
 
