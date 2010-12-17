@@ -839,6 +839,17 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
 
   if(writeOut) {
     char fname[256];
+    sprintf(fname, "inpType2_%d_%d.txt", rank, npes);
+    FILE* fp = fopen(fname, "w");
+    fprintf(fp, "%lld\n", trueLocalNumPts);
+    for(unsigned int i = 0; i < trueLocalNumPts; i++) {
+      fprintf(fp, "%lf \n", sources[i]);
+    }//end for i
+    fclose(fp);
+  }
+
+  if(writeOut) {
+    char fname[256];
     sprintf(fname, "outType2_%d_%d.txt", rank, npes);
     FILE* fp = fopen(fname, "w");
     fprintf(fp, "%d\n", (results.size()));
