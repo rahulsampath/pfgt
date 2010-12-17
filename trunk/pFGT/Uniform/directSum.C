@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <cmath>
+#include <vector>
 #include <iostream>
 
 int main(int argc, char ** argv ) {	
@@ -15,10 +16,22 @@ int main(int argc, char ** argv ) {
   double delta = atof(argv[1]);
   const double h = sqrt(delta);
 
-  FILE* fp = fopen();
+  FILE* fp = fopen("inpType2_0_1.txt", "r");
+
   int ptGridSizeWithinBox, nx, ny, nz;
 
+  fscanf(fp, "%d", &nx);
+  fscanf(fp, "%d", &ny);
+  fscanf(fp, "%d", &nz);
+  fscanf(fp, "%d", &ptGridSizeWithinBox);
+
   unsigned int trueLocalNumPts = ptGridSizeWithinBox*ptGridSizeWithinBox*ptGridSizeWithinBox*nx*ny*nz;
+
+  std::vector<double> sources (trueLocalNumPts);
+
+  for(unsigned int i = 0; i < trueLocalNumPts; i++) {
+    fscanf(fp, "%lf", &(sources[i]));
+  }//end for i
 
   fclose(fp);
 
@@ -27,4 +40,6 @@ int main(int argc, char ** argv ) {
 
 
 }
+
+
 
