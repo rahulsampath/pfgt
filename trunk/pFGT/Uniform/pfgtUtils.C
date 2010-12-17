@@ -498,6 +498,13 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
   const double ptGridH = 0.8*h/(static_cast<double>(ptGridSizeWithinBox) - 1.0);
   long long trueLocalNumPts = ptGridSizeWithinBox*ptGridSizeWithinBox*ptGridSizeWithinBox*nx*ny*nz;
 
+  //Create local sources
+  std::vector<double> sources;
+
+  for(unsigned int i = 0; i < trueLocalNumPts; i++) {
+    sources.push_back(fMag*(drand48()));
+  }//end for i
+
   PetscLogEventBegin(s2wEvent, 0, 0, 0, 0);
 
   //Loop over local boxes and execute S2W in each box
@@ -519,6 +526,8 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
   for(PetscInt zi = 0, boxId = 0; zi < nz; zi++) {
     for(PetscInt yi = 0; yi < ny; yi++) {
       for(PetscInt xi = 0; xi < nx; xi++, boxId++) {
+
+        unsigned int sourceOffset = (boxId*ptGridSizeWithinBox*ptGridSizeWithinBox*ptGridSizeWithinBox);
 
         //Anchor of the box
         double ax =  h*(static_cast<double>(xi + xs));
@@ -545,7 +554,7 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
           tmp1R[shiftK1].resize(ptGridSizeWithinBox);
           tmp1C[shiftK1].resize(ptGridSizeWithinBox);
 
-          for(int j3 = 0; j3 < ptGridSizeWithinBox; j3++) {
+          for(int j3 = 0, ptId = 0; j3 < ptGridSizeWithinBox; j3++) {
             tmp1R[shiftK1][j3].resize(ptGridSizeWithinBox);
             tmp1C[shiftK1][j3].resize(ptGridSizeWithinBox);
 
@@ -553,14 +562,13 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
               tmp1R[shiftK1][j3][j2] = 0.0;
               tmp1C[shiftK1][j3][j2] = 0.0;
 
-              for(int j1 = 0; j1 < ptGridSizeWithinBox; j1++) {
+              for(int j1 = 0; j1 < ptGridSizeWithinBox; j1++, ptId++) {
                 double px = ax + ptGridOff + (ptGridH*(static_cast<double>(j1)));
 
                 double theta = ImExpZfactor*(static_cast<double>(k1)*(cx - px));
 
-                //Replace fMag by drand48() if you want
-                tmp1R[shiftK1][j3][j2] += (fMag*cos(theta));
-                tmp1C[shiftK1][j3][j2] += (fMag*sin(theta));
+                tmp1R[shiftK1][j3][j2] += (sources[sourceOffset + ptId]*cos(theta));
+                tmp1C[shiftK1][j3][j2] += (sources[sourceOffset + ptId]*sin(theta));
               }//end for j1
             }//end for j2
           }//end for j3
