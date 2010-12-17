@@ -3,7 +3,7 @@ INCLUDE = ${PETSC_INCLUDE}
 
 LIBS = ${PETSC_LIB} 
 
-all : runUniform
+all : runUniform directSum
 
 %.o: %.$(CEXT)
 	$(PCC) -c $(CFLAGS) $(INCLUDE) $< -o $@
@@ -11,8 +11,11 @@ all : runUniform
 runUniform : ./runUniform.o ./pfgtUtils.o 
 	$(PCC) $(CFLAGS) $^ -o $@ $(LIBS) 
 
+directSum : ./directSum.o  
+	g++ $^ -o $@  
+
 clean :
-	rm -rf runUniform
+	rm -rf runUniform directSum
 	rm -rf *.o
 
 
