@@ -418,9 +418,9 @@ PetscErrorCode pfgtType1(double delta, int K, double fMag, unsigned int numPtsPe
     char fname[256];
     sprintf(fname, "inpType1_%d_%d.txt", rank, npes);
     FILE* fp = fopen(fname, "w");
-    fprintf(fp, "%lld\n", numLocalPts);
+    fprintf(fp, "%lld \n", numLocalPts);
     for(unsigned int i = 0; i < numLocalPts; i++) {
-      fprintf(fp, "%lf %lf %lf %lf\n", ptsAndSources[4*i], ptsAndSources[(4*i) + 1], 
+      fprintf(fp, "%lf %lf %lf %lf \n", ptsAndSources[4*i], ptsAndSources[(4*i) + 1], 
           ptsAndSources[(4*i) + 2], ptsAndSources[(4*i) + 3]);
     }//end for i
     fclose(fp);
@@ -430,7 +430,7 @@ PetscErrorCode pfgtType1(double delta, int K, double fMag, unsigned int numPtsPe
     char fname[256];
     sprintf(fname, "outType1_%d_%d.txt", rank, npes);
     FILE* fp = fopen(fname, "w");
-    fprintf(fp, "%lld\n", numLocalPts);
+    fprintf(fp, "%lld \n", numLocalPts);
     for(unsigned int i = 0; i < numLocalPts; i++) {
       fprintf(fp, "%lf \n", localResults[i]);
     }//end for i
@@ -841,7 +841,7 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
     char fname[256];
     sprintf(fname, "inpType2_%d_%d.txt", rank, npes);
     FILE* fp = fopen(fname, "w");
-    fprintf(fp, "%d %d %d %d %d %d %d\n", xs, ys, zs, nx, ny, nz, ptGridSizeWithinBox);
+    fprintf(fp, "%d %d %d %d %d %d %d \n", xs, ys, zs, nx, ny, nz, ptGridSizeWithinBox);
     for(unsigned int i = 0; i < trueLocalNumPts; i++) {
       fprintf(fp, "%lf \n", sources[i]);
     }//end for i
@@ -852,7 +852,7 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
     char fname[256];
     sprintf(fname, "outType2_%d_%d.txt", rank, npes);
     FILE* fp = fopen(fname, "w");
-    fprintf(fp, "%lld\n", trueLocalNumPts);
+    fprintf(fp, "%lld \n", trueLocalNumPts);
     for(unsigned int i = 0; i < results.size(); i++) {
       for(unsigned int j = 0; j < results[i].size(); j++) {
         fprintf(fp, "%lf \n", results[i][j]);
