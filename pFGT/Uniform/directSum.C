@@ -94,6 +94,15 @@ int main(int argc, char ** argv ) {
   pz.clear();
   sources.clear();
 
+  //Print direct results
+
+  fp = fopen("directResults.txt", "w");
+  fprintf(fp, "%d \n", trueLocalNumPts);
+  for(int i = 0; i < trueLocalNumPts; i++) {
+    fprintf(fp, "%lf \n", directResults[i]);
+  }//end for i
+  fclose(fp);
+
   //Read FGT results
 
   std::vector<double> fgtResults (trueLocalNumPts);
