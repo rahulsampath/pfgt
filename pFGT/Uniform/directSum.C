@@ -99,11 +99,10 @@ int main(int argc, char ** argv ) {
   std::vector<double> fgtResults (trueLocalNumPts);
 
   fp = fopen("outType2_0_1.txt", "r");
-  fscanf(fp, "%d\n", &dummyInt);
+  fscanf(fp, "%d", &dummyInt);
   for(int i = 0, k = 0; i < (nx*ny*nz); i++) {
-    fscanf(fp, "%d\n", &dummyInt);
     for(int j = 0; j < (ptGridSizeWithinBox*ptGridSizeWithinBox*ptGridSizeWithinBox); j++, k++) {
-      fscanf(fp, "%lf \n", &(fgtResults[k]));
+      fscanf(fp, "%lf", &(fgtResults[k]));
     }//end for j
   }//end for i
   fclose(fp);
