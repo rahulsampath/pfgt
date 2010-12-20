@@ -99,7 +99,7 @@ int main(int argc, char ** argv ) {
   fp = fopen("directResults.txt", "w");
   fprintf(fp, "%d \n", trueLocalNumPts);
   for(int i = 0; i < trueLocalNumPts; i++) {
-    fprintf(fp, "%lf \n", directResults[i]);
+    fprintf(fp, "%.13lf \n", directResults[i]);
   }//end for i
   fclose(fp);
 

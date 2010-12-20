@@ -681,8 +681,11 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
   VecZeroEntries(Wglobal);
   DAVecGetArrayDOF(da, Wglobal, &WgArr);
 
-  // directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, ImExpZfactor);
+#ifdef __USE_SWEEP__
   sweepW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, ImExpZfactor);
+#else
+  directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, ImExpZfactor);
+#endif
 
   DAVecRestoreArrayDOF(da, Wlocal, &WlArr);
 
