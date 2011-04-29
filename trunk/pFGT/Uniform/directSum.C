@@ -99,7 +99,7 @@ int main(int argc, char ** argv ) {
   fp = fopen("directResults.txt", "w");
   fprintf(fp, "%d \n", trueLocalNumPts);
   for(int i = 0; i < trueLocalNumPts; i++) {
-    fprintf(fp, "%.13lf \n", directResults[i]);
+    fprintf(fp, "%.15lf \n", directResults[i]);
   }//end for i
   fclose(fp);
 
@@ -121,13 +121,18 @@ int main(int argc, char ** argv ) {
   double maxErr = 0;
 
   for(int i = 0; i < trueLocalNumPts; i++) {
-    double err = fabs(directResults[i] - fgtResults[i]);
+    double err;
+    if(directResults[i] != 0) {
+      err = fabs((directResults[i] - fgtResults[i])/directResults[i]);
+    } else {
+      err = fabs(directResults[i] - fgtResults[i]);
+    }
     if(err > maxErr) {
       maxErr = err;
     }
   }//end for i
 
-  std::cout<<"Max Error = "<<maxErr<<std::endl;
+  std::cout<<"Max Relative Error = "<<maxErr<<std::endl;
 
 
 }

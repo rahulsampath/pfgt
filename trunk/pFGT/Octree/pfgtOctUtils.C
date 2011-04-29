@@ -722,8 +722,6 @@ PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDe
 
   const double ReExpZfactor = -0.25*LbyP*LbyP;
 
-  const double  __PI__ = 3.14159265;
-
   const double C0 = ( pow((0.5/sqrt(__PI__)), 3.0)*LbyP*LbyP*LbyP );
 
   std::vector<std::vector<double> > directResults(numLocalDirectOcts);

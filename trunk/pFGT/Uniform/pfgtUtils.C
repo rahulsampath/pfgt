@@ -14,7 +14,7 @@ extern PetscLogEvent s2wEvent;
 extern PetscLogEvent w2lEvent;
 extern PetscLogEvent l2tEvent;
 
-#define __PI__ 3.14159265
+#define __PI__ 3.14159265358979
 
 #define __GRID_ID__(xi, yi, zi) ( ((zi)*NgridX*NgridY) + ((yi)*NgridX) + (xi) )
 
@@ -420,7 +420,7 @@ PetscErrorCode pfgtType1(double delta, int K, double fMag, unsigned int numPtsPe
     FILE* fp = fopen(fname, "w");
     fprintf(fp, "%lld \n", numLocalPts);
     for(unsigned int i = 0; i < numLocalPts; i++) {
-      fprintf(fp, "%.13lf %.13lf %.13lf %.13lf \n", ptsAndSources[4*i], ptsAndSources[(4*i) + 1], 
+      fprintf(fp, "%.15lf %.15lf %.15lf %.15lf \n", ptsAndSources[4*i], ptsAndSources[(4*i) + 1], 
           ptsAndSources[(4*i) + 2], ptsAndSources[(4*i) + 3]);
     }//end for i
     fclose(fp);
@@ -432,7 +432,7 @@ PetscErrorCode pfgtType1(double delta, int K, double fMag, unsigned int numPtsPe
     FILE* fp = fopen(fname, "w");
     fprintf(fp, "%lld \n", numLocalPts);
     for(unsigned int i = 0; i < numLocalPts; i++) {
-      fprintf(fp, "%.13lf \n", localResults[i]);
+      fprintf(fp, "%.15lf \n", localResults[i]);
     }//end for i
     fclose(fp);
   }
@@ -846,7 +846,7 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
     FILE* fp = fopen(fname, "w");
     fprintf(fp, "%d %d %d %d %d %d %d \n", xs, ys, zs, nx, ny, nz, ptGridSizeWithinBox);
     for(unsigned int i = 0; i < trueLocalNumPts; i++) {
-      fprintf(fp, "%.13lf \n", sources[i]);
+      fprintf(fp, "%.15lf \n", sources[i]);
     }//end for i
     fclose(fp);
   }
@@ -858,7 +858,7 @@ PetscErrorCode pfgtType2(double delta, double fMag, unsigned int numPtsPerProc,
     fprintf(fp, "%lld \n", trueLocalNumPts);
     for(unsigned int i = 0; i < results.size(); i++) {
       for(unsigned int j = 0; j < results[i].size(); j++) {
-        fprintf(fp, "%.13lf \n", results[i][j]);
+        fprintf(fp, "%.15lf \n", results[i][j]);
       }//end for j
     }//end for i
     fclose(fp);
