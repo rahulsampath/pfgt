@@ -164,8 +164,6 @@ void genSpherePts(int rank, int npes, unsigned int numOctPtsPerProc, std::vector
   const unsigned int numIntervals = static_cast<unsigned int>(floor(sqrt(0.5*
           static_cast<double>(npes)*static_cast<double>(numOctPtsPerProc))));
 
-  const double  __PI__ = 3.14159265;
-
   unsigned int avgSize = (2*numIntervals*numIntervals)/npes;
 
   unsigned int stPtId = rank*avgSize;
