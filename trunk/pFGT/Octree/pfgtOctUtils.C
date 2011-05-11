@@ -2091,6 +2091,393 @@ void directW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
   }//end for zi
 }
 
+// Modified Sweep Algo  {{{ 
+void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, 
+		int xs, int ys, int zs, 
+		int nx, int ny, int nz, 
+		int Ne, double h, const int K, 
+		const int P, const double ImExpZfactor) {
+
+	// std::cout << "Sweep: " << nx << " " << ny << " " << nz << std::endl;
+	// compute the first layer directly ...  
+
+	directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, 1, Ne, h, K, P, ImExpZfactor); // XY Plane
+	directW2L(WlArr, WgArr, xs, ys, zs+1, 1, ny, nz-1, Ne, h, K, P, ImExpZfactor); // YZ Plane
+	directW2L(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, ImExpZfactor); // ZX Plane 
+
+	// directLayer(WlArr, WgArr, xs, ys, zs, nx, ny, nz, Ne, h, K, P, ImExpZfactor); // ZX Plane 
+
+	// return;
+
+	int num_layers = std::min(std::min(nx, ny), nz);
+
+	double *fac = new double [7*2*8*P*P*P]; // 7* (2P)^3 complex terms ...
+	double theta, ct, st;
+
+	for(int k3 = -P, di = 0; k3 < P; k3++) {
+		for(int k2 = -P; k2 < P; k2++) {
+			for(int k1 = -P; k1 < P; k1++, di++) {
+				// i,j,k
+				theta = ImExpZfactor*h* ( (static_cast<double>(k1 + k2 + k3) ) );
+				fac[14*di]     = cos(theta);
+				fac[14*di + 1] = sin(theta);
+
+				theta = ImExpZfactor*h* ( (static_cast<double>(k1) ) );
+				fac[14*di + 2] = cos(theta);
+				fac[14*di + 3] = sin(theta);
+
+				theta = ImExpZfactor*h* ( (static_cast<double>(k2) ) );
+				fac[14*di + 4] = cos(theta);
+				fac[14*di + 5] = sin(theta);
+
+				theta = ImExpZfactor*h* ( (static_cast<double>(k3) ) );
+				fac[14*di + 6] = cos(theta);
+				fac[14*di + 7] = sin(theta);
+
+				theta = ImExpZfactor*h* ( (static_cast<double>(k2 + k3) ) );
+				fac[14*di + 8] = cos(theta);
+				fac[14*di + 9] = sin(theta);
+
+				theta = ImExpZfactor*h* ( (static_cast<double>(k1 + k3) ) );
+				fac[14*di + 10] = cos(theta);
+				fac[14*di + 11] = sin(theta);
+
+				theta = ImExpZfactor*h* ( (static_cast<double>(k1 + k2) ) );
+				fac[14*di + 12] = cos(theta);
+				fac[14*di + 13] = sin(theta);
+			}
+		}
+	}
+
+	int i,j,k;
+	// have the first layer, now propagate ...
+	for (int layer = 1; layer < num_layers; layer++) {
+		// std::cout << std::endl << "Layer " << layer << std::endl;
+		int lx = xs + layer;
+		int ly = ys + layer;
+		int lz = zs + layer;
+		// do XY Plane ... z = lz;
+		// std::cout << "XY Plane" << std::endl;
+		k=lz;
+		for (i=lx; i<xs+nx; i++) {
+			for (j=ly; j<ys+ny; j++) {
+				// At this stage ...  (i,j,k) needs to be computed and (i-1,j-1,k-1),
+				// and the other 6 boxes between them should have already been
+				// computed.
+
+				for(int k3 = -P, di = 0; k3 < P; k3++) {
+					for(int k2 = -P; k2 < P; k2++) {
+						for(int k1 = -P; k1 < P; k1++, di++) {
+							WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j-1][i-1][2*di], WgArr[k-1][j-1][i-1][2*di+1],  fac[14*di], fac[14*di+1] );
+							WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j-1][i-1][2*di], WgArr[k-1][j-1][i-1][2*di+1],  fac[14*di], fac[14*di+1] );
+
+							WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[14*di+2], fac[14*di+3] );
+							WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[14*di+2], fac[14*di+3] );
+							WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WgArr[k][j-1][i][2*di], WgArr[k][j-1][i][2*di+1],  fac[14*di+4], fac[14*di+5] );
+							WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WgArr[k][j-1][i][2*di], WgArr[k][j-1][i][2*di+1],  fac[14*di+4], fac[14*di+5] );
+							WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WgArr[k-1][j][i][2*di], WgArr[k-1][j][i][2*di+1],  fac[14*di+6], fac[14*di+7] );
+							WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WgArr[k-1][j][i][2*di], WgArr[k-1][j][i][2*di+1],  fac[14*di+6], fac[14*di+7] );
+
+							WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j-1][i][2*di], WgArr[k-1][j-1][i][2*di+1],  fac[14*di+8], fac[14*di+9] );
+							WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j-1][i][2*di], WgArr[k-1][j-1][i][2*di+1],  fac[14*di+8], fac[14*di+9] );
+							WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j][i-1][2*di], WgArr[k-1][j][i-1][2*di+1],  fac[14*di+10], fac[14*di+11] );
+							WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j][i-1][2*di], WgArr[k-1][j][i-1][2*di+1],  fac[14*di+10], fac[14*di+11] );
+							WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k][j-1][i-1][2*di], WgArr[k][j-1][i-1][2*di+1],  fac[14*di+12], fac[14*di+13] );
+							WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k][j-1][i-1][2*di], WgArr[k][j-1][i-1][2*di+1],  fac[14*di+12], fac[14*di+13] );
+						} // k3
+					} // k2 
+				} // k1 
+
+				// now the corner corrections ...
+				for(int k3 = -P, di = 0; k3 < P; k3++) {
+					for(int k2 = -P; k2 < P; k2++) {
+						for(int k1 = -P; k1 < P; k1++, di++) {
+							// corner 000
+							if ( ( (k-K-1) >=0) && ((j-K-1) >=0) && ((i-K-1) >=0) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k1 + k2 + k3)) ) );
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k-K-1][j-K-1][i-K-1][2*di], WlArr[k-K-1][j-K-1][i-K-1][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WlArr[k-K-1][j-K-1][i-K-1][2*di], WlArr[k-K-1][j-K-1][i-K-1][2*di+1],  ct, st );
+							}
+							// corner 110
+							if ( ( (k-K-1) >=0) && ((j+K) < Ne) && ((i+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)* k3 -K*(k1 + k2))) ) ;
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k-K-1][j+K][i+K][2*di], WlArr[k-K-1][j+K][i+K][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WlArr[k-K-1][j+K][i+K][2*di], WlArr[k-K-1][j+K][i+K][2*di+1],  ct, st );
+							}
+							// corner 011
+							if ( ( (i-K-1) >=0) && ((j+K) < Ne) && ((k+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)* k1 -K*(k2 + k3))) ) ;
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+K][j+K][i-K-1][2*di], WlArr[k+K][j+K][i-K-1][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WlArr[k+K][j+K][i-K-1][2*di], WlArr[k+K][j+K][i-K-1][2*di+1],  ct, st );
+							}
+							// corner 101
+							if ( ( (j-K-1) >=0) && ((k+K) < Ne) && ((i+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)* k2 -K*(k1 + k3))) ) ;
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+K][j-K-1][i+K][2*di], WlArr[k+K][j-K-1][i+K][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WlArr[k+K][j-K-1][i+K][2*di], WlArr[k+K][j-K-1][i+K][2*di+1],  ct, st );
+							}
+							// corner 100
+							if ( ( (k-K-1) >=0) && ((j-K-1) >= 0) && ((i+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k2 + k3) -K*k1) ) );
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k-K-1][j-K-1][i+K][2*di], WlArr[k-K-1][j-K-1][i+K][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WlArr[k-K-1][j-K-1][i+K][2*di], WlArr[k-K-1][j-K-1][i+K][2*di+1],  ct, st );
+							}
+							// corner 010
+							if ( ( (k-K-1) >=0) && ((i-K-1) >= 0) && ((j+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k1 + k3) - K*k2) ) );
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k-K-1][j+K][i-K-1][2*di], WlArr[k-K-1][j+K][i-K-1][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WlArr[k-K-1][j+K][i-K-1][2*di], WlArr[k-K-1][j+K][i-K-1][2*di+1],  ct, st );
+							}
+							// corner 001
+							if ( ( (i-K-1) >=0) && ((j-K-1) >= 0) && ((k+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k1 + k2) - K*k3) ) );
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k+K][j-K-1][i-K-1][2*di], WlArr[k+K][j-K-1][i-K-1][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WlArr[k+K][j-K-1][i-K-1][2*di], WlArr[k+K][j-K-1][i-K-1][2*di+1],  ct, st );
+							}
+							// corner 111
+							if ( ( (j+K) < Ne) && ((k+K) < Ne) && ((i+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((-K)*(k1 + k2 + k3)) ) );
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k+K][j+K][i+K][2*di], WlArr[k+K][j+K][i+K][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WlArr[k+K][j+K][i+K][2*di], WlArr[k+K][j+K][i+K][2*di+1],  ct, st );
+							}
+
+						}//end for k1
+					}//end for k2
+				}//end for k3
+				// out.close();
+			}
+		} // XY Plane
+		// do YZ Plane ... x = lx;
+		// std::cout << "YZ Plane" << std::endl;
+		i=lx;
+		// std::cout << lx << "," << ly << "," << lz+1 << " -> " << lx << "," << ys+ny << "," << zs+nz << std::endl;
+		for (j=ly; j<ys+ny; j++) { // 1st z layer has already been computed ...
+			for (k=lz+1; k<zs+nz; k++) { 
+				for(int k3 = -P, di = 0; k3 < P; k3++) {
+					for(int k2 = -P; k2 < P; k2++) {
+						for(int k1 = -P; k1 < P; k1++, di++) {
+							WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j-1][i-1][2*di], WgArr[k-1][j-1][i-1][2*di+1],  fac[14*di], fac[14*di+1] );
+							WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j-1][i-1][2*di], WgArr[k-1][j-1][i-1][2*di+1],  fac[14*di], fac[14*di+1] );
+
+							WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[14*di+2], fac[14*di+3] );
+							WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[14*di+2], fac[14*di+3] );
+							WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WgArr[k][j-1][i][2*di], WgArr[k][j-1][i][2*di+1],  fac[14*di+4], fac[14*di+5] );
+							WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WgArr[k][j-1][i][2*di], WgArr[k][j-1][i][2*di+1],  fac[14*di+4], fac[14*di+5] );
+							WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WgArr[k-1][j][i][2*di], WgArr[k-1][j][i][2*di+1],  fac[14*di+6], fac[14*di+7] );
+							WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WgArr[k-1][j][i][2*di], WgArr[k-1][j][i][2*di+1],  fac[14*di+6], fac[14*di+7] );
+
+							WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j-1][i][2*di], WgArr[k-1][j-1][i][2*di+1],  fac[14*di+8], fac[14*di+9] );
+							WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j-1][i][2*di], WgArr[k-1][j-1][i][2*di+1],  fac[14*di+8], fac[14*di+9] );
+							WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j][i-1][2*di], WgArr[k-1][j][i-1][2*di+1],  fac[14*di+10], fac[14*di+11] );
+							WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j][i-1][2*di], WgArr[k-1][j][i-1][2*di+1],  fac[14*di+10], fac[14*di+11] );
+							WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k][j-1][i-1][2*di], WgArr[k][j-1][i-1][2*di+1],  fac[14*di+12], fac[14*di+13] );
+							WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k][j-1][i-1][2*di], WgArr[k][j-1][i-1][2*di+1],  fac[14*di+12], fac[14*di+13] );
+						} // k3
+					} // k2 
+				} // k1 
+
+				// now the corner corrections ...
+				for(int k3 = -P, di = 0; k3 < P; k3++) {
+					for(int k2 = -P; k2 < P; k2++) {
+						for(int k1 = -P; k1 < P; k1++, di++) {
+							// corner 000
+							if ( ( (k-K-1) >=0) && ((j-K-1) >=0) && ((i-K-1) >=0) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k1 + k2 + k3)) ) );
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k-K-1][j-K-1][i-K-1][2*di], WlArr[k-K-1][j-K-1][i-K-1][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WlArr[k-K-1][j-K-1][i-K-1][2*di], WlArr[k-K-1][j-K-1][i-K-1][2*di+1],  ct, st );
+							}
+							// corner 110
+							if ( ( (k-K-1) >=0) && ((j+K) < Ne) && ((i+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)* k3 -K*(k1 + k2))) ) ;
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k-K-1][j+K][i+K][2*di], WlArr[k-K-1][j+K][i+K][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WlArr[k-K-1][j+K][i+K][2*di], WlArr[k-K-1][j+K][i+K][2*di+1],  ct, st );
+							}
+							// corner 011
+							if ( ( (i-K-1) >=0) && ((j+K) < Ne) && ((k+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)* k1 -K*(k2 + k3))) ) ;
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+K][j+K][i-K-1][2*di], WlArr[k+K][j+K][i-K-1][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WlArr[k+K][j+K][i-K-1][2*di], WlArr[k+K][j+K][i-K-1][2*di+1],  ct, st );
+							}
+							// corner 101
+							if ( ( (j-K-1) >=0) && ((k+K) < Ne) && ((i+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)* k2 -K*(k1 + k3))) ) ;
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+K][j-K-1][i+K][2*di], WlArr[k+K][j-K-1][i+K][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WlArr[k+K][j-K-1][i+K][2*di], WlArr[k+K][j-K-1][i+K][2*di+1],  ct, st );
+							}
+							// corner 100
+							if ( ( (k-K-1) >=0) && ((j-K-1) >= 0) && ((i+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k2 + k3) -K*k1) ) );
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k-K-1][j-K-1][i+K][2*di], WlArr[k-K-1][j-K-1][i+K][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WlArr[k-K-1][j-K-1][i+K][2*di], WlArr[k-K-1][j-K-1][i+K][2*di+1],  ct, st );
+							}
+							// corner 010
+							if ( ( (k-K-1) >=0) && ((i-K-1) >= 0) && ((j+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k1 + k3) - K*k2) ) );
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k-K-1][j+K][i-K-1][2*di], WlArr[k-K-1][j+K][i-K-1][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WlArr[k-K-1][j+K][i-K-1][2*di], WlArr[k-K-1][j+K][i-K-1][2*di+1],  ct, st );
+							}
+							// corner 001
+							if ( ( (i-K-1) >=0) && ((j-K-1) >= 0) && ((k+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k1 + k2) - K*k3) ) );
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k+K][j-K-1][i-K-1][2*di], WlArr[k+K][j-K-1][i-K-1][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WlArr[k+K][j-K-1][i-K-1][2*di], WlArr[k+K][j-K-1][i-K-1][2*di+1],  ct, st );
+							}
+							// corner 111
+							if ( ( (j+K) < Ne) && ((k+K) < Ne) && ((i+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((-K)*(k1 + k2 + k3)) ) );
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k+K][j+K][i+K][2*di], WlArr[k+K][j+K][i+K][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WlArr[k+K][j+K][i+K][2*di], WlArr[k+K][j+K][i+K][2*di+1],  ct, st );
+							}
+						}//end for k1
+					}//end for k2
+				}//end for k3
+
+			}
+		} // YZ Plane
+		// do ZX Plane ... y = ly;
+		// std::cout << "ZX Plane" << std::endl;
+		j=ly;
+		// std::cout << lx+1 << "," << ly << "," << lz+1 << " -> " << xs+nx << "," << ly << "," << zs+nz << std::endl;
+		for (k=lz+1; k<zs+nz; k++) {
+			for (i=lx+1; i<xs+nx; i++) {
+				for(int k3 = -P, di = 0; k3 < P; k3++) {
+					for(int k2 = -P; k2 < P; k2++) {
+						for(int k1 = -P; k1 < P; k1++, di++) {
+							WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j-1][i-1][2*di], WgArr[k-1][j-1][i-1][2*di+1],  fac[14*di], fac[14*di+1] );
+							WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j-1][i-1][2*di], WgArr[k-1][j-1][i-1][2*di+1],  fac[14*di], fac[14*di+1] );
+
+							WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[14*di+2], fac[14*di+3] );
+							WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WgArr[k][j][i-1][2*di], WgArr[k][j][i-1][2*di+1],  fac[14*di+2], fac[14*di+3] );
+							WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WgArr[k][j-1][i][2*di], WgArr[k][j-1][i][2*di+1],  fac[14*di+4], fac[14*di+5] );
+							WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WgArr[k][j-1][i][2*di], WgArr[k][j-1][i][2*di+1],  fac[14*di+4], fac[14*di+5] );
+							WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WgArr[k-1][j][i][2*di], WgArr[k-1][j][i][2*di+1],  fac[14*di+6], fac[14*di+7] );
+							WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WgArr[k-1][j][i][2*di], WgArr[k-1][j][i][2*di+1],  fac[14*di+6], fac[14*di+7] );
+
+							WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j-1][i][2*di], WgArr[k-1][j-1][i][2*di+1],  fac[14*di+8], fac[14*di+9] );
+							WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j-1][i][2*di], WgArr[k-1][j-1][i][2*di+1],  fac[14*di+8], fac[14*di+9] );
+							WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k-1][j][i-1][2*di], WgArr[k-1][j][i-1][2*di+1],  fac[14*di+10], fac[14*di+11] );
+							WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k-1][j][i-1][2*di], WgArr[k-1][j][i-1][2*di+1],  fac[14*di+10], fac[14*di+11] );
+							WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WgArr[k][j-1][i-1][2*di], WgArr[k][j-1][i-1][2*di+1],  fac[14*di+12], fac[14*di+13] );
+							WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WgArr[k][j-1][i-1][2*di], WgArr[k][j-1][i-1][2*di+1],  fac[14*di+12], fac[14*di+13] );
+						} // k3
+					} // k2 
+				} // k1 
+
+				// now the corner corrections ...
+				for(int k3 = -P, di = 0; k3 < P; k3++) {
+					for(int k2 = -P; k2 < P; k2++) {
+						for(int k1 = -P; k1 < P; k1++, di++) {
+							// corner 000
+							if ( ( (k-K-1) >=0) && ((j-K-1) >=0) && ((i-K-1) >=0) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k1 + k2 + k3)) ) );
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k-K-1][j-K-1][i-K-1][2*di], WlArr[k-K-1][j-K-1][i-K-1][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WlArr[k-K-1][j-K-1][i-K-1][2*di], WlArr[k-K-1][j-K-1][i-K-1][2*di+1],  ct, st );
+							}
+							// corner 110
+							if ( ( (k-K-1) >=0) && ((j+K) < Ne) && ((i+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)* k3 -K*(k1 + k2))) ) ;
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k-K-1][j+K][i+K][2*di], WlArr[k-K-1][j+K][i+K][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WlArr[k-K-1][j+K][i+K][2*di], WlArr[k-K-1][j+K][i+K][2*di+1],  ct, st );
+							}
+							// corner 011
+							if ( ( (i-K-1) >=0) && ((j+K) < Ne) && ((k+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)* k1 -K*(k2 + k3))) ) ;
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+K][j+K][i-K-1][2*di], WlArr[k+K][j+K][i-K-1][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WlArr[k+K][j+K][i-K-1][2*di], WlArr[k+K][j+K][i-K-1][2*di+1],  ct, st );
+							}
+							// corner 101
+							if ( ( (j-K-1) >=0) && ((k+K) < Ne) && ((i+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)* k2 -K*(k1 + k3))) ) ;
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   += __COMP_MUL_RE( WlArr[k+K][j-K-1][i+K][2*di], WlArr[k+K][j-K-1][i+K][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] += __COMP_MUL_IM( WlArr[k+K][j-K-1][i+K][2*di], WlArr[k+K][j-K-1][i+K][2*di+1],  ct, st );
+							}
+							// corner 100
+							if ( ( (k-K-1) >=0) && ((j-K-1) >= 0) && ((i+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k2 + k3) -K*k1) ) );
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k-K-1][j-K-1][i+K][2*di], WlArr[k-K-1][j-K-1][i+K][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WlArr[k-K-1][j-K-1][i+K][2*di], WlArr[k-K-1][j-K-1][i+K][2*di+1],  ct, st );
+							}
+							// corner 010
+							if ( ( (k-K-1) >=0) && ((i-K-1) >= 0) && ((j+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k1 + k3) - K*k2) ) );
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k-K-1][j+K][i-K-1][2*di], WlArr[k-K-1][j+K][i-K-1][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WlArr[k-K-1][j+K][i-K-1][2*di], WlArr[k-K-1][j+K][i-K-1][2*di+1],  ct, st );
+							}
+							// corner 001
+							if ( ( (i-K-1) >=0) && ((j-K-1) >= 0) && ((k+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((K+1)*(k1 + k2) - K*k3) ) );
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k+K][j-K-1][i-K-1][2*di], WlArr[k+K][j-K-1][i-K-1][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WlArr[k+K][j-K-1][i-K-1][2*di], WlArr[k+K][j-K-1][i-K-1][2*di+1],  ct, st );
+							}
+							// corner 111
+							if ( ( (j+K) < Ne) && ((k+K) < Ne) && ((i+K) < Ne) ) {  
+								theta = ImExpZfactor*h* ( (static_cast<double>((-K)*(k1 + k2 + k3)) ) );
+								ct = cos(theta);
+								st = sin(theta);
+								WgArr[k][j][i][2*di]   -= __COMP_MUL_RE( WlArr[k+K][j+K][i+K][2*di], WlArr[k+K][j+K][i+K][2*di+1],  ct, st );
+								WgArr[k][j][i][2*di+1] -= __COMP_MUL_IM( WlArr[k+K][j+K][i+K][2*di], WlArr[k+K][j+K][i+K][2*di+1],  ct, st );
+							}
+						}//end for k1
+					}//end for k2
+				}//end for k3
+
+			}
+		} // ZX Plane
+
+	} // layer ...
+
+	delete [] fac;
+}
+// }}}
+
+// {{{ old sweep
+/* 
 void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr, 
     int xs, int ys, int zs, 
     int nx, int ny, int nz, 
@@ -2098,12 +2485,12 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
     const int P, const double ImExpZfactor) {
 
   // compute the first layer directly ...  
-  /*
+
      directW2L(WlArr, WgArr, xs, ys, zs, nx, ny, 1, Ne, h, K, P, ImExpZfactor); // XY Plane
      directW2L(WlArr, WgArr, xs, ys+1, zs, 1, ny-1, nz, Ne, h, K, P, ImExpZfactor); // YZ Plane
      directW2L(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, ImExpZfactor); // ZX Plane 
-     */
-  directLayer(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, ImExpZfactor); // ZX Plane 
+  
+		 // directLayer(WlArr, WgArr, xs+1, ys, zs+1, nx-1, 1, nz-1, Ne, h, K, P, ImExpZfactor); // ZX Plane 
 
   // return;
 
@@ -2465,6 +2852,8 @@ void sweepW2L(PetscScalar**** WlArr, PetscScalar**** WgArr,
 
   delete [] fac;
 }
+*/ 
+// }}}
 
 void directLayer(PetscScalar**** WlArr, PetscScalar**** WgArr, 
     int xs, int ys, int zs, 
