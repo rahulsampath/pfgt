@@ -2,7 +2,7 @@
 
 export writeOut=1
 export fMag=10.0 
-export epsilon=1.0e-12
+export epsilon=1.0e-6
 
 export forceType=2
 
@@ -14,7 +14,8 @@ export delta=1.0
 
 export numProcStr=1
 
-./runUniform ${numPtsPerProc} ${fMag} ${epsilon} ${delta} ${writeOut} ${forceType} >& upfgt.${numPtsStr}.${numProcStr}.${forceType}.txt
+./runUniform ${numPtsPerProc} ${fMag} ${epsilon} ${delta} ${writeOut} ${forceType} 
+# ./runUniform ${numPtsPerProc} ${fMag} ${epsilon} ${delta} ${writeOut} ${forceType} >& upfgt.${numPtsStr}.${numProcStr}.${forceType}.txt
 
 ./directSum ${delta}
 
