@@ -6,7 +6,7 @@
 #include "TreeNode.h"
 #include <vector>
 
-#define __PI__ 3.14159265358979
+#define __PI__ 3.1415926535897932
 
 PetscErrorCode pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
     const double delta, const double fMag, const unsigned int numFgtPtsPerDimPerProc,
