@@ -1,0 +1,18 @@
+
+INCLUDE = ${DENDRO_INCLUDE} ${PETSC_INCLUDE} 
+
+LIBS = ${DENDRO_LIB} ${PETSC_LIB} 
+
+all : runOctree
+
+%.o: %.$(CEXT)
+	$(PCC) -c $(CFLAGS) $(INCLUDE) $< -o $@
+
+runOctree : ./runOctree.o ./pfgtOctUtils.o 
+	$(PCC) $(CFLAGS) $^ -o $@ $(LIBS) 
+
+clean :
+	rm -rf runOctree
+	rm -rf *.o
+
+
