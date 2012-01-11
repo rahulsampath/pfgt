@@ -12,8 +12,8 @@
 #define __COMP_MUL_IM(a, ai, b, bi) ( ((a)*(bi)) + ((ai)*(b)) )
 
 void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
-    const double delta, const double fMag, const unsigned int numFgtPtsPerDimPerProc,
-    const int P, const int L, const int K, const int DirectHfactor, MPI_Comm commAll);
+    const unsigned int NforDelta, const double fMag, const unsigned int numFgtPtsPerDimPerProc,
+    const int P, const int L, const int K, const double DirectHfactor, MPI_Comm commAll);
 
 
 #endif

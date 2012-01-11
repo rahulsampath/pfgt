@@ -3,6 +3,7 @@
 #include "petsc.h"
 #include "sys.h"
 #include <cmath>
+#include <cassert>
 #include "parUtils.h"
 #include "octUtils.h"
 #include "TreeNode.h"
@@ -43,7 +44,7 @@ int main(int argc, char** argv) {
 
   if(argc < 7) {
     if(!rank) {
-      std::cout<<"Usage: exe numOctPtsPerProc numFgtPtsPerDimPerOct fMag epsilon delta DirectHfactor"<<std::endl;
+      std::cout<<"Usage: exe numOctPtsPerProc numFgtPtsPerDimPerOct fMag epsilon NforDelta DirectHfactor"<<std::endl;
     }
     PetscFinalize();
   }
@@ -52,16 +53,20 @@ int main(int argc, char** argv) {
   unsigned int numFgtPtsPerDimPerOct = atoi(argv[2]);
   double fMag = atof(argv[3]);
   double epsilon = atof(argv[4]);  
-  double delta = atof(argv[5]);
-  int DirectHfactor = atoi(argv[6]);
+  unsigned int NforDelta = atoi(argv[5]);
+  double DirectHfactor = atof(argv[6]);
+  unsigned int dim = 3;
+  unsigned int maxDepth = 30;
 
   if(!rank) {
     std::cout<<"numOctPtsPerProc = "<<numOctPtsPerProc<<std::endl;
     std::cout<<"numFgtPtsPerDimPerOct = "<<numFgtPtsPerDimPerOct<<std::endl;
     std::cout<<"epsilon = "<<epsilon<<std::endl;
-    std::cout<<"delta = "<<delta<<std::endl;
+    std::cout<<"NforDelta = "<<NforDelta<<std::endl;
     std::cout<<"DirectHfactor = "<<DirectHfactor<<std::endl;
   }
+
+  assert(NforDelta <= maxDepth);
 
   int P, L, K;
 
@@ -95,9 +100,6 @@ int main(int argc, char** argv) {
   rescalePts(pts);
 
   unsigned int ptsLen = pts.size();
-  unsigned int dim = 3;
-  unsigned int maxDepth = 30;
-
   std::vector<ot::TreeNode> linOct;
   for(unsigned int i = 0; i < ptsLen; i += 3) {
     linOct.push_back( ot::TreeNode((unsigned int)(pts[i]*(double)(1u << maxDepth)),
@@ -110,7 +112,7 @@ int main(int argc, char** argv) {
 
   pts.resize(3*(linOct.size()));
   ptsLen = (3*(linOct.size()));
-  for(int i = 0; i < linOct.size(); i++) {
+  for(size_t i = 0; i < linOct.size(); i++) {
     pts[3*i] = (((double)(linOct[i].getX())) + 0.5)/((double)(1u << maxDepth));
     pts[(3*i)+1] = (((double)(linOct[i].getY())) +0.5)/((double)(1u << maxDepth));
     pts[(3*i)+2] = (((double)(linOct[i].getZ())) +0.5)/((double)(1u << maxDepth));
@@ -129,7 +131,7 @@ int main(int argc, char** argv) {
   pts.clear();
 
   //FGT
-  pfgt(linOct, maxDepth, delta, fMag, numFgtPtsPerDimPerOct, P, L, K, DirectHfactor, MPI_COMM_WORLD);
+  pfgt(linOct, maxDepth, NforDelta, fMag, numFgtPtsPerDimPerOct, P, L, K, DirectHfactor, MPI_COMM_WORLD);
 
   PetscFinalize();
 
