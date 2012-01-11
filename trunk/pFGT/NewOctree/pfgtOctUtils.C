@@ -55,6 +55,31 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
   int npesExpand = (globalTreeSizes[0]*npesAll)/(globalTreeSizes[0] + globalTreeSizes[1]);
   int npesDirect = npesAll - npesExpand;
 
+  MPI_Comm subComm;
+  MPI_Group groupAll, subGroup;
+  MPI_Comm_group(commAll, &groupAll);
+  if(rankAll < npesExpand) {
+    int* list = new int[npesExpand];
+    for(int i = 0; i < npesExpand; i++) {
+      list[i] = i;
+    }//end for i
+    MPI_Group_incl(groupAll, npesExpand, list, &subGroup);
+    delete [] list;
+  } else {
+    int* list = new int[npesDirect];
+    for(int i = 0; i < npesDirect; i++) {
+      list[i] = npesExpand + i;
+    }//end for i
+    MPI_Group_incl(groupAll, npesDirect, list, &subGroup);
+    delete [] list;
+  }
+  MPI_Group_free(&groupAll);
+  MPI_Comm_create(commAll, subGroup, &subComm);
+  MPI_Group_free(&subGroup);
+
+
+
+  MPI_Comm_free(&subComm);
 
   PetscLogEventEnd(fgtEvent, 0, 0, 0, 0);
 }
