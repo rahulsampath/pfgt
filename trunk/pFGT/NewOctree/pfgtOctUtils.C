@@ -3,6 +3,7 @@
 #include <cmath>
 #include "mpi.h"
 #include "pfgtOctUtils.h"
+#include "parUtils.h"
 
 extern PetscLogEvent fgtEvent;
 
@@ -35,7 +36,6 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
   //Split octree into 2 sets
   std::vector<ot::TreeNode> expandTree;
   std::vector<ot::TreeNode> directTree;
-
   for(size_t i = 0; i < linOct.size(); i++) {
     unsigned int lev = linOct[i].getLevel();
     double hCurrOct = hOctFac*static_cast<double>(1u << (maxDepth - lev));
@@ -77,6 +77,28 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
   MPI_Comm_create(commAll, subGroup, &subComm);
   MPI_Group_free(&subGroup);
 
+  int avgExpand = (globalTreeSizes[0])/npesExpand;
+  int extraExpand = (globalTreeSizes[0])%npesExpand; 
+  int avgDirect = (globalTreeSizes[1])/npesDirect;
+  int extraDirect = (globalTreeSizes[1])%npesDirect;
+
+  std::vector<ot::TreeNode> finalExpandTree;
+  std::vector<ot::TreeNode> finalDirectTree;
+  if(rankAll < extraExpand) {
+    par::scatterValues<ot::TreeNode>(expandTree, finalExpandTree, (avgExpand + 1), commAll);
+    par::scatterValues<ot::TreeNode>(directTree, finalDirectTree, 0, commAll);
+  } else if(rankAll < npesExpand) {
+    par::scatterValues<ot::TreeNode>(expandTree, finalExpandTree, avgExpand, commAll);
+    par::scatterValues<ot::TreeNode>(directTree, finalDirectTree, 0, commAll);
+  } else if(rankAll < (npesExpand + extraDirect)) {
+    par::scatterValues<ot::TreeNode>(expandTree, finalExpandTree, 0, commAll);
+    par::scatterValues<ot::TreeNode>(directTree, finalDirectTree, (avgDirect + 1), commAll);
+  } else {
+    par::scatterValues<ot::TreeNode>(expandTree, finalExpandTree, 0, commAll);
+    par::scatterValues<ot::TreeNode>(directTree, finalDirectTree, avgDirect, commAll);
+  }
+  expandTree.clear();
+  directTree.clear();
 
 
   MPI_Comm_free(&subComm);
