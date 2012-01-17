@@ -13,8 +13,11 @@
 
 void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
     const unsigned int NforDelta, const double fMag, const unsigned int numFgtPtsPerDimPerProc,
-    const int P, const int L, const int K, const double DirectHfactor, MPI_Comm commAll);
+    const int P, const int L, const int K, const double DirectHfactor, MPI_Comm comm);
 
+void pfgtExpand(std::vector<ot::TreeNode> & expandTree, MPI_Comm subComm, MPI_Comm comm);
+
+void pfgtDirect(std::vector<ot::TreeNode> & directTree, MPI_Comm subComm, MPI_Comm comm);
 
 #endif
 

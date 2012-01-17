@@ -20,6 +20,8 @@
 
 PetscCookie fgtCookie;
 PetscLogEvent fgtEvent;
+PetscLogEvent expandEvent;
+PetscLogEvent directEvent;
 
 bool softEquals(double a, double b) {
   return ((fabs(a - b)) < 1.0e-14);
@@ -37,6 +39,8 @@ int main(int argc, char** argv) {
 
   PetscCookieRegister("FGT", &fgtCookie);
   PetscLogEventRegister("FGT", fgtCookie, &fgtEvent);
+  PetscLogEventRegister("Expand", fgtCookie, &expandEvent);
+  PetscLogEventRegister("Direct", fgtCookie, &directEvent);
 
   int npes, rank;
   MPI_Comm_size(MPI_COMM_WORLD, &npes);
