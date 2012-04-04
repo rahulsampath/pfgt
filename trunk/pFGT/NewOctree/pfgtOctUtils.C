@@ -123,6 +123,16 @@ void pfgtExpand(std::vector<ot::TreeNode> & expandTree, const unsigned int maxDe
     MPI_Comm subComm, MPI_Comm comm) {
   PetscLogEventBegin(expandEvent, 0, 0, 0, 0);
 
+  std::vector<ot::TreeNode> fgtListA;
+  std::vector<ot::TreeNode> fgtListB;
+  for(size_t i = 0; i < expandTree.size(); ++i) {
+    unsigned int lev = expandTree[i].getLevel();
+    double hCurrOct = hOctFac*static_cast<double>(1u << (maxDepth - lev));
+    if(hCurrOct < hFgt) {
+    } else {
+    }
+  }//end i
+
   PetscLogEventEnd(expandEvent, 0, 0, 0, 0);
 }
 
