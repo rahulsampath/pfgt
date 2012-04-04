@@ -19,7 +19,7 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
   MPI_Comm_rank(comm, &rank);
 
   //Kernel Bandwidth
-  double delta = 1.0/(static_cast<double>(1u << ((maxDepth - NforDelta) << 1)));
+  const double delta = 1.0/(static_cast<double>(1u << ((maxDepth - NforDelta) << 1)));
 
   //FGT box size = sqrt(delta)
   const double hFgt = 1.0/(static_cast<double>(1u << (maxDepth - NforDelta)));
@@ -108,7 +108,7 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
   directTree.clear();
 
   if(rank < npesExpand) {
-    pfgtExpand(finalExpandTree, subComm, comm);
+    pfgtExpand(finalExpandTree, maxDepth, delta, hFgt, hOctFac, subComm, comm);
   } else {
     pfgtDirect(finalDirectTree, subComm, comm);
   }
@@ -118,7 +118,9 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
   PetscLogEventEnd(fgtEvent, 0, 0, 0, 0);
 }
 
-void pfgtExpand(std::vector<ot::TreeNode> & expandTree, MPI_Comm subComm, MPI_Comm comm) {
+void pfgtExpand(std::vector<ot::TreeNode> & expandTree, const unsigned int maxDepth,
+    const double delta, const double hFgt, const double hOctFac,
+    MPI_Comm subComm, MPI_Comm comm) {
   PetscLogEventBegin(expandEvent, 0, 0, 0, 0);
 
   PetscLogEventEnd(expandEvent, 0, 0, 0, 0);
