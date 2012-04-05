@@ -19,7 +19,8 @@ void pfgtExpand(std::vector<ot::TreeNode> & expandTree, const unsigned int maxDe
     const unsigned int FgtLev, const double delta, const double hFgt,
     MPI_Comm subComm, MPI_Comm comm);
 
-void pfgtDirect(std::vector<ot::TreeNode> & directTree, MPI_Comm subComm, MPI_Comm comm);
+void pfgtDirect(std::vector<ot::TreeNode> & directTree, const unsigned int FgtLev,
+    MPI_Comm subComm, MPI_Comm comm);
 
 #endif
 

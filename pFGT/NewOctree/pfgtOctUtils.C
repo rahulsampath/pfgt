@@ -108,7 +108,7 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
   if(rank < npesExpand) {
     pfgtExpand(finalExpandTree, maxDepth, FgtLev, delta, hFgt, subComm, comm);
   } else {
-    pfgtDirect(finalDirectTree, subComm, comm);
+    pfgtDirect(finalDirectTree, FgtLev, subComm, comm);
   }
 
   MPI_Comm_free(&subComm);
@@ -121,24 +121,51 @@ void pfgtExpand(std::vector<ot::TreeNode> & expandTree, const unsigned int maxDe
     MPI_Comm subComm, MPI_Comm comm) {
   PetscLogEventBegin(expandEvent, 0, 0, 0, 0);
 
-  std::vector<ot::TreeNode> fgtListA;
-  std::vector<ot::TreeNode> fgtListB;
+  std::vector<ot::TreeNode> tmpFgtListA;
+  std::vector<ot::TreeNode> tmpFgtListB;
   for(size_t i = 0; i < expandTree.size(); ++i) {
     unsigned int lev = expandTree[i].getLevel();
-    if(lev >= FgtLev) {
-      fgtListA.push_back(expandTree[i].getAncestor(FgtLev));
+    if(lev > FgtLev) {
+      tmpFgtListA.push_back(expandTree[i].getAncestor(FgtLev));
     } else {
-      fgtListB.push_back(expandTree[i]);
-      fgtListB[fgtListB.size() - 1].setWeight(1u << (3*(FgtLev - lev)));
+      tmpFgtListB.push_back(expandTree[i]);
     }
   }//end i
 
-  par::removeDuplicates<ot::TreeNode>(fgtListA, true, subComm);
+  seq::makeVectorUnique<ot::TreeNode>(tmpFgtListA, true);
+
+  std::vector<ot::TreeNode> fgtList;
+  if(tmpFgtListB.empty()) {
+    fgtList = tmpFgtListA;
+  } else if(tmpFgtListA.empty()) {
+    fgtList = tmpFgtListB;
+  } else {
+    int aIdx = 0;
+    int bIdx = 0;
+    while( (aIdx < tmpFgtListA.size()) && (bIdx < tmpFgtListB.size()) ) {
+      if(tmpFgtListA[aIdx] < tmpFgtListB[bIdx]) {
+        fgtList.push_back(tmpFgtListA[aIdx]);
+        ++aIdx;
+      } else {
+        fgtList.push_back(tmpFgtListB[bIdx]);
+        ++bIdx;
+      }
+    }
+    for(; aIdx < tmpFgtListA.size(); ++aIdx) {
+      fgtList.push_back(tmpFgtListA[aIdx]);
+    }
+    for(; bIdx < tmpFgtListB.size(); ++bIdx) {
+      fgtList.push_back(tmpFgtListB[bIdx]);
+    }
+  }
+
+  tmpFgtListA.clear();
+  tmpFgtListB.clear();
 
   PetscLogEventEnd(expandEvent, 0, 0, 0, 0);
 }
 
-void pfgtDirect(std::vector<ot::TreeNode> & directTree, MPI_Comm subComm, MPI_Comm comm) {
+void pfgtDirect(std::vector<ot::TreeNode> & directTree, const unsigned int FgtLev, MPI_Comm subComm, MPI_Comm comm) {
   PetscLogEventBegin(directEvent, 0, 0, 0, 0);
 
   PetscLogEventEnd(directEvent, 0, 0, 0, 0);
