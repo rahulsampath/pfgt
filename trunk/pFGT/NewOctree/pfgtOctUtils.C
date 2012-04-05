@@ -10,7 +10,7 @@ extern PetscLogEvent expandEvent;
 extern PetscLogEvent directEvent;
 
 void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
-    const unsigned int NforDelta, const double fMag, const unsigned int ptGridSizeWithinBox, 
+    const unsigned int FgtLev, const double fMag, const unsigned int ptGridSizeWithinBox, 
     const int P, const int L, const int K, const double DirectHfactor, MPI_Comm comm) {
   PetscLogEventBegin(fgtEvent, 0, 0, 0, 0);
 
@@ -19,12 +19,10 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
   MPI_Comm_rank(comm, &rank);
 
   //Kernel Bandwidth
-  const double delta = 1.0/(static_cast<double>(1u << ((maxDepth - NforDelta) << 1)));
+  const double delta = 1.0/(static_cast<double>(1u << (FgtLev << 1)));
 
   //FGT box size = sqrt(delta)
-  const double hFgt = 1.0/(static_cast<double>(1u << (maxDepth - NforDelta)));
-
-  const double hOctFac = 1.0/static_cast<double>(1u << maxDepth);
+  const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
 
   //2P complex coefficients for each dimension.  
   const unsigned int Ndofs = 16*P*P*P;
@@ -40,7 +38,7 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
   std::vector<ot::TreeNode> directTree;
   for(size_t i = 0; i < linOct.size(); i++) {
     unsigned int lev = linOct[i].getLevel();
-    double hCurrOct = hOctFac*static_cast<double>(1u << (maxDepth - lev));
+    double hCurrOct = 1.0/(static_cast<double>(1u << lev));
     if( hCurrOct <= (hFgt*DirectHfactor) ) {
       expandTree.push_back(linOct[i]);
     } else {
@@ -108,7 +106,7 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
   directTree.clear();
 
   if(rank < npesExpand) {
-    pfgtExpand(finalExpandTree, maxDepth, delta, hFgt, hOctFac, subComm, comm);
+    pfgtExpand(finalExpandTree, maxDepth, FgtLev, delta, hFgt, subComm, comm);
   } else {
     pfgtDirect(finalDirectTree, subComm, comm);
   }
@@ -119,7 +117,7 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
 }
 
 void pfgtExpand(std::vector<ot::TreeNode> & expandTree, const unsigned int maxDepth,
-    const double delta, const double hFgt, const double hOctFac,
+    const unsigned int FgtLev, const double delta, const double hFgt, 
     MPI_Comm subComm, MPI_Comm comm) {
   PetscLogEventBegin(expandEvent, 0, 0, 0, 0);
 
@@ -127,9 +125,11 @@ void pfgtExpand(std::vector<ot::TreeNode> & expandTree, const unsigned int maxDe
   std::vector<ot::TreeNode> fgtListB;
   for(size_t i = 0; i < expandTree.size(); ++i) {
     unsigned int lev = expandTree[i].getLevel();
-    double hCurrOct = hOctFac*static_cast<double>(1u << (maxDepth - lev));
-    if(hCurrOct < hFgt) {
+    if(lev > FgtLev) {
+      fgtListA.push_back(expandTree[i].getAncestor(FgtLev));
     } else {
+      fgtListB.push_back(expandTree[i]);
+      fgtListB[fgtListB.size() - 1].setWeight(1u << (3*(FgtLev - lev)));
     }
   }//end i
 
