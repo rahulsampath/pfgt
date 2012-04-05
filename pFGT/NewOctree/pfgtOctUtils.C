@@ -125,13 +125,15 @@ void pfgtExpand(std::vector<ot::TreeNode> & expandTree, const unsigned int maxDe
   std::vector<ot::TreeNode> fgtListB;
   for(size_t i = 0; i < expandTree.size(); ++i) {
     unsigned int lev = expandTree[i].getLevel();
-    if(lev > FgtLev) {
+    if(lev >= FgtLev) {
       fgtListA.push_back(expandTree[i].getAncestor(FgtLev));
     } else {
       fgtListB.push_back(expandTree[i]);
       fgtListB[fgtListB.size() - 1].setWeight(1u << (3*(FgtLev - lev)));
     }
   }//end i
+
+  par::removeDuplicates<ot::TreeNode>(fgtListA, true, subComm);
 
   PetscLogEventEnd(expandEvent, 0, 0, 0, 0);
 }
