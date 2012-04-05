@@ -22,5 +22,8 @@ void pfgtExpand(std::vector<ot::TreeNode> & expandTree, const unsigned int maxDe
 void pfgtDirect(std::vector<ot::TreeNode> & directTree, const unsigned int FgtLev,
     MPI_Comm subComm, MPI_Comm comm);
 
+void createFGToctree(std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & expandTree,
+    const unsigned int FgtLev);
+
 #endif
 
