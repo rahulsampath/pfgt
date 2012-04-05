@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 
   if(argc < 7) {
     if(!rank) {
-      std::cout<<"Usage: exe numOctPtsPerProc numFgtPtsPerDimPerOct fMag epsilon NforDelta DirectHfactor"<<std::endl;
+      std::cout<<"Usage: exe numOctPtsPerProc numFgtPtsPerDimPerOct fMag epsilon FgtLev DirectHfactor"<<std::endl;
     }
     PetscFinalize();
   }
@@ -57,20 +57,20 @@ int main(int argc, char** argv) {
   unsigned int numFgtPtsPerDimPerOct = atoi(argv[2]);
   double fMag = atof(argv[3]);
   double epsilon = atof(argv[4]);  
-  unsigned int NforDelta = atoi(argv[5]);
+  unsigned int FgtLev = atoi(argv[5]);
   double DirectHfactor = atof(argv[6]);
   unsigned int dim = 3;
   unsigned int maxDepth = 30;
+
+  assert(FgtLev <= maxDepth);
 
   if(!rank) {
     std::cout<<"numOctPtsPerProc = "<<numOctPtsPerProc<<std::endl;
     std::cout<<"numFgtPtsPerDimPerOct = "<<numFgtPtsPerDimPerOct<<std::endl;
     std::cout<<"epsilon = "<<epsilon<<std::endl;
-    std::cout<<"NforDelta = "<<NforDelta<<std::endl;
+    std::cout<<"FgtLev = "<<FgtLev<<std::endl;
     std::cout<<"DirectHfactor = "<<DirectHfactor<<std::endl;
   }
-
-  assert(NforDelta <= maxDepth);
 
   int P, L, K;
 
@@ -135,7 +135,7 @@ int main(int argc, char** argv) {
   pts.clear();
 
   //FGT
-  pfgt(linOct, maxDepth, NforDelta, fMag, numFgtPtsPerDimPerOct, P, L, K, DirectHfactor, MPI_COMM_WORLD);
+  pfgt(linOct, maxDepth, FgtLev, fMag, numFgtPtsPerDimPerOct, P, L, K, DirectHfactor, MPI_COMM_WORLD);
 
   PetscFinalize();
 
