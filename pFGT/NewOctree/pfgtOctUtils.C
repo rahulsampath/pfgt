@@ -121,6 +121,20 @@ void pfgtExpand(std::vector<ot::TreeNode> & expandTree, const unsigned int maxDe
     MPI_Comm subComm, MPI_Comm comm) {
   PetscLogEventBegin(expandEvent, 0, 0, 0, 0);
 
+  std::vector<ot::TreeNode> fgtList;
+  createFGToctree(fgtList, expandTree, FgtLev);
+
+  PetscLogEventEnd(expandEvent, 0, 0, 0, 0);
+}
+
+void pfgtDirect(std::vector<ot::TreeNode> & directTree, const unsigned int FgtLev, MPI_Comm subComm, MPI_Comm comm) {
+  PetscLogEventBegin(directEvent, 0, 0, 0, 0);
+
+  PetscLogEventEnd(directEvent, 0, 0, 0, 0);
+}
+
+void createFGToctree(std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & expandTree,
+    const unsigned int FgtLev) {
   std::vector<ot::TreeNode> tmpFgtListA;
   std::vector<ot::TreeNode> tmpFgtListB;
   for(size_t i = 0; i < expandTree.size(); ++i) {
@@ -134,7 +148,6 @@ void pfgtExpand(std::vector<ot::TreeNode> & expandTree, const unsigned int maxDe
 
   seq::makeVectorUnique<ot::TreeNode>(tmpFgtListA, true);
 
-  std::vector<ot::TreeNode> fgtList;
   if(tmpFgtListB.empty()) {
     fgtList = tmpFgtListA;
   } else if(tmpFgtListA.empty()) {
@@ -158,17 +171,6 @@ void pfgtExpand(std::vector<ot::TreeNode> & expandTree, const unsigned int maxDe
       fgtList.push_back(tmpFgtListB[bIdx]);
     }
   }
-
-  tmpFgtListA.clear();
-  tmpFgtListB.clear();
-
-  PetscLogEventEnd(expandEvent, 0, 0, 0, 0);
-}
-
-void pfgtDirect(std::vector<ot::TreeNode> & directTree, const unsigned int FgtLev, MPI_Comm subComm, MPI_Comm comm) {
-  PetscLogEventBegin(directEvent, 0, 0, 0, 0);
-
-  PetscLogEventEnd(directEvent, 0, 0, 0, 0);
 }
 
 
