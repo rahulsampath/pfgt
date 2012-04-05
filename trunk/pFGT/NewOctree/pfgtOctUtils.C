@@ -53,6 +53,9 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
   localTreeSizes[1] = directTree.size();
   MPI_Allreduce(localTreeSizes, globalTreeSizes, 2, MPI_UNSIGNED, MPI_SUM, comm);
   int npesExpand = (globalTreeSizes[0]*npes)/(globalTreeSizes[0] + globalTreeSizes[1]);
+  if((npesExpand == 0) && (globalTreeSizes[0] > 0)) {
+    npesExpand = 1;
+  }
   int npesDirect = npes - npesExpand;
 
   MPI_Comm subComm;
@@ -121,6 +124,8 @@ void pfgtExpand(std::vector<ot::TreeNode> & expandTree, const unsigned int maxDe
     MPI_Comm subComm, MPI_Comm comm) {
   PetscLogEventBegin(expandEvent, 0, 0, 0, 0);
 
+  assert(!(expandTree.empty()));
+
   std::vector<ot::TreeNode> fgtList;
   createFGToctree(fgtList, expandTree, FgtLev);
 
@@ -148,29 +153,26 @@ void createFGToctree(std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNo
 
   seq::makeVectorUnique<ot::TreeNode>(tmpFgtListA, true);
 
-  if(tmpFgtListB.empty()) {
-    fgtList = tmpFgtListA;
-  } else if(tmpFgtListA.empty()) {
-    fgtList = tmpFgtListB;
-  } else {
-    int aIdx = 0;
-    int bIdx = 0;
-    while( (aIdx < tmpFgtListA.size()) && (bIdx < tmpFgtListB.size()) ) {
-      if(tmpFgtListA[aIdx] < tmpFgtListB[bIdx]) {
-        fgtList.push_back(tmpFgtListA[aIdx]);
-        ++aIdx;
-      } else {
-        fgtList.push_back(tmpFgtListB[bIdx]);
-        ++bIdx;
-      }
-    }
-    for(; aIdx < tmpFgtListA.size(); ++aIdx) {
+  int aIdx = 0;
+  int bIdx = 0;
+  while( (aIdx < tmpFgtListA.size()) && (bIdx < tmpFgtListB.size()) ) {
+    if(tmpFgtListA[aIdx] < tmpFgtListB[bIdx]) {
       fgtList.push_back(tmpFgtListA[aIdx]);
-    }
-    for(; bIdx < tmpFgtListB.size(); ++bIdx) {
+      ++aIdx;
+    } else {
       fgtList.push_back(tmpFgtListB[bIdx]);
+      ++bIdx;
     }
   }
+  for(; aIdx < tmpFgtListA.size(); ++aIdx) {
+    fgtList.push_back(tmpFgtListA[aIdx]);
+  }
+  for(; bIdx < tmpFgtListB.size(); ++bIdx) {
+    fgtList.push_back(tmpFgtListB[bIdx]);
+  }
+
+  assert(!(fgtList.empty()));
+
 }
 
 
