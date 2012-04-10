@@ -63,10 +63,11 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
   } else {
     int npesExpand = (globalTreeSizes[0]*npes)/(globalTreeSizes[0] + globalTreeSizes[1]);
     assert(npesExpand < npes);
-    if(npesExpand == 0) {
+    if(npesExpand < 1) {
       npesExpand = 1;
     }
     int npesDirect = npes - npesExpand;
+    assert(npesDirect > 0);
 
     MPI_Comm subComm;
     MPI_Group group, subGroup;
