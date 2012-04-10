@@ -4,6 +4,7 @@
 #include "mpi.h"
 #include "pfgtOctUtils.h"
 #include "parUtils.h"
+#include "dtypes.h"
 
 extern PetscLogEvent fgtEvent;
 extern PetscLogEvent expandEvent;
@@ -127,7 +128,7 @@ void pfgtExpand(std::vector<ot::TreeNode> & expandTree, const unsigned int maxDe
   assert(!(expandTree.empty()));
 
   std::vector<ot::TreeNode> fgtList;
-  createFGToctree(fgtList, expandTree, FgtLev);
+  createFGToctree(fgtList, expandTree, FgtLev, subComm);
 
   PetscLogEventEnd(expandEvent, 0, 0, 0, 0);
 }
@@ -139,7 +140,7 @@ void pfgtDirect(std::vector<ot::TreeNode> & directTree, const unsigned int FgtLe
 }
 
 void createFGToctree(std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & expandTree,
-    const unsigned int FgtLev) {
+    const unsigned int FgtLev, MPI_Comm subComm) {
   std::vector<ot::TreeNode> tmpFgtListA;
   std::vector<ot::TreeNode> tmpFgtListB;
   for(size_t i = 0; i < expandTree.size(); ++i) {
@@ -172,6 +173,39 @@ void createFGToctree(std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNo
   }
 
   assert(!(fgtList.empty()));
+
+  int rank, npes;
+  MPI_Comm_rank(subComm, &rank);
+  MPI_Comm_size(subComm, &npes);
+
+  ot::TreeNode tmpOct;
+
+  MPI_Request recvRequest, sendRequest;
+  if(rank > 0) {
+    MPI_Irecv(&tmpOct, 1, par::Mpi_datatype<ot::TreeNode>::value(),
+        (rank - 1), 1, subComm, &recvRequest);
+  }
+
+  if(rank < (npes - 1)) {
+    MPI_Isend(&(fgtList[fgtList.size() - 1]), 1, par::Mpi_datatype<ot::TreeNode>::value(),
+        (rank + 1), 1, subComm, &sendRequest);
+  }
+
+  if(rank > 0) {
+    MPI_Status status;
+    MPI_Wait(&recvRequest, &status);
+  }
+
+  if(rank < (npes - 1)) {
+    MPI_Status status;
+    MPI_Wait(&sendRequest, &status);
+  }
+
+  if(rank > 0) {
+    if(tmpOct == fgtList[0]) {
+      fgtList.erase(fgtList.begin());
+    }
+  }
 
 }
 
