@@ -23,7 +23,7 @@ void pfgtDirect(std::vector<ot::TreeNode> & directTree, const unsigned int FgtLe
     MPI_Comm subComm, MPI_Comm comm);
 
 void createFGToctree(std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & expandTree,
-    const unsigned int FgtLev);
+    const unsigned int FgtLev, MPI_Comm subComm);
 
 #endif
 
