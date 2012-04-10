@@ -7,8 +7,12 @@
 #include "dtypes.h"
 
 extern PetscLogEvent fgtEvent;
-extern PetscLogEvent expandEvent;
-extern PetscLogEvent directEvent;
+extern PetscLogEvent serialEvent;
+extern PetscLogEvent fgtOctConEvent;
+extern PetscLogEvent expandOnlyEvent;
+extern PetscLogEvent expandHybridEvent;
+extern PetscLogEvent directOnlyEvent;
+extern PetscLogEvent directHybridEvent;
 
 void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
     const unsigned int FgtLev, const double fMag, const unsigned int ptGridSizeWithinBox, 
@@ -55,11 +59,11 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
   MPI_Allreduce(localTreeSizes, globalTreeSizes, 2, MPI_UNSIGNED, MPI_SUM, comm);
 
   if(globalTreeSizes[0] == 0) {
-    //Only Direct
+    pfgtOnlyDirect(directTree, comm);
   } else if(globalTreeSizes[1] == 0) {
-    //Only Expand
+    pfgtOnlyExpand(expandTree, maxDepth, FgtLev, comm);
   } else if(npes == 1) {
-    //Sequential
+    pfgtSerial(directTree, expandTree, maxDepth, FgtLev);
   } else {
     int npesExpand = (globalTreeSizes[0]*npes)/(globalTreeSizes[0] + globalTreeSizes[1]);
     assert(npesExpand < npes);
@@ -117,9 +121,9 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
     directTree.clear();
 
     if(rank < npesExpand) {
-      pfgtExpand(finalExpandTree, maxDepth, FgtLev, delta, hFgt, subComm, comm);
+      pfgtHybridExpand(finalExpandTree, maxDepth, FgtLev, delta, hFgt, subComm, comm);
     } else {
-      pfgtDirect(finalDirectTree, FgtLev, subComm, comm);
+      pfgtHybridDirect(finalDirectTree, FgtLev, subComm, comm);
     }
 
     MPI_Comm_free(&subComm);
@@ -128,27 +132,50 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
   PetscLogEventEnd(fgtEvent, 0, 0, 0, 0);
 }
 
-void pfgtExpand(std::vector<ot::TreeNode> & expandTree, const unsigned int maxDepth,
+void pfgtOnlyDirect(std::vector<ot::TreeNode> & directTree, MPI_Comm comm) {
+  PetscLogEventBegin(directOnlyEvent, 0, 0, 0, 0);
+
+  PetscLogEventEnd(directOnlyEvent, 0, 0, 0, 0);
+}
+
+void pfgtOnlyExpand(std::vector<ot::TreeNode> & expandTree, const unsigned int maxDepth,
+    const unsigned int FgtLev, MPI_Comm comm) {
+  PetscLogEventBegin(expandOnlyEvent, 0, 0, 0, 0);
+
+  PetscLogEventEnd(expandOnlyEvent, 0, 0, 0, 0);
+}
+
+void pfgtSerial(std::vector<ot::TreeNode> & directTree, std::vector<ot::TreeNode> & expandTree,
+    const unsigned int maxDepth, const unsigned int FgtLev) {
+  PetscLogEventBegin(serialEvent, 0, 0, 0, 0);
+
+  PetscLogEventEnd(serialEvent, 0, 0, 0, 0);
+}
+
+void pfgtHybridExpand(std::vector<ot::TreeNode> & expandTree, const unsigned int maxDepth,
     const unsigned int FgtLev, const double delta, const double hFgt, 
     MPI_Comm subComm, MPI_Comm comm) {
-  PetscLogEventBegin(expandEvent, 0, 0, 0, 0);
+  PetscLogEventBegin(expandHybridEvent, 0, 0, 0, 0);
 
   assert(!(expandTree.empty()));
 
   std::vector<ot::TreeNode> fgtList;
   createFGToctree(fgtList, expandTree, FgtLev, subComm);
 
-  PetscLogEventEnd(expandEvent, 0, 0, 0, 0);
+  PetscLogEventEnd(expandHybridEvent, 0, 0, 0, 0);
 }
 
-void pfgtDirect(std::vector<ot::TreeNode> & directTree, const unsigned int FgtLev, MPI_Comm subComm, MPI_Comm comm) {
-  PetscLogEventBegin(directEvent, 0, 0, 0, 0);
+void pfgtHybridDirect(std::vector<ot::TreeNode> & directTree, const unsigned int FgtLev,
+    MPI_Comm subComm, MPI_Comm comm) {
+  PetscLogEventBegin(directHybridEvent, 0, 0, 0, 0);
 
-  PetscLogEventEnd(directEvent, 0, 0, 0, 0);
+  PetscLogEventEnd(directHybridEvent, 0, 0, 0, 0);
 }
 
 void createFGToctree(std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & expandTree,
     const unsigned int FgtLev, MPI_Comm subComm) {
+  PetscLogEventBegin(fgtOctConEvent, 0, 0, 0, 0);
+
   std::vector<ot::TreeNode> tmpFgtListA;
   std::vector<ot::TreeNode> tmpFgtListB;
   for(size_t i = 0; i < expandTree.size(); ++i) {
@@ -215,6 +242,7 @@ void createFGToctree(std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNo
     }
   }
 
+  PetscLogEventEnd(fgtOctConEvent, 0, 0, 0, 0);
 }
 
 
