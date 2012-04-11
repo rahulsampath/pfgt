@@ -33,5 +33,10 @@ void pfgtHybridDirect(std::vector<ot::TreeNode> & directTree, const unsigned int
 void createFGToctree(std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & expandTree,
     const unsigned int FgtLev, MPI_Comm subComm);
 
+void computeFGTminsHybridExpand(std::vector<ot::TreeNode> & fgtMins, std::vector<ot::TreeNode> & fgtList,
+    MPI_Comm subComm, MPI_Comm comm);
+
+void computeFGTminsHybridDirect(std::vector<ot::TreeNode> & fgtMins, MPI_Comm comm);
+
 #endif
 
