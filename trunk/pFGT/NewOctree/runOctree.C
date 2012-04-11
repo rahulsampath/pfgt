@@ -56,28 +56,29 @@ int main(int argc, char** argv) {
 
   if(argc < 7) {
     if(!rank) {
-      std::cout<<"Usage: exe numOctPtsPerProc numFgtPtsPerDimPerOct fMag epsilon FgtLev DirectHfactor"<<std::endl;
+      std::cout<<"Usage: exe numPtsPerProc fMag epsilon FgtLev DirectHfactor maxNumPts"<<std::endl;
     }
     PetscFinalize();
   }
 
-  unsigned int numOctPtsPerProc = atoi(argv[1]);
-  unsigned int numFgtPtsPerDimPerOct = atoi(argv[2]);
-  double fMag = atof(argv[3]);
-  double epsilon = atof(argv[4]);  
-  unsigned int FgtLev = atoi(argv[5]);
-  double DirectHfactor = atof(argv[6]);
-  unsigned int dim = 3;
-  unsigned int maxDepth = 30;
+  unsigned int numPtsPerProc = atoi(argv[1]);
+  double fMag = atof(argv[2]);
+  double epsilon = atof(argv[3]);  
+  unsigned int FgtLev = atoi(argv[4]);
+  double DirectHfactor = atof(argv[5]);
+  unsigned int maxNumPts = atoi(argv[6]);
+  const unsigned int dim = 3;
+  const unsigned int maxDepth = 30;
 
   assert(FgtLev <= maxDepth);
 
   if(!rank) {
-    std::cout<<"numOctPtsPerProc = "<<numOctPtsPerProc<<std::endl;
-    std::cout<<"numFgtPtsPerDimPerOct = "<<numFgtPtsPerDimPerOct<<std::endl;
+    std::cout<<"numPtsPerProc = "<<numPtsPerProc<<std::endl;
+    std::cout<<"fMag = "<<fMag<<std::endl;
     std::cout<<"epsilon = "<<epsilon<<std::endl;
     std::cout<<"FgtLev = "<<FgtLev<<std::endl;
     std::cout<<"DirectHfactor = "<<DirectHfactor<<std::endl;
+    std::cout<<"MaxNumPts = "<<maxNumPts<<std::endl;
   }
 
   int P, L, K;
@@ -108,12 +109,11 @@ int main(int argc, char** argv) {
 
   //Generate gaussian distribution for the octree
   std::vector<double> pts;
-  genGaussPts(rank, numOctPtsPerProc, pts);
+  genGaussPts(rank, numPtsPerProc, pts);
   rescalePts(pts);
 
-  unsigned int ptsLen = pts.size();
   std::vector<ot::TreeNode> linOct;
-  for(unsigned int i = 0; i < ptsLen; i += 3) {
+  for(unsigned int i = 0; i < pts.size(); i += 3) {
     linOct.push_back( ot::TreeNode((unsigned int)(pts[i]*(double)(1u << maxDepth)),
           (unsigned int)(pts[i+1]*(double)(1u << maxDepth)),
           (unsigned int)(pts[i+2]*(double)(1u << maxDepth)),
@@ -123,39 +123,48 @@ int main(int argc, char** argv) {
   par::removeDuplicates<ot::TreeNode>(linOct, false, MPI_COMM_WORLD);
 
   pts.resize(3*(linOct.size()));
-  ptsLen = (3*(linOct.size()));
   for(size_t i = 0; i < linOct.size(); i++) {
     pts[3*i] = (((double)(linOct[i].getX())) + 0.5)/((double)(1u << maxDepth));
     pts[(3*i)+1] = (((double)(linOct[i].getY())) +0.5)/((double)(1u << maxDepth));
     pts[(3*i)+2] = (((double)(linOct[i].getZ())) +0.5)/((double)(1u << maxDepth));
   }//end for i
 
-  unsigned int maxNumPts = 1;
-
   double gSize[3];
   gSize[0] = 1.0;
   gSize[1] = 1.0;
   gSize[2] = 1.0;
 
-  //construct the octree
   linOct.clear();
+
+  const unsigned int seed = (0x3456782  + (54763*rank));
+  srand48(seed);
+
+  //construct the octree
+  int numPts = ((pts.size())/3);
+  std::vector<double> sources(4*numPts);
+  for(int i = 0; i < numPts; ++i) {
+    sources[4*i] = pts[3*i];
+    sources[(4*i) + 1] = pts[(3*i) + 1];
+    sources[(4*i) + 2] = pts[(3*i) + 2];
+    sources[(4*i) + 3] = (fMag*(drand48()));
+  }//end i
   ot::points2Octree(pts, gSize, linOct, dim, maxDepth, maxNumPts, MPI_COMM_WORLD);
   pts.clear();
 
   //FGT
-  pfgt(linOct, maxDepth, FgtLev, fMag, numFgtPtsPerDimPerOct, P, L, K, DirectHfactor, MPI_COMM_WORLD);
+  pfgt(linOct, maxDepth, FgtLev, sources, P, L, K, DirectHfactor, MPI_COMM_WORLD);
 
   PetscFinalize();
 
 }
 
-void genGaussPts(int rank, unsigned int numOctPtsPerProc, std::vector<double> & pts)
+void genGaussPts(int rank, unsigned int numPtsPerProc, std::vector<double> & pts)
 {
   const unsigned int seed = (0x12345678  + (76543*rank));
   srand48(seed);
 
-  pts.resize(3*numOctPtsPerProc);
-  for(unsigned int i = 0; i < (3*numOctPtsPerProc); i++) {
+  pts.resize(3*numPtsPerProc);
+  for(unsigned int i = 0; i < (3*numPtsPerProc); i++) {
     pts[i]= gaussian(0.5, 0.16);
   }
 }
