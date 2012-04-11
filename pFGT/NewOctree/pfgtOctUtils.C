@@ -162,6 +162,9 @@ void pfgtHybridExpand(std::vector<ot::TreeNode> & expandTree, const unsigned int
   std::vector<ot::TreeNode> fgtList;
   createFGToctree(fgtList, expandTree, FgtLev, subComm);
 
+  std::vector<ot::TreeNode> fgtMins;
+  computeFGTminsHybridExpand(fgtMins, fgtList, subComm, comm);
+
   PetscLogEventEnd(expandHybridEvent, 0, 0, 0, 0);
 }
 
@@ -169,7 +172,67 @@ void pfgtHybridDirect(std::vector<ot::TreeNode> & directTree, const unsigned int
     MPI_Comm subComm, MPI_Comm comm) {
   PetscLogEventBegin(directHybridEvent, 0, 0, 0, 0);
 
+  std::vector<ot::TreeNode> fgtMins;
+  computeFGTminsHybridDirect(fgtMins, comm);
+
   PetscLogEventEnd(directHybridEvent, 0, 0, 0, 0);
+}
+
+void computeFGTminsHybridExpand(std::vector<ot::TreeNode> & fgtMins, std::vector<ot::TreeNode> & fgtList,
+    MPI_Comm subComm, MPI_Comm comm) {
+  int subNpes;
+  MPI_Comm_size(subComm, &subNpes);
+
+  int subRank;
+  MPI_Comm_rank(subComm, &subRank);
+
+  int rank;
+  MPI_Comm_rank(comm, &rank);
+
+  assert(rank == subRank);
+
+  ot::TreeNode firstFgt;
+  if(!(fgtList.empty())) {
+    firstFgt = fgtList[0];
+  }
+
+  ot::TreeNode* recvBuf = NULL;
+  if(rank == 0) {
+    fgtMins.resize(subNpes);
+    recvBuf = &(fgtMins[0]);
+  }
+
+  MPI_Gather(&firstFgt, 1, par::Mpi_datatype<ot::TreeNode>::value(),
+      recvBuf, 1, par::Mpi_datatype<ot::TreeNode>::value(), 0, subComm);
+
+  int fgtMinSize;
+  if(rank == 0) {
+    std::vector<ot::TreeNode> tmpMins;
+    for(int i = 0; i < fgtMins.size(); ++i) {
+      if(fgtMins[i].getDim()) {
+        fgtMins[i].setWeight(i);
+        tmpMins.push_back(fgtMins[i]);
+      }
+    }//end i
+    fgtMins = tmpMins;
+    fgtMinSize = fgtMins.size();
+  }
+
+  MPI_Bcast(&fgtMinSize, 1, MPI_INT, 0, comm);
+
+  if(rank) {
+    fgtMins.resize(fgtMinSize);
+  }
+
+  MPI_Bcast(&(fgtMins[0]), fgtMinSize, par::Mpi_datatype<ot::TreeNode>::value(), 0, comm);
+}
+
+void computeFGTminsHybridDirect(std::vector<ot::TreeNode> & fgtMins, MPI_Comm comm) {
+  int fgtMinSize;
+  MPI_Bcast(&fgtMinSize, 1, MPI_INT, 0, comm);
+
+  fgtMins.resize(fgtMinSize);
+  MPI_Bcast(&(fgtMins[0]), fgtMinSize, par::Mpi_datatype<ot::TreeNode>::value(), 0, comm);
 }
 
 void createFGToctree(std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & expandTree,
