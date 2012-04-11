@@ -15,7 +15,7 @@ extern PetscLogEvent directOnlyEvent;
 extern PetscLogEvent directHybridEvent;
 
 void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
-    const unsigned int FgtLev, const double fMag, const unsigned int ptGridSizeWithinBox, 
+    const unsigned int FgtLev, std::vector<double> & sources,  
     const int P, const int L, const int K, const double DirectHfactor, MPI_Comm comm) {
   PetscLogEventBegin(fgtEvent, 0, 0, 0, 0);
 
