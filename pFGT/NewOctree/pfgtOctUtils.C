@@ -140,10 +140,7 @@ void pfgtHybridExpand(std::vector<double> & sources, std::vector<ot::TreeNode> &
   assert(!(expandTree.empty()));
 
   std::vector<ot::TreeNode> expandMins;
-  computeExpandMinsHybridExpand(expandMins, expandTree, subComm, comm);
-
-  std::vector<ot::TreeNode> directMins;
-  computeDirectMinsHybridExpand(directMins, subComm, comm);
+  computeMins(expandMins, expandTree, subComm);
 
   std::vector<ot::TreeNode> fgtList;
   createFGToctree(fgtList, expandTree, FgtLev, subComm);
@@ -160,11 +157,8 @@ void pfgtHybridDirect(std::vector<double> & sources, std::vector<ot::TreeNode> &
 
   assert(!(directTree.empty()));
 
-  std::vector<ot::TreeNode> expandMins;
-  computeExpandMinsHybridDirect(expandMins, subComm, comm);
-
   std::vector<ot::TreeNode> directMins;
-  computeDirectMinsHybridDirect(directMins, directTree, subComm, comm);
+  computeMins(directMins, directTree, subComm);
 
   std::vector<ot::TreeNode> fgtMins;
   computeFGTminsHybridDirect(fgtMins, comm);
@@ -172,77 +166,14 @@ void pfgtHybridDirect(std::vector<double> & sources, std::vector<ot::TreeNode> &
   PetscLogEventEnd(directHybridEvent, 0, 0, 0, 0);
 }
 
-void computeExpandMinsHybridExpand(std::vector<ot::TreeNode> & expandMins, std::vector<ot::TreeNode> & expandTree,
-    MPI_Comm subComm, MPI_Comm comm) {
-  int npesExpand;
-  MPI_Comm_size(subComm, &npesExpand);
+void computeMins(std::vector<ot::TreeNode> & mins, std::vector<ot::TreeNode> & subTree, MPI_Comm subComm) {
+  int subNpes;
+  MPI_Comm_size(subComm, &subNpes);
 
-  int subRank;
-  MPI_Comm_rank(subComm, &subRank);
+  mins.resize(subNpes);
 
-  int rank;
-  MPI_Comm_rank(comm, &rank);
-
-  assert(rank == subRank);
-
-  expandMins.resize(npesExpand);
-
-  MPI_Gather(&(expandTree[0]), 1, par::Mpi_datatype<ot::TreeNode>::value(),
-      &(expandMins[0]), 1, par::Mpi_datatype<ot::TreeNode>::value(), 0, subComm);
-
-  MPI_Bcast(&(expandMins[0]), npesExpand, par::Mpi_datatype<ot::TreeNode>::value(), 0, comm);
-}
-
-void computeDirectMinsHybridDirect(std::vector<ot::TreeNode> & directMins, std::vector<ot::TreeNode> & directTree, 
-    MPI_Comm subComm, MPI_Comm comm) {
-  int npesDirect;
-  MPI_Comm_size(subComm, &npesDirect);
-
-  int npes;
-  MPI_Comm_size(comm, &npes);
-
-  int npesExpand = npes - npesDirect;
-
-  int subRank;
-  MPI_Comm_rank(subComm, &subRank);
-
-  int rank;
-  MPI_Comm_rank(comm, &rank);
-
-  assert(rank == (subRank + npesExpand));
-
-  directMins.resize(npesDirect);
-
-  MPI_Gather(&(directTree[0]), 1, par::Mpi_datatype<ot::TreeNode>::value(),
-      &(directMins[0]), 1, par::Mpi_datatype<ot::TreeNode>::value(), 0, subComm);
-
-  MPI_Bcast(&(directMins[0]), npesDirect, par::Mpi_datatype<ot::TreeNode>::value(), npesExpand, comm);
-}
-
-void computeExpandMinsHybridDirect(std::vector<ot::TreeNode> & expandMins, MPI_Comm subComm, MPI_Comm comm) {
-  int npesDirect;
-  MPI_Comm_size(subComm, &npesDirect);
-
-  int npes;
-  MPI_Comm_size(comm, &npes);
-
-  int npesExpand = npes - npesDirect;
-
-  expandMins.resize(npesExpand);
-  MPI_Bcast(&(expandMins[0]), npesExpand, par::Mpi_datatype<ot::TreeNode>::value(), 0, comm);
-}
-
-void computeDirectMinsHybridExpand(std::vector<ot::TreeNode> & directMins, MPI_Comm subComm, MPI_Comm comm) {
-  int npesExpand;
-  MPI_Comm_size(subComm, &npesExpand);
-
-  int npes;
-  MPI_Comm_size(comm, &npes);
-
-  int npesDirect = npes - npesExpand;
-
-  directMins.resize(npesDirect);
-  MPI_Bcast(&(directMins[0]), npesDirect, par::Mpi_datatype<ot::TreeNode>::value(), npesExpand, comm);
+  MPI_Allgather(&(subTree[0]), 1, par::Mpi_datatype<ot::TreeNode>::value(),
+      &(mins[0]), 1, par::Mpi_datatype<ot::TreeNode>::value(), subComm);
 }
 
 void computeFGTminsHybridExpand(std::vector<ot::TreeNode> & fgtMins, std::vector<ot::TreeNode> & fgtList,
