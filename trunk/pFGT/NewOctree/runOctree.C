@@ -163,6 +163,19 @@ int main(int argc, char** argv) {
     sendCnts[i] = 0;
   }//end i
 
+  int minsCnt = 0;
+  for(int i = 0; i < numPts; ++i) {
+    unsigned int px = (unsigned int)(sources[4*i]*(double)(1u << maxDepth));
+    unsigned int py = (unsigned int)(sources[(4*i)+1]*(double)(1u << maxDepth));
+    unsigned int pz = (unsigned int)(sources[(4*i)+2]*(double)(1u << maxDepth));
+    ot::TreeNode tmpOct(px, py, pz, maxDepth, dim, maxDepth);
+    while((minsCnt < npes) && (mins[minsCnt] <= tmpOct)) {
+      minsCnt++;
+    }
+    minsCnt--;
+    sendCnts[minsCnt] += 4;
+  }//end i
+
   int* recvCnts = new int[npes];
 
   MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, MPI_COMM_WORLD);
