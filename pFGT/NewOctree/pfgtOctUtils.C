@@ -159,6 +159,12 @@ void pfgtHybridExpand(std::vector<double> & sources, std::vector<ot::TreeNode> &
 
   assert(!(expandTree.empty()));
 
+  std::vector<ot::TreeNode> expandMins;
+  computeExpandMinsHybridExpand(expandMins, subComm, comm);
+
+  std::vector<ot::TreeNode> directMins;
+  computeDirectMinsHybridExpand(directMins, comm);
+
   std::vector<ot::TreeNode> fgtList;
   createFGToctree(fgtList, expandTree, FgtLev, subComm);
 
@@ -172,10 +178,30 @@ void pfgtHybridDirect(std::vector<double> & sources, std::vector<ot::TreeNode> &
     const unsigned int FgtLev, MPI_Comm subComm, MPI_Comm comm) {
   PetscLogEventBegin(directHybridEvent, 0, 0, 0, 0);
 
+  assert(!(directTree.empty()));
+
+  std::vector<ot::TreeNode> expandMins;
+  computeExpandMinsHybridDirect(expandMins, comm);
+
+  std::vector<ot::TreeNode> directMins;
+  computeDirectMinsHybridDirect(directMins, subComm, comm);
+
   std::vector<ot::TreeNode> fgtMins;
   computeFGTminsHybridDirect(fgtMins, comm);
 
   PetscLogEventEnd(directHybridEvent, 0, 0, 0, 0);
+}
+
+void computeExpandMinsHybridExpand(std::vector<ot::TreeNode> & expandMins, MPI_Comm subComm, MPI_Comm comm) {
+}
+
+void computeExpandMinsHybridDirect(std::vector<ot::TreeNode> & expandMins, MPI_Comm comm) {
+}
+
+void computeDirectMinsHybridExpand(std::vector<ot::TreeNode> & directMins, MPI_Comm comm) {
+}
+
+void computeDirectMinsHybridDirect(std::vector<ot::TreeNode> & directMins, MPI_Comm subComm, MPI_Comm comm) {
 }
 
 void computeFGTminsHybridExpand(std::vector<ot::TreeNode> & fgtMins, std::vector<ot::TreeNode> & fgtList,
