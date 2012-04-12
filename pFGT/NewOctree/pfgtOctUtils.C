@@ -132,26 +132,6 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
   PetscLogEventEnd(fgtEvent, 0, 0, 0, 0);
 }
 
-void pfgtOnlyDirect(std::vector<double> & sources, std::vector<ot::TreeNode> & directTree, MPI_Comm comm) {
-  PetscLogEventBegin(directOnlyEvent, 0, 0, 0, 0);
-
-  PetscLogEventEnd(directOnlyEvent, 0, 0, 0, 0);
-}
-
-void pfgtOnlyExpand(std::vector<double> & sources, std::vector<ot::TreeNode> & expandTree, 
-    const unsigned int maxDepth, const unsigned int FgtLev, MPI_Comm comm) {
-  PetscLogEventBegin(expandOnlyEvent, 0, 0, 0, 0);
-
-  PetscLogEventEnd(expandOnlyEvent, 0, 0, 0, 0);
-}
-
-void pfgtSerial(std::vector<double> & sources, std::vector<ot::TreeNode> & directTree, 
-    std::vector<ot::TreeNode> & expandTree, const unsigned int maxDepth, const unsigned int FgtLev) {
-  PetscLogEventBegin(serialEvent, 0, 0, 0, 0);
-
-  PetscLogEventEnd(serialEvent, 0, 0, 0, 0);
-}
-
 void pfgtHybridExpand(std::vector<double> & sources, std::vector<ot::TreeNode> & expandTree,
     const unsigned int maxDepth, const unsigned int FgtLev, const double delta, 
     const double hFgt, MPI_Comm subComm, MPI_Comm comm) {
@@ -160,10 +140,10 @@ void pfgtHybridExpand(std::vector<double> & sources, std::vector<ot::TreeNode> &
   assert(!(expandTree.empty()));
 
   std::vector<ot::TreeNode> expandMins;
-  computeExpandMinsHybridExpand(expandMins, subComm, comm);
+  computeExpandMinsHybridExpand(expandMins, expandTree, subComm, comm);
 
   std::vector<ot::TreeNode> directMins;
-  computeDirectMinsHybridExpand(directMins, comm);
+  computeDirectMinsHybridExpand(directMins, subComm, comm);
 
   std::vector<ot::TreeNode> fgtList;
   createFGToctree(fgtList, expandTree, FgtLev, subComm);
@@ -181,10 +161,10 @@ void pfgtHybridDirect(std::vector<double> & sources, std::vector<ot::TreeNode> &
   assert(!(directTree.empty()));
 
   std::vector<ot::TreeNode> expandMins;
-  computeExpandMinsHybridDirect(expandMins, comm);
+  computeExpandMinsHybridDirect(expandMins, subComm, comm);
 
   std::vector<ot::TreeNode> directMins;
-  computeDirectMinsHybridDirect(directMins, subComm, comm);
+  computeDirectMinsHybridDirect(directMins, directTree, subComm, comm);
 
   std::vector<ot::TreeNode> fgtMins;
   computeFGTminsHybridDirect(fgtMins, comm);
@@ -192,16 +172,77 @@ void pfgtHybridDirect(std::vector<double> & sources, std::vector<ot::TreeNode> &
   PetscLogEventEnd(directHybridEvent, 0, 0, 0, 0);
 }
 
-void computeExpandMinsHybridExpand(std::vector<ot::TreeNode> & expandMins, MPI_Comm subComm, MPI_Comm comm) {
+void computeExpandMinsHybridExpand(std::vector<ot::TreeNode> & expandMins, std::vector<ot::TreeNode> & expandTree,
+    MPI_Comm subComm, MPI_Comm comm) {
+  int npesExpand;
+  MPI_Comm_size(subComm, &npesExpand);
+
+  int subRank;
+  MPI_Comm_rank(subComm, &subRank);
+
+  int rank;
+  MPI_Comm_rank(comm, &rank);
+
+  assert(rank == subRank);
+
+  expandMins.resize(npesExpand);
+
+  MPI_Gather(&(expandTree[0]), 1, par::Mpi_datatype<ot::TreeNode>::value(),
+      &(expandMins[0]), 1, par::Mpi_datatype<ot::TreeNode>::value(), 0, subComm);
+
+  MPI_Bcast(&(expandMins[0]), npesExpand, par::Mpi_datatype<ot::TreeNode>::value(), 0, comm);
 }
 
-void computeExpandMinsHybridDirect(std::vector<ot::TreeNode> & expandMins, MPI_Comm comm) {
+void computeDirectMinsHybridDirect(std::vector<ot::TreeNode> & directMins, std::vector<ot::TreeNode> & directTree, 
+    MPI_Comm subComm, MPI_Comm comm) {
+  int npesDirect;
+  MPI_Comm_size(subComm, &npesDirect);
+
+  int npes;
+  MPI_Comm_size(comm, &npes);
+
+  int npesExpand = npes - npesDirect;
+
+  int subRank;
+  MPI_Comm_rank(subComm, &subRank);
+
+  int rank;
+  MPI_Comm_rank(comm, &rank);
+
+  assert(rank == (subRank + npesExpand));
+
+  directMins.resize(npesDirect);
+
+  MPI_Gather(&(directTree[0]), 1, par::Mpi_datatype<ot::TreeNode>::value(),
+      &(directMins[0]), 1, par::Mpi_datatype<ot::TreeNode>::value(), 0, subComm);
+
+  MPI_Bcast(&(directMins[0]), npesDirect, par::Mpi_datatype<ot::TreeNode>::value(), npesExpand, comm);
 }
 
-void computeDirectMinsHybridExpand(std::vector<ot::TreeNode> & directMins, MPI_Comm comm) {
+void computeExpandMinsHybridDirect(std::vector<ot::TreeNode> & expandMins, MPI_Comm subComm, MPI_Comm comm) {
+  int npesDirect;
+  MPI_Comm_size(subComm, &npesDirect);
+
+  int npes;
+  MPI_Comm_size(comm, &npes);
+
+  int npesExpand = npes - npesDirect;
+
+  expandMins.resize(npesExpand);
+  MPI_Bcast(&(expandMins[0]), npesExpand, par::Mpi_datatype<ot::TreeNode>::value(), 0, comm);
 }
 
-void computeDirectMinsHybridDirect(std::vector<ot::TreeNode> & directMins, MPI_Comm subComm, MPI_Comm comm) {
+void computeDirectMinsHybridExpand(std::vector<ot::TreeNode> & directMins, MPI_Comm subComm, MPI_Comm comm) {
+  int npesExpand;
+  MPI_Comm_size(subComm, &npesExpand);
+
+  int npes;
+  MPI_Comm_size(comm, &npes);
+
+  int npesDirect = npes - npesExpand;
+
+  directMins.resize(npesDirect);
+  MPI_Bcast(&(directMins[0]), npesDirect, par::Mpi_datatype<ot::TreeNode>::value(), npesExpand, comm);
 }
 
 void computeFGTminsHybridExpand(std::vector<ot::TreeNode> & fgtMins, std::vector<ot::TreeNode> & fgtList,
@@ -332,6 +373,35 @@ void createFGToctree(std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNo
   }
 
   PetscLogEventEnd(fgtOctConEvent, 0, 0, 0, 0);
+}
+
+void pfgtOnlyDirect(std::vector<double> & sources, std::vector<ot::TreeNode> & directTree, MPI_Comm comm) {
+  PetscLogEventBegin(directOnlyEvent, 0, 0, 0, 0);
+
+  //Not Implemented
+  assert(false);
+
+  PetscLogEventEnd(directOnlyEvent, 0, 0, 0, 0);
+}
+
+void pfgtOnlyExpand(std::vector<double> & sources, std::vector<ot::TreeNode> & expandTree, 
+    const unsigned int maxDepth, const unsigned int FgtLev, MPI_Comm comm) {
+  PetscLogEventBegin(expandOnlyEvent, 0, 0, 0, 0);
+
+  //Not Implemented
+  assert(false);
+
+  PetscLogEventEnd(expandOnlyEvent, 0, 0, 0, 0);
+}
+
+void pfgtSerial(std::vector<double> & sources, std::vector<ot::TreeNode> & directTree, 
+    std::vector<ot::TreeNode> & expandTree, const unsigned int maxDepth, const unsigned int FgtLev) {
+  PetscLogEventBegin(serialEvent, 0, 0, 0, 0);
+
+  //Not Implemented
+  assert(false);
+
+  PetscLogEventEnd(serialEvent, 0, 0, 0, 0);
 }
 
 
