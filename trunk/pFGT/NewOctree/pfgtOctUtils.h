@@ -38,15 +38,7 @@ void computeFGTminsHybridExpand(std::vector<ot::TreeNode> & fgtMins, std::vector
 
 void computeFGTminsHybridDirect(std::vector<ot::TreeNode> & fgtMins, MPI_Comm comm);
 
-void computeExpandMinsHybridExpand(std::vector<ot::TreeNode> & expandMins, std::vector<ot::TreeNode> & expandTree,
-    MPI_Comm subComm, MPI_Comm comm); 
-
-void computeDirectMinsHybridDirect(std::vector<ot::TreeNode> & directMins, std::vector<ot::TreeNode> & directTree,
-    MPI_Comm subComm, MPI_Comm comm);
-
-void computeExpandMinsHybridDirect(std::vector<ot::TreeNode> & expandMins, MPI_Comm subComm, MPI_Comm comm);
-
-void computeDirectMinsHybridExpand(std::vector<ot::TreeNode> & directMins, MPI_Comm subComm, MPI_Comm comm);
+void computeMins(std::vector<ot::TreeNode> & mins, std::vector<ot::TreeNode> & subTree, MPI_Comm subComm);
 
 #endif
 
