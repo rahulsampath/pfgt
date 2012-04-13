@@ -67,10 +67,8 @@ int main(int argc, char** argv) {
   unsigned int FgtLev = atoi(argv[4]);
   double DirectHfactor = atof(argv[5]);
   unsigned int maxNumPts = atoi(argv[6]);
-  const unsigned int dim = 3;
-  const unsigned int maxDepth = 30;
 
-  assert(FgtLev <= maxDepth);
+  assert(FgtLev <= __MAX_DEPTH__);
 
   if(!rank) {
     std::cout<<"numPtsPerProc = "<<numPtsPerProc<<std::endl;
@@ -114,19 +112,19 @@ int main(int argc, char** argv) {
 
   std::vector<ot::TreeNode> linOct;
   for(unsigned int i = 0; i < pts.size(); i += 3) {
-    linOct.push_back( ot::TreeNode((unsigned int)(pts[i]*(double)(1u << maxDepth)),
-          (unsigned int)(pts[i+1]*(double)(1u << maxDepth)),
-          (unsigned int)(pts[i+2]*(double)(1u << maxDepth)),
-          maxDepth, dim, maxDepth) );
+    linOct.push_back( ot::TreeNode((unsigned int)(pts[i]*(double)(1u << __MAX_DEPTH__)),
+          (unsigned int)(pts[i+1]*(double)(1u << __MAX_DEPTH__)),
+          (unsigned int)(pts[i+2]*(double)(1u << __MAX_DEPTH__)),
+          __MAX_DEPTH__, __DIM__, __MAX_DEPTH__) );
   }//end for i
 
   par::removeDuplicates<ot::TreeNode>(linOct, false, MPI_COMM_WORLD);
 
   pts.resize(3*(linOct.size()));
   for(size_t i = 0; i < linOct.size(); i++) {
-    pts[3*i] = (((double)(linOct[i].getX())) + 0.5)/((double)(1u << maxDepth));
-    pts[(3*i)+1] = (((double)(linOct[i].getY())) +0.5)/((double)(1u << maxDepth));
-    pts[(3*i)+2] = (((double)(linOct[i].getZ())) +0.5)/((double)(1u << maxDepth));
+    pts[3*i] = (((double)(linOct[i].getX())) + 0.5)/((double)(1u << __MAX_DEPTH__));
+    pts[(3*i)+1] = (((double)(linOct[i].getY())) +0.5)/((double)(1u << __MAX_DEPTH__));
+    pts[(3*i)+2] = (((double)(linOct[i].getZ())) +0.5)/((double)(1u << __MAX_DEPTH__));
   }//end for i
 
   double gSize[3];
@@ -149,14 +147,13 @@ int main(int argc, char** argv) {
     sources[(4*i) + 3] = (fMag*(drand48()));
   }//end i
 
-  ot::points2Octree(pts, gSize, linOct, dim, maxDepth, maxNumPts, MPI_COMM_WORLD);
+  ot::points2Octree(pts, gSize, linOct, __DIM__, __MAX_DEPTH__, maxNumPts, MPI_COMM_WORLD);
   pts.clear();
 
-  alignSources(sources, linOct, dim, maxDepth, MPI_COMM_WORLD);
+  alignSources(sources, linOct, MPI_COMM_WORLD);
 
   //FGT
-  pfgt(linOct, maxDepth, FgtLev, sources, P, L, K,
-      DirectHfactor, MPI_COMM_WORLD);
+  pfgt(linOct, FgtLev, sources, P, L, K, DirectHfactor, MPI_COMM_WORLD);
 
   PetscFinalize();
 }

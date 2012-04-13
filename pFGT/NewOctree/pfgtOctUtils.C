@@ -15,8 +15,7 @@ extern PetscLogEvent expandHybridEvent;
 extern PetscLogEvent directOnlyEvent;
 extern PetscLogEvent directHybridEvent;
 
-void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
-    const unsigned int FgtLev, std::vector<double> & sources,  
+void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int FgtLev, std::vector<double> & sources,  
     const int P, const int L, const int K, const double DirectHfactor, MPI_Comm comm) {
   PetscLogEventBegin(fgtEvent, 0, 0, 0, 0);
 
@@ -33,25 +32,60 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
   //2P complex coefficients for each dimension.  
   const unsigned int Ndofs = 16*P*P*P;
 
+  int numPts = ((sources.size())/4);
+
   if(!rank) {
     std::cout<<"delta = "<<delta<<std::endl;
     std::cout<<"Ndofs = "<< Ndofs <<std::endl;
     std::cout<<"StencilWidth = "<< K <<std::endl;
   }
 
-  //Split octree into 2 sets
+  //Split octree and sources into 2 sets
+  std::vector<double> expandSources;
+  std::vector<double> directSources;
   std::vector<ot::TreeNode> expandTree;
   std::vector<ot::TreeNode> directTree;
+  int ptsCnt = 0;
   for(size_t i = 0; i < linOct.size(); i++) {
     unsigned int lev = linOct[i].getLevel();
     double hCurrOct = 1.0/(static_cast<double>(1u << lev));
+    linOct[i].setWeight(0);
+    bool isExpand = false;
     if( hCurrOct <= (hFgt*DirectHfactor) ) {
       expandTree.push_back(linOct[i]);
+      isExpand = true;
     } else {
       directTree.push_back(linOct[i]);
     }
+    while(ptsCnt < numPts) {
+      unsigned int px = (unsigned int)(sources[4*ptsCnt]*(double)(1u << __MAX_DEPTH__));
+      unsigned int py = (unsigned int)(sources[(4*ptsCnt)+1]*(double)(1u << __MAX_DEPTH__));
+      unsigned int pz = (unsigned int)(sources[(4*ptsCnt)+2]*(double)(1u << __MAX_DEPTH__));
+      ot::TreeNode tmpOct(px, py, pz, __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
+      if(tmpOct >= linOct[i]) {
+        if((tmpOct == linOct[i]) || (linOct[i].isAncestor(tmpOct))) {
+          if(isExpand) {
+            expandTree[expandTree.size() - 1].addWeight(1);
+            expandSources.push_back(sources[4*ptsCnt]);
+            expandSources.push_back(sources[(4*ptsCnt) + 1]);
+            expandSources.push_back(sources[(4*ptsCnt) + 2]);
+            expandSources.push_back(sources[(4*ptsCnt) + 3]);
+          } else {
+            directTree[directTree.size() - 1].addWeight(1);
+            directSources.push_back(sources[4*ptsCnt]);
+            directSources.push_back(sources[(4*ptsCnt) + 1]);
+            directSources.push_back(sources[(4*ptsCnt) + 2]);
+            directSources.push_back(sources[(4*ptsCnt) + 3]);
+          }
+        } else {
+          break;
+        }
+      }
+      ++ptsCnt;
+    }//end while
   }//end for i
   linOct.clear();
+  sources.clear();
 
   unsigned int localTreeSizes[2];
   unsigned int globalTreeSizes[2];
@@ -60,11 +94,11 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
   MPI_Allreduce(localTreeSizes, globalTreeSizes, 2, MPI_UNSIGNED, MPI_SUM, comm);
 
   if(globalTreeSizes[0] == 0) {
-    pfgtOnlyDirect(sources, directTree, comm);
+    pfgtOnlyDirect(directSources, directTree, comm);
   } else if(globalTreeSizes[1] == 0) {
-    pfgtOnlyExpand(sources, expandTree, maxDepth, FgtLev, comm);
+    pfgtOnlyExpand(expandSources, expandTree, FgtLev, comm);
   } else if(npes == 1) {
-    pfgtSerial(sources, directTree, expandTree, maxDepth, FgtLev);
+    pfgtSerial(directSources, expandSources, directTree, expandTree, FgtLev);
   } else {
     int npesExpand = (globalTreeSizes[0]*npes)/(globalTreeSizes[0] + globalTreeSizes[1]);
     assert(npesExpand < npes);
@@ -121,10 +155,29 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
     expandTree.clear();
     directTree.clear();
 
+    int numRecvExpandPts = 0;
+    for(int i = 0; i < finalExpandTree.size(); ++i) {
+      numRecvExpandPts += (finalExpandTree[i].getWeight());
+    }//end for i
+
+    int numRecvDirectPts = 0;
+    for(int i = 0; i < finalDirectTree.size(); ++i) {
+      numRecvDirectPts += (finalDirectTree[i].getWeight());
+    }//end for i
+
+    std::vector<double> finalExpandSources;
+    std::vector<double> finalDirectSources;
+
+    par::scatterValues<double>(expandSources, finalExpandSources, (4*numRecvExpandPts), comm);
+    par::scatterValues<double>(directSources, finalDirectSources, (4*numRecvDirectPts), comm);
+
+    expandSources.clear();
+    directSources.clear();
+
     if(rank < npesExpand) {
-      pfgtHybridExpand(sources, finalExpandTree, maxDepth, FgtLev, delta, hFgt, subComm, comm);
+      pfgtHybridExpand(finalExpandSources, finalExpandTree, FgtLev, delta, hFgt, subComm, comm);
     } else {
-      pfgtHybridDirect(sources, finalDirectTree, FgtLev, subComm, comm);
+      pfgtHybridDirect(finalDirectSources, finalDirectTree, FgtLev, subComm, comm);
     }
 
     MPI_Comm_free(&subComm);
@@ -133,9 +186,8 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
   PetscLogEventEnd(fgtEvent, 0, 0, 0, 0);
 }
 
-void pfgtHybridExpand(std::vector<double> & sources, std::vector<ot::TreeNode> & expandTree,
-    const unsigned int maxDepth, const unsigned int FgtLev, const double delta, 
-    const double hFgt, MPI_Comm subComm, MPI_Comm comm) {
+void pfgtHybridExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expandTree,
+    const unsigned int FgtLev, const double delta, const double hFgt, MPI_Comm subComm, MPI_Comm comm) {
   PetscLogEventBegin(expandHybridEvent, 0, 0, 0, 0);
 
   assert(!(expandTree.empty()));
@@ -152,7 +204,7 @@ void pfgtHybridExpand(std::vector<double> & sources, std::vector<ot::TreeNode> &
   PetscLogEventEnd(expandHybridEvent, 0, 0, 0, 0);
 }
 
-void pfgtHybridDirect(std::vector<double> & sources, std::vector<ot::TreeNode> & directTree, 
+void pfgtHybridDirect(std::vector<double> & directSources, std::vector<ot::TreeNode> & directTree, 
     const unsigned int FgtLev, MPI_Comm subComm, MPI_Comm comm) {
   PetscLogEventBegin(directHybridEvent, 0, 0, 0, 0);
 
@@ -307,7 +359,7 @@ void createFGToctree(std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNo
   PetscLogEventEnd(fgtOctConEvent, 0, 0, 0, 0);
 }
 
-void pfgtOnlyDirect(std::vector<double> & sources, std::vector<ot::TreeNode> & directTree, MPI_Comm comm) {
+void pfgtOnlyDirect(std::vector<double> & directSources, std::vector<ot::TreeNode> & directTree, MPI_Comm comm) {
   PetscLogEventBegin(directOnlyEvent, 0, 0, 0, 0);
 
   //Not Implemented
@@ -316,8 +368,8 @@ void pfgtOnlyDirect(std::vector<double> & sources, std::vector<ot::TreeNode> & d
   PetscLogEventEnd(directOnlyEvent, 0, 0, 0, 0);
 }
 
-void pfgtOnlyExpand(std::vector<double> & sources, std::vector<ot::TreeNode> & expandTree, 
-    const unsigned int maxDepth, const unsigned int FgtLev, MPI_Comm comm) {
+void pfgtOnlyExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expandTree, 
+    const unsigned int FgtLev, MPI_Comm comm) {
   PetscLogEventBegin(expandOnlyEvent, 0, 0, 0, 0);
 
   //Not Implemented
@@ -326,8 +378,8 @@ void pfgtOnlyExpand(std::vector<double> & sources, std::vector<ot::TreeNode> & e
   PetscLogEventEnd(expandOnlyEvent, 0, 0, 0, 0);
 }
 
-void pfgtSerial(std::vector<double> & sources, std::vector<ot::TreeNode> & directTree, 
-    std::vector<ot::TreeNode> & expandTree, const unsigned int maxDepth, const unsigned int FgtLev) {
+void pfgtSerial(std::vector<double> & directSources, std::vector<double> & expandSources,
+    std::vector<ot::TreeNode> & directTree, std::vector<ot::TreeNode> & expandTree, const unsigned int FgtLev) {
   PetscLogEventBegin(serialEvent, 0, 0, 0, 0);
 
   //Not Implemented
@@ -336,8 +388,7 @@ void pfgtSerial(std::vector<double> & sources, std::vector<ot::TreeNode> & direc
   PetscLogEventEnd(serialEvent, 0, 0, 0, 0);
 }
 
-void alignSources(std::vector<double> & sources, std::vector<ot::TreeNode> & linOct,
-    const unsigned int dim, const unsigned int maxDepth, MPI_Comm comm) {
+void alignSources(std::vector<double> & sources, std::vector<ot::TreeNode> & linOct, MPI_Comm comm) {
   assert(!(linOct.empty()));
 
   int npes;
@@ -357,10 +408,10 @@ void alignSources(std::vector<double> & sources, std::vector<ot::TreeNode> & lin
 
   int minsCnt = 0;
   for(int i = 0; i < numPts; ++i) {
-    unsigned int px = (unsigned int)(sources[4*i]*(double)(1u << maxDepth));
-    unsigned int py = (unsigned int)(sources[(4*i)+1]*(double)(1u << maxDepth));
-    unsigned int pz = (unsigned int)(sources[(4*i)+2]*(double)(1u << maxDepth));
-    ot::TreeNode tmpOct(px, py, pz, maxDepth, dim, maxDepth);
+    unsigned int px = (unsigned int)(sources[4*i]*(double)(1u << __MAX_DEPTH__));
+    unsigned int py = (unsigned int)(sources[(4*i)+1]*(double)(1u << __MAX_DEPTH__));
+    unsigned int pz = (unsigned int)(sources[(4*i)+2]*(double)(1u << __MAX_DEPTH__));
+    ot::TreeNode tmpOct(px, py, pz, __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
     while((minsCnt < npes) && (mins[minsCnt] <= tmpOct)) {
       minsCnt++;
     }
