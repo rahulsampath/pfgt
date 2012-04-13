@@ -148,67 +148,17 @@ int main(int argc, char** argv) {
     sources[(4*i) + 2] = pts[(3*i) + 2];
     sources[(4*i) + 3] = (fMag*(drand48()));
   }//end i
+
   ot::points2Octree(pts, gSize, linOct, dim, maxDepth, maxNumPts, MPI_COMM_WORLD);
   pts.clear();
 
-  assert(!(linOct.empty()));
-
-  std::vector<ot::TreeNode> mins(npes);
-  MPI_Allgather(&(linOct[0]), 1, par::Mpi_datatype<ot::TreeNode>::value(),
-      &(mins[0]), 1, par::Mpi_datatype<ot::TreeNode>::value(), MPI_COMM_WORLD);
-
-  int* sendCnts = new int[npes];
-
-  for(int i = 0; i < npes; ++i) {
-    sendCnts[i] = 0;
-  }//end i
-
-  int minsCnt = 0;
-  for(int i = 0; i < numPts; ++i) {
-    unsigned int px = (unsigned int)(sources[4*i]*(double)(1u << maxDepth));
-    unsigned int py = (unsigned int)(sources[(4*i)+1]*(double)(1u << maxDepth));
-    unsigned int pz = (unsigned int)(sources[(4*i)+2]*(double)(1u << maxDepth));
-    ot::TreeNode tmpOct(px, py, pz, maxDepth, dim, maxDepth);
-    while((minsCnt < npes) && (mins[minsCnt] <= tmpOct)) {
-      minsCnt++;
-    }
-    minsCnt--;
-    sendCnts[minsCnt] += 4;
-  }//end i
-
-  int* recvCnts = new int[npes];
-
-  MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, MPI_COMM_WORLD);
-
-  int* sendDisps = new int[npes];
-  int* recvDisps = new int[npes];
-
-  sendDisps[0] = 0;
-  recvDisps[0] = 0;
-  for(int i = 1; i < npes; ++i) {
-    sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
-    recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
-  }//end i
-
-  std::vector<double> recvSources(recvDisps[npes - 1] + recvCnts[npes - 1]);
-
-  MPI_Alltoallv(&(sources[0]), sendCnts, sendDisps, MPI_DOUBLE, 
-      &(recvSources[0]), recvCnts, recvDisps, MPI_DOUBLE, MPI_COMM_WORLD);
-
-  sources.clear();
-
-  delete [] sendCnts;
-  delete [] recvCnts;
-
-  delete [] sendDisps;
-  delete [] recvDisps;
+  alignSources(sources, linOct, dim, maxDepth, MPI_COMM_WORLD);
 
   //FGT
-  pfgt(linOct, maxDepth, FgtLev, recvSources, P, L, K,
+  pfgt(linOct, maxDepth, FgtLev, sources, P, L, K,
       DirectHfactor, MPI_COMM_WORLD);
 
   PetscFinalize();
-
 }
 
 void genGaussPts(int rank, unsigned int numPtsPerProc, std::vector<double> & pts)
