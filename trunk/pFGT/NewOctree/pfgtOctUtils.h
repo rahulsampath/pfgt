@@ -11,6 +11,9 @@
 #define __COMP_MUL_RE(a, ai, b, bi) ( ((a)*(b)) - ((ai)*(bi)) )
 #define __COMP_MUL_IM(a, ai, b, bi) ( ((a)*(bi)) + ((ai)*(b)) )
 
+void alignSources(std::vector<double> & sources, std::vector<ot::TreeNode> & linOct,
+    const unsigned int dim, const unsigned int maxDepth, MPI_Comm comm);
+
 void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int maxDepth,
     const unsigned int FgtLev, std::vector<double> & sources,
     const int P, const int L, const int K, const double DirectHfactor, MPI_Comm comm);
