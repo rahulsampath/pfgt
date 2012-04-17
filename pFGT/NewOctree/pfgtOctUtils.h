@@ -34,13 +34,14 @@ void pfgtHybridExpand(std::vector<double> & expandSources, std::vector<ot::TreeN
 
 void s2w(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expandTree,
     std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> fgtMins,
-    const int P, const int L, const unsigned int FgtLev, const double hFgt, MPI_Comm subComm);
+    const unsigned int numLocalFGT, const int P, const int L,
+    const unsigned int FgtLev, const double hFgt, MPI_Comm subComm);
 
 void pfgtHybridDirect(std::vector<double> & directSources, std::vector<ot::TreeNode> & directTree,
     const unsigned int FgtLev, MPI_Comm subComm, MPI_Comm comm);
 
-void createFGToctree(std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & expandTree,
-    const unsigned int FgtLev, MPI_Comm subComm);
+void createFGToctree(std::vector<ot::TreeNode> & fgtList, unsigned int & numLocalFGT,
+    std::vector<ot::TreeNode> & expandTree, const unsigned int FgtLev, MPI_Comm subComm);
 
 void computeFGTminsHybridExpand(std::vector<ot::TreeNode> & fgtMins, std::vector<ot::TreeNode> & fgtList,
     MPI_Comm subComm, MPI_Comm comm);
