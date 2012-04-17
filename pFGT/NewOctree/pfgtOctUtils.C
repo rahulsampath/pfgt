@@ -214,158 +214,11 @@ void s2wLocal(std::vector<double> & expandSources, std::vector<ot::TreeNode> & e
   const double LbyP = static_cast<double>(L)/static_cast<double>(P);
   const double ImExpZfactor = LbyP/hFgt; 
 
-  std::vector<std::vector<unsigned int> > oct2fgtIdmap(expandTree.size());
-
-  std::vector<unsigned int> uniqueOct2fgtIdmap;
-
-  std::vector<std::vector<double> > Wfgt;
-
-  for(unsigned int i = 0; i < expandTree.size(); i++) {
-    unsigned int lev = expandTree[i].getLevel();
-    double hCurrOct = 1.0/(static_cast<double>(1u << lev));
-
-    //Anchor of the octant
-    unsigned int anchX = expandTree[i].getX();
-    unsigned int anchY = expandTree[i].getY();
-    unsigned int anchZ = expandTree[i].getZ();
-
-    double aOx =  hOctFac*(static_cast<double>(anchX));
-    double aOy =  hOctFac*(static_cast<double>(anchY));
-    double aOz =  hOctFac*(static_cast<double>(anchZ));
-
-    bool fgtContainsOct = true;
-    if(hCurrOct > hFgt) {
-      fgtContainsOct = false;
-    }
-
-    double ptGridOff, ptGridH;
-    unsigned int tmpPtGridSize;
-
-    if(fgtContainsOct) {
-      tmpPtGridSize = ptGridSizeWithinBox;
-      ptGridH = 0.8*hCurrOct/(static_cast<double>(tmpPtGridSize) - 1.0);
-      ptGridOff = 0.1*hCurrOct;
-    } else {
-      tmpPtGridSize = ptGridSizeWithinBox/numFgtPerDim;
-      ptGridH = 0.8*hRg/(static_cast<double>(tmpPtGridSize) - 1.0);
-      ptGridOff = 0.1*hRg;
-    }
-
-    unsigned int fgtStXid = static_cast<unsigned int>(floor(aOx/hRg));
-    unsigned int fgtStYid = static_cast<unsigned int>(floor(aOy/hRg));
-    unsigned int fgtStZid = static_cast<unsigned int>(floor(aOz/hRg));
-
-    for(unsigned int fgtzid = fgtStZid; fgtzid < (fgtStZid + numFgtPerDim); fgtzid++) {
-      for(unsigned int fgtyid = fgtStYid; fgtyid < (fgtStYid + numFgtPerDim); fgtyid++) {
-        for(unsigned int fgtxid = fgtStXid; fgtxid < (fgtStXid + numFgtPerDim); fgtxid++) {
-
-          unsigned int fgtId = ( (fgtzid*Ne*Ne) + (fgtyid*Ne) + fgtxid );
-
-          oct2fgtIdmap[i].push_back(fgtId);
-
-          //Anchor of the FGT box
-          double aFx = hRg*static_cast<double>(fgtxid);
-          double aFy = hRg*static_cast<double>(fgtyid);
-          double aFz = hRg*static_cast<double>(fgtzid);
-
-          //Center of the FGT box
-          double cx =  aFx + halfH;
-          double cy =  aFy + halfH;
-          double cz =  aFz + halfH;
-
-          //Anchor for the points
-          double aPx, aPy, aPz;
-
-          if(fgtContainsOct) {
-            aPx = aOx;
-            aPy = aOy;
-            aPz = aOz;
-          } else {
-            aPx = aFx;
-            aPy = aFy;
-            aPz = aFz;
-          }
-
-          std::vector<double> octWvals(Ndofs);
-
-          for(int k3 = -P, di = 0; k3 < P; k3++) {
-            for(int k2 = -P; k2 < P; k2++) {
-
-              for(int k1 = -P; k1 < 1; k1++, di++) {
-                octWvals[2*di] = 0.0;
-                octWvals[(2*di) + 1] = 0.0;
-
-                for(int j3 = 0; j3 < tmpPtGridSize; j3++) {
-                  double pz = aPz + ptGridOff + (ptGridH*(static_cast<double>(j3)));
-
-                  double thetaZ = ImExpZfactor*(static_cast<double>(k3)*(cz - pz));
-
-                  for(int j2 = 0; j2 < tmpPtGridSize; j2++) {
-                    double py = aPy + ptGridOff + (ptGridH*(static_cast<double>(j2)));
-
-                    double thetaY = ImExpZfactor*(static_cast<double>(k2)*(cy - py));
-
-                    for(int j1 = 0; j1 < tmpPtGridSize; j1++) {
-                      double px = aPx + ptGridOff + (ptGridH*(static_cast<double>(j1)));
-
-                      double thetaX = ImExpZfactor*(static_cast<double>(k1)*(cx - px));
-
-                      double theta = (thetaX + thetaY + thetaZ);
-
-                      //Replace fMag by drand48() if you want
-                      octWvals[2*di] += (fMag*cos(theta));
-                      octWvals[(2*di) + 1] += (fMag*sin(theta));
-
-                    }//end for j1
-                  }//end for j2
-                }//end for j3
-
-              }//end for k1
-
-              for(int k1 = 1; k1 < P; k1++, di++) {
-                octWvals[2*di] = octWvals[2*(di - (2*k1))];
-                octWvals[(2*di) + 1] = -octWvals[(2*(di - (2*k1))) + 1];
-              }//end for k1
-
-            }//end for k2
-          }//end for k3
-
-          unsigned int foundIdx;
-          bool foundIt = seq::maxLowerBound<unsigned int>(uniqueOct2fgtIdmap, fgtId, foundIdx, 0, 0);
-
-          if(foundIt) {
-            if( uniqueOct2fgtIdmap[foundIdx] != fgtId ) {
-              uniqueOct2fgtIdmap.insert( (uniqueOct2fgtIdmap.begin() + foundIdx + 1), fgtId );
-              Wfgt.insert( (Wfgt.begin() + foundIdx + 1), octWvals );
-            } else {
-              for(int li = 0; li < Ndofs; li++) {
-                Wfgt[foundIdx][li] += octWvals[li];
-              }//end for li
-            }
-          } else {
-            uniqueOct2fgtIdmap.insert( uniqueOct2fgtIdmap.begin(), fgtId );
-            Wfgt.insert( Wfgt.begin(), octWvals );
-          }
-
-        }//end for fgtxid
-      }//end for fgtyid
-    }//end for fgtzid
-
-  }//end for i
-
-  for(unsigned int i = 0; i < numLocalExpandOcts; i++) {
-    for(unsigned int j = 0; j < oct2fgtIdmap[i].size(); j++) {
-      unsigned int fgtId = oct2fgtIdmap[i][j];
-      unsigned int fgtIndex;
-
-      bool foundIt = seq::BinarySearch<unsigned int>( (&(*(uniqueOct2fgtIdmap.begin()))),
-          uniqueOct2fgtIdmap.size(), fgtId, &fgtIndex);
-
-      oct2fgtIdmap[i][j] = fgtIndex;
-    }//end for j
-  }//end for i
 
   PetscLogEventEnd(s2wEvent, 0, 0, 0, 0);
+}
+
+void s2wComm() {
 }
 
 void pfgtHybridDirect(std::vector<double> & directSources, std::vector<ot::TreeNode> & directTree, 
@@ -609,9 +462,6 @@ void pfgtSerial(std::vector<double> & directSources, std::vector<double> & expan
   assert(false);
 
   PetscLogEventEnd(serialEvent, 0, 0, 0, 0);
-}
-
-void s2wComm() {
 }
 
 
