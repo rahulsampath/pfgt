@@ -189,34 +189,43 @@ void pfgtHybridExpand(std::vector<double> & expandSources, std::vector<ot::TreeN
 
   assert(!(expandTree.empty()));
 
+  unsigned int numLocalFGT;
   std::vector<ot::TreeNode> fgtList;
-  createFGToctree(fgtList, expandTree, FgtLev, subComm);
+  createFGToctree(fgtList, numLocalFGT, expandTree, FgtLev, subComm);
 
   std::vector<ot::TreeNode> fgtMins;
   computeFGTminsHybridExpand(fgtMins, fgtList, subComm, comm);
 
-  s2w(expandSources, expandTree, fgtList, fgtMins, P, L, FgtLev, hFgt, subComm);
+  s2w(expandSources, expandTree, fgtList, fgtMins, numLocalFGT, P, L, FgtLev, hFgt, subComm);
 
   PetscLogEventEnd(expandHybridEvent, 0, 0, 0, 0);
 }
 
 void s2w(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expandTree,
     std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> fgtMins,
-    const int P, const int L, const unsigned int FgtLev, const double hFgt, MPI_Comm subComm) {
+    const unsigned int numLocalFGT, const int P, const int L, 
+    const unsigned int FgtLev, const double hFgt, MPI_Comm subComm) {
   PetscLogEventBegin(s2wEvent, 0, 0, 0, 0);
 
   int subNpes;
   MPI_Comm_size(subComm, &subNpes);
 
+  int rank;
+  MPI_Comm_rank(subComm, &rank);
+
   const double LbyP = static_cast<double>(L)/static_cast<double>(P);
   const double ImExpZfactor = LbyP/hFgt;
 
   int remoteFGTowner = -1;
+  ot::TreeNode remoteFGT;
   if((expandTree[0].getLevel()) > FgtLev) {
-    ot::TreeNode tmpFGT = expandTree[0].getAncestor(FgtLev);
+    remoteFGT = expandTree[0].getAncestor(FgtLev);
     unsigned int retIdx;
-    seq::maxLowerBound(fgtMins, tmpFGT, retIdx, NULL, NULL);
+    seq::maxLowerBound(fgtMins, remoteFGT, retIdx, NULL, NULL);
     remoteFGTowner = fgtMins[retIdx].getWeight();
+    if(remoteFGTowner == rank) {
+      remoteFGTowner = -1;
+    }
   }
 
   //2P complex coefficients for each dimension.  
@@ -249,7 +258,11 @@ void s2w(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expand
 
   std::vector<double> sendWlist;
   if(remoteFGTowner >= 0) {
-    sendWlist.resize(numWcoeffs);
+    sendWlist.resize(numWcoeffs, 0.0);
+    while( (octCnt < expandTree.size()) &&
+        (remoteFGT.isAncestor(expandTree[octCnt])) ) {
+      ++octCnt;
+    }//end while
   }
 
   std::vector<double> recvWlist(recvDisps[subNpes - 1] + recvCnts[subNpes - 1]);
@@ -270,7 +283,7 @@ void s2w(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expand
   delete [] recvCnts;
   delete [] recvDisps;
 
-  std::vector<double> localWlist(numWcoeffs*(fgtList.size()));
+  std::vector<double> localWlist( (numWcoeffs*numLocalFGT), 0.0);
 
   for(; octCnt < expandTree.size(); ++octCnt) {
     unsigned int lev = expandTree[octCnt].getLevel();
@@ -337,7 +350,7 @@ void computeFGTminsHybridExpand(std::vector<ot::TreeNode> & fgtMins, std::vector
   int fgtMinSize;
   if(rank == 0) {
     std::vector<ot::TreeNode> tmpMins;
-    for(int i = 0; i < fgtMins.size(); ++i) {
+    for(unsigned int i = 0; i < fgtMins.size(); ++i) {
       if(fgtMins[i].getDim()) {
         fgtMins[i].setWeight(i);
         tmpMins.push_back(fgtMins[i]);
@@ -364,8 +377,8 @@ void computeFGTminsHybridDirect(std::vector<ot::TreeNode> & fgtMins, MPI_Comm co
   MPI_Bcast(&(fgtMins[0]), fgtMinSize, par::Mpi_datatype<ot::TreeNode>::value(), 0, comm);
 }
 
-void createFGToctree(std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & expandTree,
-    const unsigned int FgtLev, MPI_Comm subComm) {
+void createFGToctree(std::vector<ot::TreeNode> & fgtList, unsigned int & numLocalFGT,
+    std::vector<ot::TreeNode> & expandTree, const unsigned int FgtLev, MPI_Comm subComm) {
   PetscLogEventBegin(fgtOctConEvent, 0, 0, 0, 0);
 
   std::vector<ot::TreeNode> tmpFgtListA;
