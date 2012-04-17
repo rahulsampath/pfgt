@@ -21,7 +21,6 @@
 PetscCookie fgtCookie;
 PetscLogEvent fgtEvent;
 PetscLogEvent s2wEvent;
-PetscLogEvent s2wCommEvent;
 PetscLogEvent serialEvent;
 PetscLogEvent fgtOctConEvent;
 PetscLogEvent expandOnlyEvent;
@@ -52,7 +51,6 @@ int main(int argc, char** argv) {
   PetscLogEventRegister("Direct-O", fgtCookie, &directOnlyEvent);
   PetscLogEventRegister("Direct-H", fgtCookie, &directHybridEvent);
   PetscLogEventRegister("S2W", fgtCookie, &s2wEvent);
-  PetscLogEventRegister("S2Wcomm", fgtCookie, &s2wCommEvent);
 
   int npes, rank;
   MPI_Comm_size(MPI_COMM_WORLD, &npes);
@@ -107,6 +105,12 @@ int main(int argc, char** argv) {
     }
     assert(false);
     PetscFinalize();
+  }
+
+  if(!rank) {
+    std::cout<<"P = "<<P<<std::endl;
+    std::cout<<"L = "<<L<<std::endl;
+    std::cout<<"K = "<<K<<std::endl;
   }
 
   //Generate gaussian distribution for the octree

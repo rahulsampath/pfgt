@@ -9,7 +9,6 @@
 
 extern PetscLogEvent fgtEvent;
 extern PetscLogEvent s2wEvent;
-extern PetscLogEvent s2wCommEvent;
 extern PetscLogEvent serialEvent;
 extern PetscLogEvent fgtOctConEvent;
 extern PetscLogEvent expandOnlyEvent;
@@ -25,21 +24,16 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int FgtLev, std::ve
   MPI_Comm_size(comm, &npes);
   MPI_Comm_rank(comm, &rank);
 
-  //Kernel Bandwidth
-  const double delta = 1.0/(static_cast<double>(1u << (FgtLev << 1)));
-
   //FGT box size = sqrt(delta)
   const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
 
-  //2P complex coefficients for each dimension.  
-  const unsigned int Ndofs = 16*P*P*P;
+  //Kernel Bandwidth
+  const double delta = hFgt*hFgt;
 
   int numPts = ((sources.size())/4);
 
   if(!rank) {
     std::cout<<"delta = "<<delta<<std::endl;
-    std::cout<<"Ndofs = "<< Ndofs <<std::endl;
-    std::cout<<"StencilWidth = "<< K <<std::endl;
   }
 
   //Split octree and sources into 2 sets
@@ -195,30 +189,97 @@ void pfgtHybridExpand(std::vector<double> & expandSources, std::vector<ot::TreeN
 
   assert(!(expandTree.empty()));
 
-  std::vector<ot::TreeNode> expandMins;
-  computeMins(expandMins, expandTree, subComm);
-
   std::vector<ot::TreeNode> fgtList;
   createFGToctree(fgtList, expandTree, FgtLev, subComm);
 
   std::vector<ot::TreeNode> fgtMins;
   computeFGTminsHybridExpand(fgtMins, fgtList, subComm, comm);
 
+  s2w(expandSources, expandTree, fgtList, fgtMins, P, L, FgtLev, hFgt, subComm);
+
   PetscLogEventEnd(expandHybridEvent, 0, 0, 0, 0);
 }
 
-void s2wLocal(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expandTree,
-    const int P, const int L, const double hFgt) {
+void s2w(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expandTree,
+    std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> fgtMins,
+    const int P, const int L, const unsigned int FgtLev, const double hFgt, MPI_Comm subComm) {
   PetscLogEventBegin(s2wEvent, 0, 0, 0, 0);
 
-  const double LbyP = static_cast<double>(L)/static_cast<double>(P);
-  const double ImExpZfactor = LbyP/hFgt; 
+  int subNpes;
+  MPI_Comm_size(subComm, &subNpes);
 
+  const double LbyP = static_cast<double>(L)/static_cast<double>(P);
+  const double ImExpZfactor = LbyP/hFgt;
+
+  int remoteFGTowner = -1;
+  if((expandTree[0].getLevel()) > FgtLev) {
+    ot::TreeNode tmpFGT = expandTree[0].getAncestor(FgtLev);
+    unsigned int retIdx;
+    seq::maxLowerBound(fgtMins, tmpFGT, retIdx, NULL, NULL);
+    remoteFGTowner = fgtMins[retIdx].getWeight();
+  }
+
+  //2P complex coefficients for each dimension.  
+  const unsigned int numWcoeffs = 16*P*P*P;
+
+  int* sendCnts = new int[subNpes];
+  for(int i = 0; i < subNpes; ++i) {
+    sendCnts[i] = 0;
+  }//end i
+  if(remoteFGTowner >= 0) {
+    sendCnts[remoteFGTowner] = numWcoeffs;
+  }
+
+  int* recvCnts = new int[subNpes]; 
+
+  MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, subComm);
+
+  int* sendDisps = new int[subNpes];
+  int* recvDisps = new int[subNpes]; 
+
+  sendDisps[0] = 0;
+  recvDisps[0] = 0;
+  for(int i = 1; i < subNpes; ++i) {
+    sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
+    recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
+  }//end i
+
+  unsigned int ptsCnt = 0;
+  unsigned int octCnt = 0;
+
+  std::vector<double> sendWlist;
+  if(remoteFGTowner >= 0) {
+    sendWlist.resize(numWcoeffs);
+  }
+
+  std::vector<double> recvWlist(recvDisps[subNpes - 1] + recvCnts[subNpes - 1]);
+
+  double* sendBuf = NULL;
+  if(!(sendWlist.empty())) {
+    sendBuf = &(sendWlist[0]);
+  }
+  double* recvBuf = NULL;
+  if(!(recvWlist.empty())) {
+    recvBuf = &(recvWlist[0]);
+  }
+  MPI_Alltoallv(sendBuf, sendCnts, sendDisps, MPI_DOUBLE,
+      recvBuf, recvCnts, recvDisps, MPI_DOUBLE, subComm);
+
+  delete [] sendCnts;
+  delete [] sendDisps;
+  delete [] recvCnts;
+  delete [] recvDisps;
+
+  std::vector<double> localWlist(numWcoeffs*(fgtList.size()));
+
+  for(; octCnt < expandTree.size(); ++octCnt) {
+    unsigned int lev = expandTree[octCnt].getLevel();
+    if(lev > FgtLev) {
+    } else {
+    }
+  }//end for
 
   PetscLogEventEnd(s2wEvent, 0, 0, 0, 0);
-}
-
-void s2wComm() {
 }
 
 void pfgtHybridDirect(std::vector<double> & directSources, std::vector<ot::TreeNode> & directTree, 
