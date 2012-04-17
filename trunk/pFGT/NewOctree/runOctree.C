@@ -20,6 +20,8 @@
 
 PetscCookie fgtCookie;
 PetscLogEvent fgtEvent;
+PetscLogEvent s2wEvent;
+PetscLogEvent s2wCommEvent;
 PetscLogEvent serialEvent;
 PetscLogEvent fgtOctConEvent;
 PetscLogEvent expandOnlyEvent;
@@ -49,6 +51,8 @@ int main(int argc, char** argv) {
   PetscLogEventRegister("Expand-H", fgtCookie, &expandHybridEvent);
   PetscLogEventRegister("Direct-O", fgtCookie, &directOnlyEvent);
   PetscLogEventRegister("Direct-H", fgtCookie, &directHybridEvent);
+  PetscLogEventRegister("S2W", fgtCookie, &s2wEvent);
+  PetscLogEventRegister("S2Wcomm", fgtCookie, &s2wCommEvent);
 
   int npes, rank;
   MPI_Comm_size(MPI_COMM_WORLD, &npes);

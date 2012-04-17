@@ -29,7 +29,13 @@ void pfgtSerial(std::vector<double> & directSources, std::vector<double> & expan
     std::vector<ot::TreeNode> & directTree, std::vector<ot::TreeNode> & expandTree, const unsigned int FgtLev);
 
 void pfgtHybridExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expandTree, 
-    const unsigned int FgtLev, const double delta, const double hFgt, MPI_Comm subComm, MPI_Comm comm);
+    const int P, const int L, const unsigned int FgtLev, const double delta, 
+    const double hFgt, MPI_Comm subComm, MPI_Comm comm);
+
+void s2wLocal(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expandTree,
+    const int P, const int L, const double hFgt);
+
+void s2wComm();
 
 void pfgtHybridDirect(std::vector<double> & directSources, std::vector<ot::TreeNode> & directTree,
     const unsigned int FgtLev, MPI_Comm subComm, MPI_Comm comm);
