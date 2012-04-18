@@ -283,13 +283,6 @@ void s2w(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expand
 
   std::vector<double> localWlist( (numWcoeffs*(fgtList.size())), 0.0);
 
-  for(; octCnt < expandTree.size(); ++octCnt) {
-    unsigned int lev = expandTree[octCnt].getLevel();
-    if(lev > FgtLev) {
-    } else {
-    }
-  }//end for
-
   PetscLogEventEnd(s2wEvent, 0, 0, 0, 0);
 }
 
