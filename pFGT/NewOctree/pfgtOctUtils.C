@@ -189,22 +189,20 @@ void pfgtHybridExpand(std::vector<double> & expandSources, std::vector<ot::TreeN
 
   assert(!(expandTree.empty()));
 
-  unsigned int numLocalFGT;
   std::vector<ot::TreeNode> fgtList;
-  createFGToctree(fgtList, numLocalFGT, expandTree, FgtLev, subComm);
+  createFGToctree(fgtList, expandTree, FgtLev, subComm);
 
   std::vector<ot::TreeNode> fgtMins;
   computeFGTminsHybridExpand(fgtMins, fgtList, subComm, comm);
 
-  s2w(expandSources, expandTree, fgtList, fgtMins, numLocalFGT, P, L, FgtLev, hFgt, subComm);
+  s2w(expandSources, expandTree, fgtList, fgtMins, P, L, FgtLev, hFgt, subComm);
 
   PetscLogEventEnd(expandHybridEvent, 0, 0, 0, 0);
 }
 
 void s2w(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expandTree,
-    std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> fgtMins,
-    const unsigned int numLocalFGT, const int P, const int L, 
-    const unsigned int FgtLev, const double hFgt, MPI_Comm subComm) {
+    std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> fgtMins, const int P,
+    const int L, const unsigned int FgtLev, const double hFgt, MPI_Comm subComm) {
   PetscLogEventBegin(s2wEvent, 0, 0, 0, 0);
 
   int subNpes;
@@ -283,7 +281,7 @@ void s2w(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expand
   delete [] recvCnts;
   delete [] recvDisps;
 
-  std::vector<double> localWlist( (numWcoeffs*numLocalFGT), 0.0);
+  std::vector<double> localWlist( (numWcoeffs*(fgtList.size())), 0.0);
 
   for(; octCnt < expandTree.size(); ++octCnt) {
     unsigned int lev = expandTree[octCnt].getLevel();
@@ -377,8 +375,8 @@ void computeFGTminsHybridDirect(std::vector<ot::TreeNode> & fgtMins, MPI_Comm co
   MPI_Bcast(&(fgtMins[0]), fgtMinSize, par::Mpi_datatype<ot::TreeNode>::value(), 0, comm);
 }
 
-void createFGToctree(std::vector<ot::TreeNode> & fgtList, unsigned int & numLocalFGT,
-    std::vector<ot::TreeNode> & expandTree, const unsigned int FgtLev, MPI_Comm subComm) {
+void createFGToctree(std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & expandTree,
+    const unsigned int FgtLev, MPI_Comm subComm) {
   PetscLogEventBegin(fgtOctConEvent, 0, 0, 0, 0);
 
   std::vector<ot::TreeNode> tmpFgtListA;
@@ -388,7 +386,25 @@ void createFGToctree(std::vector<ot::TreeNode> & fgtList, unsigned int & numLoca
     if(lev > FgtLev) {
       tmpFgtListA.push_back(expandTree[i].getAncestor(FgtLev));
     } else {
-      tmpFgtListB.push_back(expandTree[i]);
+      std::vector<ot::TreeNode> subTree;
+      subTree.push_back(expandTree[i]);
+      while(true) {
+        std::vector<ot::TreeNode> tmpSubTree;
+        for(int j = 0; j < subTree.size(); ++j) {
+          if((subTree[j].getLevel()) < FgtLev) {
+            subTree[j].addChildren(tmpSubTree);
+          } else {
+            assert((subTree[j].getLevel()) == FgtLev);
+            tmpSubTree.push_back(subTree[j]);
+          }
+        }//end j
+        if((tmpSubTree.size()) == (subTree.size())) {
+          break;
+        } else {
+          swap(subTree, tmpSubTree);
+        }
+      }//end while
+      tmpFgtListB.insert(tmpFgtListB.end(), subTree.begin(), subTree.end());
     }
   }//end i
 
@@ -446,11 +462,6 @@ void createFGToctree(std::vector<ot::TreeNode> & fgtList, unsigned int & numLoca
       fgtList.erase(fgtList.begin());
     }
   }
-
-  numLocalFGT = 0;
-  for(size_t i = 0; i < fgtList.size(); ++i) {
-    numLocalFGT += (1u<<(3*(FgtLev - (fgtList[i].getLevel()))));
-  }//end i
 
   PetscLogEventEnd(fgtOctConEvent, 0, 0, 0, 0);
 }
