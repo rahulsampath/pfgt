@@ -447,6 +447,11 @@ void createFGToctree(std::vector<ot::TreeNode> & fgtList, unsigned int & numLoca
     }
   }
 
+  numLocalFGT = 0;
+  for(size_t i = 0; i < fgtList.size(); ++i) {
+    numLocalFGT += (1u<<(3*(FgtLev - (fgtList[i].getLevel()))));
+  }//end i
+
   PetscLogEventEnd(fgtOctConEvent, 0, 0, 0, 0);
 }
 
