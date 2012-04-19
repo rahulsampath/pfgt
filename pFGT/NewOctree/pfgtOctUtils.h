@@ -28,6 +28,9 @@ void pfgtOnlyExpand(std::vector<double> & expandSources, std::vector<ot::TreeNod
 void pfgtSerial(std::vector<double> & directSources, std::vector<double> & expandSources,
     std::vector<ot::TreeNode> & directTree, std::vector<ot::TreeNode> & expandTree, const unsigned int FgtLev);
 
+void computeNumPtsInFGT(std::vector<double> & expandSources, std::vector<ot::TreeNode> & fgtList,
+    unsigned int & numPtsInRemoteFGT);
+
 void pfgtHybridExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expandTree, 
     const int P, const int L, const unsigned int FgtLev, const double delta, 
     const double hFgt, MPI_Comm subComm, MPI_Comm comm);
