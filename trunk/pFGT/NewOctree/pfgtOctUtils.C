@@ -197,7 +197,12 @@ void pfgtHybridExpand(std::vector<double> & expandSources, std::vector<ot::TreeN
   unsigned int numPtsInRemoteFGT;
   computeNumPtsInFGT(expandSources, fgtList, numPtsInRemoteFGT);
 
-  s2w(expandSources, expandTree, fgtList, fgtMins, P, L, FgtLev, hFgt, subComm);
+  ot::TreeNode remoteFGT;
+  if(numPtsInRemoteFGT > 0) {
+    assert((expandTree[0].getLevel()) > FgtLev);
+    remoteFGT = expandTree[0].getAncestor(FgtLev);
+  }
+  s2w(expandSources, remoteFGT, numPtsInRemoteFGT, fgtList, fgtMins, P, L, FgtLev, hFgt, subComm);
 
   PetscLogEventEnd(expandHybridEvent, 0, 0, 0, 0);
 }
@@ -245,31 +250,25 @@ void computeNumPtsInFGT(std::vector<double> & sources, std::vector<ot::TreeNode>
 
 }
 
-void s2w(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expandTree,
-    std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> fgtMins, const int P,
-    const int L, const unsigned int FgtLev, const double hFgt, MPI_Comm subComm) {
+void s2w(std::vector<double> & sources, ot::TreeNode remoteFGT, 
+    const unsigned int numPtsInRemoteFGT, std::vector<ot::TreeNode> & fgtList, 
+    std::vector<ot::TreeNode> & fgtMins, const int P, const int L, 
+    const unsigned int FgtLev, const double hFgt, MPI_Comm subComm) {
   PetscLogEventBegin(s2wEvent, 0, 0, 0, 0);
-
-  int subNpes;
-  MPI_Comm_size(subComm, &subNpes);
 
   int rank;
   MPI_Comm_rank(subComm, &rank);
 
-  const double LbyP = static_cast<double>(L)/static_cast<double>(P);
-  const double ImExpZfactor = LbyP/hFgt;
-
   int remoteFGTowner = -1;
-  ot::TreeNode remoteFGT;
-  if((expandTree[0].getLevel()) > FgtLev) {
-    remoteFGT = expandTree[0].getAncestor(FgtLev);
+  if(numPtsInRemoteFGT > 0) {
     unsigned int retIdx;
     seq::maxLowerBound(fgtMins, remoteFGT, retIdx, NULL, NULL);
     remoteFGTowner = fgtMins[retIdx].getWeight();
-    if(remoteFGTowner == rank) {
-      remoteFGTowner = -1;
-    }
+    assert(remoteFGTowner < rank);
   }
+
+  int subNpes;
+  MPI_Comm_size(subComm, &subNpes);
 
   //2P complex coefficients for each dimension.  
   const unsigned int numWcoeffs = 16*P*P*P;
@@ -296,16 +295,33 @@ void s2w(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expand
     recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
   }//end i
 
-  unsigned int ptsCnt = 0;
-  unsigned int octCnt = 0;
+  const double LbyP = static_cast<double>(L)/static_cast<double>(P);
+  const double ImExpZfactor = LbyP/hFgt;
 
   std::vector<double> sendWlist;
   if(remoteFGTowner >= 0) {
     sendWlist.resize(numWcoeffs, 0.0);
-    while( (octCnt < expandTree.size()) &&
-        (remoteFGT.isAncestor(expandTree[octCnt])) ) {
-      ++octCnt;
-    }//end while
+    double cx = (0.5*hFgt) + ((static_cast<double>(remoteFGT.getX()))/(static_cast<double>(1u <<__MAX_DEPTH__)));
+    double cy = (0.5*hFgt) + ((static_cast<double>(remoteFGT.getY()))/(static_cast<double>(1u <<__MAX_DEPTH__)));
+    double cz = (0.5*hFgt) + ((static_cast<double>(remoteFGT.getZ()))/(static_cast<double>(1u <<__MAX_DEPTH__)));
+    for(int i = 0; i < numPtsInRemoteFGT; ++i) {
+      double px = sources[4*i];
+      double py = sources[(4*i)+1];
+      double pz = sources[(4*i)+2];
+      double pf = sources[(4*i)+3];
+      for(int k3 = -P, di = 0; k3 < P; k3++) {
+        double thetaZ = ImExpZfactor*(static_cast<double>(k3)*(cz - pz));
+        for(int k2 = -P; k2 < P; k2++) {
+          double thetaY = ImExpZfactor*(static_cast<double>(k2)*(cy - py));
+          for(int k1 = -P; k1 < P; k1++, di++) {
+            double thetaX = ImExpZfactor*(static_cast<double>(k1)*(cx - px));
+            double theta = (thetaX + thetaY + thetaZ);
+            sendWlist[2*di] += (pf*cos(theta));
+            sendWlist[(2*di) + 1] += (pf*sin(theta));
+          }//end for k1
+        }//end for k2
+      }//end for k3
+    }//end i
   }
 
   std::vector<double> recvWlist(recvDisps[subNpes - 1] + recvCnts[subNpes - 1]);
@@ -327,6 +343,37 @@ void s2w(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expand
   delete [] recvDisps;
 
   std::vector<double> localWlist( (numWcoeffs*(fgtList.size())), 0.0);
+
+  for(int i = 0; i < recvWlist.size(); i += numWcoeffs) {
+    for(int d = 0; d < numWcoeffs; ++d) {
+      localWlist[(numWcoeffs*(fgtList.size() - 1)) + d] += recvWlist[i + d];
+    }//end d
+  }//end i
+
+  for(int i = 0, ptsIdx = numPtsInRemoteFGT; i < fgtList.size(); ++i) {
+    double cx = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getX()))/(static_cast<double>(1u <<__MAX_DEPTH__)));
+    double cy = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getY()))/(static_cast<double>(1u <<__MAX_DEPTH__)));
+    double cz = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getZ()))/(static_cast<double>(1u <<__MAX_DEPTH__)));
+    for(int j = 0; j < fgtList[i].getWeight(); ++j, ++ptsIdx) {
+      double px = sources[4*ptsIdx];
+      double py = sources[(4*ptsIdx)+1];
+      double pz = sources[(4*ptsIdx)+2];
+      double pf = sources[(4*ptsIdx)+3];
+      for(int k3 = -P, di = 0; k3 < P; k3++) {
+        double thetaZ = ImExpZfactor*(static_cast<double>(k3)*(cz - pz));
+        for(int k2 = -P; k2 < P; k2++) {
+          double thetaY = ImExpZfactor*(static_cast<double>(k2)*(cy - py));
+          for(int k1 = -P; k1 < P; k1++, di++) {
+            double thetaX = ImExpZfactor*(static_cast<double>(k1)*(cx - px));
+            double theta = (thetaX + thetaY + thetaZ);
+            localWlist[(numWcoeffs*i) + (2*di)] += (pf*cos(theta));
+            localWlist[(numWcoeffs*i) + (2*di) + 1] += (pf*sin(theta));
+          }//end for k1
+        }//end for k2
+      }//end for k3
+    }//end j
+  }//end i
+
 
   PetscLogEventEnd(s2wEvent, 0, 0, 0, 0);
 }

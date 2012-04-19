@@ -28,16 +28,17 @@ void pfgtOnlyExpand(std::vector<double> & expandSources, std::vector<ot::TreeNod
 void pfgtSerial(std::vector<double> & directSources, std::vector<double> & expandSources,
     std::vector<ot::TreeNode> & directTree, std::vector<ot::TreeNode> & expandTree, const unsigned int FgtLev);
 
-void computeNumPtsInFGT(std::vector<double> & expandSources, std::vector<ot::TreeNode> & fgtList,
-    unsigned int & numPtsInRemoteFGT);
-
 void pfgtHybridExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expandTree, 
     const int P, const int L, const unsigned int FgtLev, const double delta, 
     const double hFgt, MPI_Comm subComm, MPI_Comm comm);
 
-void s2w(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expandTree,
-    std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> fgtMins,
-    const int P, const int L, const unsigned int FgtLev, const double hFgt, MPI_Comm subComm);
+void computeNumPtsInFGT(std::vector<double> & expandSources, std::vector<ot::TreeNode> & fgtList,
+    unsigned int & numPtsInRemoteFGT);
+
+void s2w(std::vector<double> & expandSources, ot::TreeNode remoteFGT, 
+    const unsigned int numPtsInRemoteFGT, std::vector<ot::TreeNode> & fgtList, 
+    std::vector<ot::TreeNode> & fgtMins, const int P, const int L, 
+    const unsigned int FgtLev, const double hFgt, MPI_Comm subComm);
 
 void pfgtHybridDirect(std::vector<double> & directSources, std::vector<ot::TreeNode> & directTree,
     const unsigned int FgtLev, MPI_Comm subComm, MPI_Comm comm);
