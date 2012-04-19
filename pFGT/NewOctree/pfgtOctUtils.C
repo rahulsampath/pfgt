@@ -202,7 +202,9 @@ void pfgtHybridExpand(std::vector<double> & expandSources, std::vector<ot::TreeN
     assert((expandTree[0].getLevel()) > FgtLev);
     remoteFGT = expandTree[0].getAncestor(FgtLev);
   }
-  s2w(expandSources, remoteFGT, numPtsInRemoteFGT, fgtList, fgtMins, P, L, FgtLev, hFgt, subComm);
+
+  std::vector<double> wVec;
+  s2w(wVec, expandSources, remoteFGT, numPtsInRemoteFGT, fgtList, fgtMins, P, L, FgtLev, hFgt, subComm);
 
   PetscLogEventEnd(expandHybridEvent, 0, 0, 0, 0);
 }
@@ -250,7 +252,7 @@ void computeNumPtsInFGT(std::vector<double> & sources, std::vector<ot::TreeNode>
 
 }
 
-void s2w(std::vector<double> & sources, ot::TreeNode remoteFGT, 
+void s2w(std::vector<double> & localWlist, std::vector<double> & sources, ot::TreeNode remoteFGT, 
     const unsigned int numPtsInRemoteFGT, std::vector<ot::TreeNode> & fgtList, 
     std::vector<ot::TreeNode> & fgtMins, const int P, const int L, 
     const unsigned int FgtLev, const double hFgt, MPI_Comm subComm) {
@@ -342,7 +344,7 @@ void s2w(std::vector<double> & sources, ot::TreeNode remoteFGT,
   delete [] recvCnts;
   delete [] recvDisps;
 
-  std::vector<double> localWlist( (numWcoeffs*(fgtList.size())), 0.0);
+  localWlist.resize( (numWcoeffs*(fgtList.size())), 0.0);
 
   for(int i = 0; i < recvWlist.size(); i += numWcoeffs) {
     for(int d = 0; d < numWcoeffs; ++d) {
