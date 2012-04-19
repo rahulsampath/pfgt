@@ -58,26 +58,25 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int FgtLev, std::ve
       unsigned int py = (unsigned int)(sources[(4*ptsCnt)+1]*(double)(1u << __MAX_DEPTH__));
       unsigned int pz = (unsigned int)(sources[(4*ptsCnt)+2]*(double)(1u << __MAX_DEPTH__));
       ot::TreeNode tmpOct(px, py, pz, __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
-      if(tmpOct >= linOct[i]) {
-        if((tmpOct == linOct[i]) || (linOct[i].isAncestor(tmpOct))) {
-          if(isExpand) {
-            expandTree[expandTree.size() - 1].addWeight(1);
-            expandSources.push_back(sources[4*ptsCnt]);
-            expandSources.push_back(sources[(4*ptsCnt) + 1]);
-            expandSources.push_back(sources[(4*ptsCnt) + 2]);
-            expandSources.push_back(sources[(4*ptsCnt) + 3]);
-          } else {
-            directTree[directTree.size() - 1].addWeight(1);
-            directSources.push_back(sources[4*ptsCnt]);
-            directSources.push_back(sources[(4*ptsCnt) + 1]);
-            directSources.push_back(sources[(4*ptsCnt) + 2]);
-            directSources.push_back(sources[(4*ptsCnt) + 3]);
-          }
+      assert(tmpOct >= linOct[i]);
+      if((tmpOct == linOct[i]) || (linOct[i].isAncestor(tmpOct))) {
+        if(isExpand) {
+          expandTree[expandTree.size() - 1].addWeight(1);
+          expandSources.push_back(sources[4*ptsCnt]);
+          expandSources.push_back(sources[(4*ptsCnt) + 1]);
+          expandSources.push_back(sources[(4*ptsCnt) + 2]);
+          expandSources.push_back(sources[(4*ptsCnt) + 3]);
         } else {
-          break;
+          directTree[directTree.size() - 1].addWeight(1);
+          directSources.push_back(sources[4*ptsCnt]);
+          directSources.push_back(sources[(4*ptsCnt) + 1]);
+          directSources.push_back(sources[(4*ptsCnt) + 2]);
+          directSources.push_back(sources[(4*ptsCnt) + 3]);
         }
+        ++ptsCnt;
+      } else {
+        break;
       }
-      ++ptsCnt;
     }//end while
   }//end for i
   linOct.clear();
@@ -195,9 +194,55 @@ void pfgtHybridExpand(std::vector<double> & expandSources, std::vector<ot::TreeN
   std::vector<ot::TreeNode> fgtMins;
   computeFGTminsHybridExpand(fgtMins, fgtList, subComm, comm);
 
+  unsigned int numPtsInRemoteFGT;
+  computeNumPtsInFGT(expandSources, fgtList, numPtsInRemoteFGT);
+
   s2w(expandSources, expandTree, fgtList, fgtMins, P, L, FgtLev, hFgt, subComm);
 
   PetscLogEventEnd(expandHybridEvent, 0, 0, 0, 0);
+}
+
+void computeNumPtsInFGT(std::vector<double> & sources, std::vector<ot::TreeNode> & fgtList, 
+    unsigned int & numPtsInRemoteFGT) {
+
+  int numPts = ((sources.size())/4);
+
+  if(fgtList.empty()) {
+    numPtsInRemoteFGT = numPts;
+  } else {
+    int ptsCnt = 0;
+    while(ptsCnt < numPts) {
+      unsigned int px = (unsigned int)(sources[4*ptsCnt]*(double)(1u << __MAX_DEPTH__));
+      unsigned int py = (unsigned int)(sources[(4*ptsCnt)+1]*(double)(1u << __MAX_DEPTH__));
+      unsigned int pz = (unsigned int)(sources[(4*ptsCnt)+2]*(double)(1u << __MAX_DEPTH__));
+      ot::TreeNode tmpOct(px, py, pz, __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
+      if(tmpOct < fgtList[0]) {
+        ++ptsCnt;
+      } else {
+        break;
+      }
+    }//end while
+
+    numPtsInRemoteFGT = ptsCnt;
+
+    for(int i = 0; i < fgtList.size(); ++i) {
+      fgtList[i].setWeight(0);
+      while(ptsCnt < numPts) {
+        unsigned int px = (unsigned int)(sources[4*ptsCnt]*(double)(1u << __MAX_DEPTH__));
+        unsigned int py = (unsigned int)(sources[(4*ptsCnt)+1]*(double)(1u << __MAX_DEPTH__));
+        unsigned int pz = (unsigned int)(sources[(4*ptsCnt)+2]*(double)(1u << __MAX_DEPTH__));
+        ot::TreeNode tmpOct(px, py, pz, __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
+        assert(tmpOct >= fgtList[i]);
+        if( (tmpOct == fgtList[i]) || (fgtList[i].isAncestor(tmpOct)) ) {
+          fgtList[i].addWeight(1);
+          ++ptsCnt;
+        } else {
+          break;
+        }
+      }//end while
+    }//end i
+  }
+
 }
 
 void s2w(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expandTree,
