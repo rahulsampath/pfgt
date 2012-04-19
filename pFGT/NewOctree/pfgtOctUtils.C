@@ -37,6 +37,7 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int FgtLev, std::ve
   }
 
   //Split octree and sources into 2 sets
+  //Remove empty octants
   std::vector<double> expandSources;
   std::vector<double> directSources;
   std::vector<ot::TreeNode> expandTree;
@@ -45,14 +46,11 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int FgtLev, std::ve
   for(size_t i = 0; i < linOct.size(); i++) {
     unsigned int lev = linOct[i].getLevel();
     double hCurrOct = 1.0/(static_cast<double>(1u << lev));
-    linOct[i].setWeight(0);
     bool isExpand = false;
     if( hCurrOct <= (hFgt*DirectHfactor) ) {
-      expandTree.push_back(linOct[i]);
       isExpand = true;
-    } else {
-      directTree.push_back(linOct[i]);
     }
+    linOct[i].setWeight(0);
     while(ptsCnt < numPts) {
       unsigned int px = (unsigned int)(sources[4*ptsCnt]*(double)(1u << __MAX_DEPTH__));
       unsigned int py = (unsigned int)(sources[(4*ptsCnt)+1]*(double)(1u << __MAX_DEPTH__));
@@ -61,23 +59,29 @@ void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int FgtLev, std::ve
       assert(tmpOct >= linOct[i]);
       if((tmpOct == linOct[i]) || (linOct[i].isAncestor(tmpOct))) {
         if(isExpand) {
-          expandTree[expandTree.size() - 1].addWeight(1);
           expandSources.push_back(sources[4*ptsCnt]);
           expandSources.push_back(sources[(4*ptsCnt) + 1]);
           expandSources.push_back(sources[(4*ptsCnt) + 2]);
           expandSources.push_back(sources[(4*ptsCnt) + 3]);
         } else {
-          directTree[directTree.size() - 1].addWeight(1);
           directSources.push_back(sources[4*ptsCnt]);
           directSources.push_back(sources[(4*ptsCnt) + 1]);
           directSources.push_back(sources[(4*ptsCnt) + 2]);
           directSources.push_back(sources[(4*ptsCnt) + 3]);
         }
+        linOct[i].addWeight(1);
         ++ptsCnt;
       } else {
         break;
       }
     }//end while
+    if(linOct[i].getWeight() > 0) {
+      if(isExpand) {
+        expandTree.push_back(linOct[i]);
+      } else {
+        directTree.push_back(linOct[i]);
+      }
+    }
   }//end for i
   linOct.clear();
   sources.clear();
