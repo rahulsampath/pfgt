@@ -35,7 +35,7 @@ void pfgtHybridExpand(std::vector<double> & expandSources, std::vector<ot::TreeN
 void computeNumPtsInFGT(std::vector<double> & expandSources, std::vector<ot::TreeNode> & fgtList,
     unsigned int & numPtsInRemoteFGT);
 
-void s2w(std::vector<double> & expandSources, ot::TreeNode remoteFGT, 
+void s2w(std::vector<double> & wVec, std::vector<double> & expandSources, ot::TreeNode remoteFGT, 
     const unsigned int numPtsInRemoteFGT, std::vector<ot::TreeNode> & fgtList, 
     std::vector<ot::TreeNode> & fgtMins, const int P, const int L, 
     const unsigned int FgtLev, const double hFgt, MPI_Comm subComm);
