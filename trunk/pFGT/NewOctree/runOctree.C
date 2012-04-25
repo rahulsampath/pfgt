@@ -21,11 +21,8 @@
 PetscCookie fgtCookie;
 PetscLogEvent fgtEvent;
 PetscLogEvent s2wEvent;
-PetscLogEvent serialEvent;
 PetscLogEvent fgtOctConEvent;
-PetscLogEvent expandOnlyEvent;
 PetscLogEvent expandHybridEvent;
-PetscLogEvent directOnlyEvent;
 PetscLogEvent directHybridEvent;
 
 bool softEquals(double a, double b) {
@@ -44,11 +41,8 @@ int main(int argc, char** argv) {
 
   PetscCookieRegister("FGT", &fgtCookie);
   PetscLogEventRegister("FGT", fgtCookie, &fgtEvent);
-  PetscLogEventRegister("Serial", fgtCookie, &serialEvent);
   PetscLogEventRegister("FGToctCon", fgtCookie, &fgtOctConEvent);
-  PetscLogEventRegister("Expand-O", fgtCookie, &expandOnlyEvent);
   PetscLogEventRegister("Expand-H", fgtCookie, &expandHybridEvent);
-  PetscLogEventRegister("Direct-O", fgtCookie, &directOnlyEvent);
   PetscLogEventRegister("Direct-H", fgtCookie, &directHybridEvent);
   PetscLogEventRegister("S2W", fgtCookie, &s2wEvent);
 
@@ -56,9 +50,9 @@ int main(int argc, char** argv) {
   MPI_Comm_size(MPI_COMM_WORLD, &npes);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  if(argc < 7) {
+  if(argc < 6) {
     if(!rank) {
-      std::cout<<"Usage: exe numPtsPerProc fMag epsilon FgtLev DirectHfactor maxNumPts"<<std::endl;
+      std::cout<<"Usage: exe numPtsPerProc fMag epsilon FgtLev minPtsInFgt"<<std::endl;
     }
     PetscFinalize();
   }
@@ -67,8 +61,7 @@ int main(int argc, char** argv) {
   double fMag = atof(argv[2]);
   double epsilon = atof(argv[3]);  
   unsigned int FgtLev = atoi(argv[4]);
-  double DirectHfactor = atof(argv[5]);
-  unsigned int maxNumPts = atoi(argv[6]);
+  unsigned int minPtsInFgt = atoi(argv[5]);
 
   assert(FgtLev <= __MAX_DEPTH__);
 
@@ -77,8 +70,7 @@ int main(int argc, char** argv) {
     std::cout<<"fMag = "<<fMag<<std::endl;
     std::cout<<"epsilon = "<<epsilon<<std::endl;
     std::cout<<"FgtLev = "<<FgtLev<<std::endl;
-    std::cout<<"DirectHfactor = "<<DirectHfactor<<std::endl;
-    std::cout<<"MaxNumPts = "<<maxNumPts<<std::endl;
+    std::cout<<"minPtsInFgt = "<<minPtsInFgt<<std::endl;
   }
 
   int P, L, K;
@@ -113,39 +105,34 @@ int main(int argc, char** argv) {
     std::cout<<"K = "<<K<<std::endl;
   }
 
-  //Generate gaussian distribution for the octree
+  //Generate gaussian distribution of points in (0, 1)
   std::vector<double> pts;
   genGaussPts(rank, numPtsPerProc, pts);
   rescalePts(pts);
 
   std::vector<ot::TreeNode> linOct;
   for(unsigned int i = 0; i < pts.size(); i += 3) {
-    linOct.push_back( ot::TreeNode((unsigned int)(pts[i]*(double)(1u << __MAX_DEPTH__)),
-          (unsigned int)(pts[i+1]*(double)(1u << __MAX_DEPTH__)),
-          (unsigned int)(pts[i+2]*(double)(1u << __MAX_DEPTH__)),
-          __MAX_DEPTH__, __DIM__, __MAX_DEPTH__) );
+    unsigned int px = static_cast<unsigned int>(pts[i]*(__DTPMD__));
+    unsigned int py = static_cast<unsigned int>(pts[i + 1]*(__DTPMD__));
+    unsigned int pz = static_cast<unsigned int>(pts[i + 2]*(__DTPMD__));
+    linOct.push_back( ot::TreeNode(px, py, pz, __MAX_DEPTH__, __DIM__, __MAX_DEPTH__) );
   }//end for i
 
+  //Sort and Remove Duplicates
   par::removeDuplicates<ot::TreeNode>(linOct, false, MPI_COMM_WORLD);
 
   pts.resize(3*(linOct.size()));
   for(size_t i = 0; i < linOct.size(); i++) {
-    pts[3*i] = (((double)(linOct[i].getX())) + 0.5)/((double)(1u << __MAX_DEPTH__));
-    pts[(3*i)+1] = (((double)(linOct[i].getY())) +0.5)/((double)(1u << __MAX_DEPTH__));
-    pts[(3*i)+2] = (((double)(linOct[i].getZ())) +0.5)/((double)(1u << __MAX_DEPTH__));
+    pts[3*i] = (((double)(linOct[i].getX())) + 0.5)/(__DTPMD__);
+    pts[(3*i)+1] = (((double)(linOct[i].getY())) +0.5)/(__DTPMD__);
+    pts[(3*i)+2] = (((double)(linOct[i].getZ())) +0.5)/(__DTPMD__);
   }//end for i
-
-  double gSize[3];
-  gSize[0] = 1.0;
-  gSize[1] = 1.0;
-  gSize[2] = 1.0;
-
   linOct.clear();
 
   const unsigned int seed = (0x3456782  + (54763*rank));
   srand48(seed);
 
-  //construct the octree
+  //Generate Sources
   int numPts = ((pts.size())/3);
   std::vector<double> sources(4*numPts);
   for(int i = 0; i < numPts; ++i) {
@@ -154,14 +141,10 @@ int main(int argc, char** argv) {
     sources[(4*i) + 2] = pts[(3*i) + 2];
     sources[(4*i) + 3] = (fMag*(drand48()));
   }//end i
-
-  ot::points2Octree(pts, gSize, linOct, __DIM__, __MAX_DEPTH__, maxNumPts, MPI_COMM_WORLD);
   pts.clear();
 
-  alignSources(sources, linOct, MPI_COMM_WORLD);
-
   //FGT
-  pfgt(linOct, FgtLev, sources, P, L, K, DirectHfactor, MPI_COMM_WORLD);
+  pfgt(sources, minPtsInFgt, FgtLev, P, L, K, MPI_COMM_WORLD);
 
   PetscFinalize();
 }

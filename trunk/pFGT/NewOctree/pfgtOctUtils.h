@@ -12,21 +12,19 @@
 
 #define __MAX_DEPTH__ 30
 
+#define __ITPMD__  (1u << __MAX_DEPTH__)
+
+#define __DTPMD__  (static_cast<double>(__ITPMD__))
+
 #define __COMP_MUL_RE(a, ai, b, bi) ( ((a)*(b)) - ((ai)*(bi)) )
 #define __COMP_MUL_IM(a, ai, b, bi) ( ((a)*(bi)) + ((ai)*(b)) )
 
-void alignSources(std::vector<double> & sources, std::vector<ot::TreeNode> & linOct, MPI_Comm comm);
+void pfgt(std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev,
+    const int P, const int L, const int K, MPI_Comm comm);
 
-void pfgt(std::vector<ot::TreeNode> & linOct, const unsigned int FgtLev, std::vector<double> & sources,
-    const int P, const int L, const int K, const double DirectHfactor, MPI_Comm comm);
-
-void pfgtOnlyDirect(std::vector<double> & directSources, std::vector<ot::TreeNode> & directTree, MPI_Comm comm);
-
-void pfgtOnlyExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expandTree, 
-    const unsigned int FgtLev, MPI_Comm comm);
-
-void pfgtSerial(std::vector<double> & directSources, std::vector<double> & expandSources,
-    std::vector<ot::TreeNode> & directTree, std::vector<ot::TreeNode> & expandTree, const unsigned int FgtLev);
+void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt, 
+    const unsigned int FgtLev, std::vector<double>& expandSources, std::vector<double>& directSources, 
+    std::vector<ot::TreeNode>& fgtList, MPI_Comm comm);
 
 void pfgtHybridExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expandTree, 
     const int P, const int L, const unsigned int FgtLev, const double delta, 
