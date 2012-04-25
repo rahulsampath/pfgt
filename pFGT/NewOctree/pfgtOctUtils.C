@@ -27,8 +27,6 @@ void pfgt(std::vector<double>& sources, const unsigned int minPtsInFgt, const un
   //Kernel Bandwidth
   const double delta = hFgt*hFgt;
 
-  int numPts = ((sources.size())/4);
-
   if(!rank) {
     std::cout<<"delta = "<<delta<<std::endl;
   }
@@ -575,6 +573,71 @@ void createFGToctree(std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNo
 void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt, 
     const unsigned int FgtLev, std::vector<double>& expandSources, std::vector<double>& directSources, 
     std::vector<ot::TreeNode>& fgtList, MPI_Comm comm) {
+  assert(!(sources.empty()));
+  assert(expandSources.empty());
+  assert(directSources.empty());
+  assert(fgtList.empty());
+
+  int numPts = ((sources.size())/4);
+
+  {
+    unsigned int px = static_cast<unsigned int>(sources[0]*(__DTPMD__));
+    unsigned int py = static_cast<unsigned int>(sources[1]*(__DTPMD__));
+    unsigned int pz = static_cast<unsigned int>(sources[2]*(__DTPMD__));
+    ot::TreeNode ptOct(px, py, pz, __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
+    ot::TreeNode newFgt = ptOct.getAncestor(FgtLev);
+    fgtList.push_back(newFgt);
+  }
+
+  for(int i = 1; i < numPts; ++i) {
+    unsigned int px = static_cast<unsigned int>(sources[4*i]*(__DTPMD__));
+    unsigned int py = static_cast<unsigned int>(sources[(4*i)+1]*(__DTPMD__));
+    unsigned int pz = static_cast<unsigned int>(sources[(4*i)+2]*(__DTPMD__));
+    ot::TreeNode ptOct(px, py, pz, __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
+    ot::TreeNode newFgt = ptOct.getAncestor(FgtLev);
+    if(fgtList[fgtList.size() - 1] == newFgt) {
+      fgtList[fgtList.size() - 1].addWeight(1);
+    } else {
+      fgtList.push_back(newFgt);
+    }
+  }//end for i
+
+  int rank;
+  int npes;
+  MPI_Comm_rank(comm, &rank);
+  MPI_Comm_size(comm, &npes);
+
+  ot::TreeNode prevFgt;
+  ot::TreeNode nextFgt;
+  ot::TreeNode firstFgt = fgtList[0];
+  ot::TreeNode lastFgt = fgtList[fgtList.size() - 1];
+  MPI_Request recvPrevReq;
+  MPI_Request recvNextReq;
+  MPI_Request sendFirstReq;
+  MPI_Request sendLastReq;
+  if(rank > 0) {
+    MPI_Irecv(&prevFgt, 1, par::Mpi_datatype<ot::TreeNode>::value(),
+        (rank - 1), 1, comm, &recvPrevReq);
+    MPI_Isend(&firstFgt, 1, par::Mpi_datatype<ot::TreeNode>::value(),
+        (rank - 1), 2, comm, &sendFirstReq);
+  }
+  if(rank < (npes - 1)) {
+    MPI_Irecv(&nextFgt, 1, par::Mpi_datatype<ot::TreeNode>::value(),
+        (rank + 1), 2, comm, &recvNextReq);
+    MPI_Isend(&lastFgt, 1, par::Mpi_datatype<ot::TreeNode>::value(),
+        (rank + 1), 1, comm, &sendLastReq);
+  }
+
+  if(rank > 0) {
+    MPI_Status status;
+    MPI_Wait(&recvPrevReq, &status);
+    MPI_Wait(&sendFirstReq, &status);
+  }
+  if(rank < (npes - 1)) {
+    MPI_Status status;
+    MPI_Wait(&recvNextReq, &status);
+    MPI_Wait(&sendLastReq, &status);
+  }
 
 }
 
