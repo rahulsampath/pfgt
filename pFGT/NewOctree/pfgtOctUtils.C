@@ -608,7 +608,7 @@ void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt,
   MPI_Comm_size(comm, &npes);
 
   int localFlag = 0;
-  if(fgtList.size() < 2) {
+  if( (rank > 0) && (rank < (npes - 1)) && ((fgtList.size()) == 1) ) {
     localFlag = 1;
   }
 
@@ -680,10 +680,14 @@ void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt,
       sources.erase(sources.begin(), sources.begin() + (4*(firstFgt.getWeight())));
     }
   } else {
-    if(!rank) {
-      std::cout<<"THIS CASE IS NOT SUPPORTED!"<<std::endl;
-    }
-    assert(false);
+    int numLocalFgt = fgtList.size();
+    int* fgtListSizes = new int[npes];
+
+    MPI_Allgather(&numLocalFgt, 1, MPI_INT, fgtListSizes, 1, MPI_INT, comm);
+
+    //TO BE COMPLETED!
+
+    delete [] fgtListSizes;
   }
 
   assert(expandSources.empty());
