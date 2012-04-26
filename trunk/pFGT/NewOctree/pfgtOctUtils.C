@@ -573,13 +573,11 @@ void createFGToctree(std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNo
 void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt, 
     const unsigned int FgtLev, std::vector<double>& expandSources, std::vector<double>& directSources, 
     std::vector<ot::TreeNode>& fgtList, MPI_Comm comm) {
-  assert(!(sources.empty()));
-  assert(expandSources.empty());
-  assert(directSources.empty());
-  assert(fgtList.empty());
 
   int numPts = ((sources.size())/4);
 
+  assert(!(sources.empty()));
+  assert(fgtList.empty());
   {
     unsigned int px = static_cast<unsigned int>(sources[0]*(__DTPMD__));
     unsigned int py = static_cast<unsigned int>(sources[1]*(__DTPMD__));
@@ -602,43 +600,109 @@ void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt,
     }
   }//end for i
 
+  assert(!(fgtList.empty()));
+
   int rank;
   int npes;
   MPI_Comm_rank(comm, &rank);
   MPI_Comm_size(comm, &npes);
 
-  ot::TreeNode prevFgt;
-  ot::TreeNode nextFgt;
-  ot::TreeNode firstFgt = fgtList[0];
-  ot::TreeNode lastFgt = fgtList[fgtList.size() - 1];
-  MPI_Request recvPrevReq;
-  MPI_Request recvNextReq;
-  MPI_Request sendFirstReq;
-  MPI_Request sendLastReq;
-  if(rank > 0) {
-    MPI_Irecv(&prevFgt, 1, par::Mpi_datatype<ot::TreeNode>::value(),
-        (rank - 1), 1, comm, &recvPrevReq);
-    MPI_Isend(&firstFgt, 1, par::Mpi_datatype<ot::TreeNode>::value(),
-        (rank - 1), 2, comm, &sendFirstReq);
-  }
-  if(rank < (npes - 1)) {
-    MPI_Irecv(&nextFgt, 1, par::Mpi_datatype<ot::TreeNode>::value(),
-        (rank + 1), 2, comm, &recvNextReq);
-    MPI_Isend(&lastFgt, 1, par::Mpi_datatype<ot::TreeNode>::value(),
-        (rank + 1), 1, comm, &sendLastReq);
+  int localFlag = 0;
+  if(fgtList.size() < 2) {
+    localFlag = 1;
   }
 
-  if(rank > 0) {
-    MPI_Status status;
-    MPI_Wait(&recvPrevReq, &status);
-    MPI_Wait(&sendFirstReq, &status);
-  }
-  if(rank < (npes - 1)) {
-    MPI_Status status;
-    MPI_Wait(&recvNextReq, &status);
-    MPI_Wait(&sendLastReq, &status);
+  int globalFlag;
+  MPI_Allreduce(&localFlag, &globalFlag, 1, MPI_INT, MPI_SUM, comm);
+
+  if(globalFlag == 0) {
+    ot::TreeNode prevFgt;
+    ot::TreeNode nextFgt;
+    ot::TreeNode firstFgt = fgtList[0];
+    ot::TreeNode lastFgt = fgtList[fgtList.size() - 1];
+    MPI_Request recvPrevReq;
+    MPI_Request recvNextReq;
+    MPI_Request sendFirstReq;
+    MPI_Request sendLastReq;
+    if(rank > 0) {
+      MPI_Irecv(&prevFgt, 1, par::Mpi_datatype<ot::TreeNode>::value(),
+          (rank - 1), 1, comm, &recvPrevReq);
+      MPI_Isend(&firstFgt, 1, par::Mpi_datatype<ot::TreeNode>::value(),
+          (rank - 1), 2, comm, &sendFirstReq);
+    }
+    if(rank < (npes - 1)) {
+      MPI_Irecv(&nextFgt, 1, par::Mpi_datatype<ot::TreeNode>::value(),
+          (rank + 1), 2, comm, &recvNextReq);
+      MPI_Isend(&lastFgt, 1, par::Mpi_datatype<ot::TreeNode>::value(),
+          (rank + 1), 1, comm, &sendLastReq);
+    }
+
+    if(rank > 0) {
+      MPI_Status status;
+      MPI_Wait(&recvPrevReq, &status);
+      MPI_Wait(&sendFirstReq, &status);
+    }
+    if(rank < (npes - 1)) {
+      MPI_Status status;
+      MPI_Wait(&recvNextReq, &status);
+      MPI_Wait(&sendLastReq, &status);
+    }
+
+    bool removeFirst = false;
+    bool addToLast = false;
+    if(rank > 0) {
+      if(prevFgt == firstFgt) {
+        removeFirst = true;
+      }
+    }
+    if(rank < (npes - 1)) {
+      if(nextFgt == lastFgt) {
+        addToLast = true;
+      }
+    }
+
+    MPI_Request recvPtsReq;
+    if(addToLast) {
+      sources.resize(4*(numPts + (nextFgt.getWeight())));
+      fgtList[fgtList.size() - 1].addWeight(nextFgt.getWeight());
+      MPI_Irecv((&(sources[4*numPts])), (4*(nextFgt.getWeight())), MPI_DOUBLE, (rank + 1),
+          3, comm, &recvPtsReq);
+    }
+    if(removeFirst) {
+      MPI_Send((&(sources[0])), (4*(firstFgt.getWeight())), MPI_DOUBLE, (rank - 1), 3, comm);
+      fgtList.erase(fgtList.begin());
+    }
+    if(addToLast) {
+      MPI_Status status;
+      MPI_Wait(&recvPtsReq, &status);
+    }
+    if(removeFirst) {
+      sources.erase(sources.begin(), sources.begin() + (4*(firstFgt.getWeight())));
+    }
+  } else {
+    if(!rank) {
+      std::cout<<"THIS CASE IS NOT SUPPORTED!"<<std::endl;
+    }
+    assert(false);
   }
 
+  assert(expandSources.empty());
+  assert(directSources.empty());
+  std::vector<ot::TreeNode> dummyList;
+  int sourceIdx = 0;
+  for(size_t i = 0; i < fgtList.size(); ++i) {
+    if((fgtList[i].getWeight()) < minPtsInFgt) {
+      directSources.insert(directSources.end(), (sources.begin() + sourceIdx),
+          (sources.begin() + sourceIdx + (4*(fgtList[i].getWeight()))));
+    } else {
+      dummyList.push_back(fgtList[i]);
+      expandSources.insert(expandSources.end(), (sources.begin() + sourceIdx), 
+          (sources.begin() + sourceIdx + (4*(fgtList[i].getWeight()))));
+    }
+    sourceIdx += (4*(fgtList[i].getWeight()));
+  }//end i
+  swap(dummyList, fgtList);
+  assert((sources.size()) == ((directSources.size()) + (expandSources.size())));
 }
 
 
