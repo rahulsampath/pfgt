@@ -685,9 +685,56 @@ void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt,
 
     MPI_Allgather(&numLocalFgt, 1, MPI_INT, fgtListSizes, 1, MPI_INT, comm);
 
+    int* sendFgtCnts = new int[npes];
+    int* recvFgtCnts = new int[npes];
+
+    for(int i = 0; i < npes; ++i) {
+      sendFgtCnts[i] = 0;
+      recvFgtCnts[i] = 0;
+    }//end i
+    sendFgtCnts[rank] = numLocalFgt;
+    recvFgtCnts[rank] = numLocalFgt;
+
+    for(int i = 1; i < (npes - 1); ++i) {
+      int recv = i - 1;
+      while( (i < (npes - 1)) && (fgtListSizes[i] == 1) ) {
+        fgtListSizes[recv]++;
+        fgtListSizes[i] = 0;
+        if(rank == recv) {
+          recvFgtCnts[i]++;
+        }
+        if(rank == i) {
+          sendFgtCnts[rank]--;
+          recvFgtCnts[rank]--;
+          sendFgtCnts[recv]++;
+        }
+        ++i;
+      }//end while
+    }//end i
+
+    int* sendFgtDisps = new int[npes];
+    int* recvFgtDisps = new int[npes];
+    sendFgtDisps[0] = 0;
+    recvFgtDisps[0] = 0;
+    for(int i = 1; i < npes; ++i) {
+      sendFgtDisps[i] = sendFgtDisps[i - 1] + sendFgtCnts[i - 1];
+      recvFgtDisps[i] = recvFgtDisps[i - 1] + recvFgtCnts[i - 1];
+    }//end i
+
+    std::vector<ot::TreeNode> tmpFgtList(recvFgtDisps[npes - 1] + recvFgtCnts[npes - 1]);
+
+    MPI_Alltoallv( (&(fgtList[0])), sendFgtCnts, sendFgtDisps, par::Mpi_datatype<ot::TreeNode>::value(),
+        (&(tmpFgtList[0])), recvFgtCnts, recvFgtDisps, par::Mpi_datatype<ot::TreeNode>::value(), comm);
+
+    swap(fgtList, tmpFgtList);
+
     //TO BE COMPLETED!
 
     delete [] fgtListSizes;
+    delete [] sendFgtCnts;
+    delete [] recvFgtCnts;
+    delete [] sendFgtDisps;
+    delete [] recvFgtDisps;
   }
 
   assert(expandSources.empty());
