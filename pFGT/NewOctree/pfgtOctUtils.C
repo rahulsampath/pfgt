@@ -680,37 +680,52 @@ void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt,
       sources.erase(sources.begin(), sources.begin() + (4*(firstFgt.getWeight())));
     }
   } else {
-    int numLocalFgt = fgtList.size();
-    int* fgtListSizes = new int[npes];
 
-    MPI_Allgather(&numLocalFgt, 1, MPI_INT, fgtListSizes, 1, MPI_INT, comm);
+    int gatherSendBuf = 0;
+    if( (rank > 0) && (rank < (npes - 1)) && (fgtList.size() == 1) ) {
+      gatherSendBuf = sources.size();
+    }
+
+    int* gatherList = new int[npes];
+
+    MPI_Allgather((&gatherSendBuf), 1, MPI_INT, gatherList, 1, MPI_INT, comm);
 
     int* sendFgtCnts = new int[npes];
     int* recvFgtCnts = new int[npes];
 
+    int* sendSourceCnts = new int[npes];
+    int* recvSourceCnts = new int[npes];
+
     for(int i = 0; i < npes; ++i) {
       sendFgtCnts[i] = 0;
       recvFgtCnts[i] = 0;
+      sendSourceCnts[i] = 0;
+      recvSourceCnts[i] = 0;
     }//end i
-    sendFgtCnts[rank] = numLocalFgt;
-    recvFgtCnts[rank] = numLocalFgt;
+
+    if(gatherSendBuf == 0) {
+      sendFgtCnts[rank] = fgtList.size();
+      recvFgtCnts[rank] = fgtList.size();
+      sendSourceCnts[rank] = sources.size();
+      recvSourceCnts[rank] = sources.size();
+    }
 
     for(int i = 1; i < (npes - 1); ++i) {
       int recv = i - 1;
-      while( (i < (npes - 1)) && (fgtListSizes[i] == 1) ) {
-        fgtListSizes[recv]++;
-        fgtListSizes[i] = 0;
-        if(rank == recv) {
-          recvFgtCnts[i]++;
-        }
+      while( (i < (npes - 1)) && (gatherList[i] != 0) ) {
         if(rank == i) {
-          sendFgtCnts[rank]--;
-          recvFgtCnts[rank]--;
-          sendFgtCnts[recv]++;
+          sendFgtCnts[recv] = sendFgtCnts[recv] + 1;
+          sendSourceCnts[recv] = sendSourceCnts[recv] + gatherList[i];
+        }
+        if(rank == recv) {
+          recvFgtCnts[i] = recvFgtCnts[i] + 1;
+          recvSourceCnts[i] = recvSourceCnts[i] + gatherList[i];
         }
         ++i;
       }//end while
     }//end i
+
+    delete [] gatherList;
 
     int* sendFgtDisps = new int[npes];
     int* recvFgtDisps = new int[npes];
@@ -723,18 +738,49 @@ void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt,
 
     std::vector<ot::TreeNode> tmpFgtList(recvFgtDisps[npes - 1] + recvFgtCnts[npes - 1]);
 
+    ot::TreeNode* recvFgtBuf = NULL;
+    if(!(tmpFgtList.empty())) {
+      recvFgtBuf = (&(tmpFgtList[0]));
+    }
+
     MPI_Alltoallv( (&(fgtList[0])), sendFgtCnts, sendFgtDisps, par::Mpi_datatype<ot::TreeNode>::value(),
-        (&(tmpFgtList[0])), recvFgtCnts, recvFgtDisps, par::Mpi_datatype<ot::TreeNode>::value(), comm);
+        recvFgtBuf, recvFgtCnts, recvFgtDisps, par::Mpi_datatype<ot::TreeNode>::value(), comm);
 
     swap(fgtList, tmpFgtList);
 
-    //TO BE COMPLETED!
-
-    delete [] fgtListSizes;
     delete [] sendFgtCnts;
     delete [] recvFgtCnts;
     delete [] sendFgtDisps;
     delete [] recvFgtDisps;
+
+    int* sendSourceDisps = new int[npes];
+    int* recvSourceDisps = new int[npes];
+    sendSourceDisps[0] = 0;
+    recvSourceDisps[0] = 0;
+    for(int i = 1; i < npes; ++i) {
+      sendSourceDisps[i] = sendSourceDisps[i - 1] + sendSourceCnts[i - 1];
+      recvSourceDisps[i] = recvSourceDisps[i - 1] + recvSourceCnts[i - 1];
+    }//end i
+
+    std::vector<double> tmpSources(recvSourceDisps[npes - 1] + recvSourceCnts[npes - 1]);
+
+    double* recvSourceBuf = NULL;
+    if(!(tmpSources.empty())) {
+      recvSourceBuf = (&(tmpSources[0]));
+    }
+
+    MPI_Alltoallv( (&(sources[0])), sendSourceCnts, sendSourceDisps, MPI_DOUBLE,
+        recvSourceBuf, recvSourceCnts, recvSourceDisps, MPI_DOUBLE, comm);
+
+    swap(sources, tmpSources);
+
+    delete [] sendSourceCnts;
+    delete [] recvSourceCnts;
+    delete [] sendSourceDisps;
+    delete [] recvSourceDisps;
+  }
+
+  if(!(fgtList.empty())) {
   }
 
   assert(expandSources.empty());
