@@ -37,165 +37,98 @@ void pfgt(std::vector<double>& sources, const unsigned int minPtsInFgt, const un
   splitSources(sources, minPtsInFgt, FgtLev, expandSources, directSources, fgtList, comm);
   sources.clear();
 
-  /*
-  //Split octree and sources into 2 sets
-  //Remove empty octants
-  std::vector<ot::TreeNode> expandTree;
-  std::vector<ot::TreeNode> directTree;
-  int ptsCnt = 0;
-  for(size_t i = 0; i < linOct.size(); i++) {
-  unsigned int lev = linOct[i].getLevel();
-  double hCurrOct = 1.0/(static_cast<double>(1u << lev));
-  bool isExpand = false;
-  if( hCurrOct <= (hFgt*DirectHfactor) ) {
-  isExpand = true;
-  }
-  linOct[i].setWeight(0);
-  while(ptsCnt < numPts) {
-  unsigned int px = static_cast<unsigned int>(sources[4*ptsCnt]*(__DTPMD__));
-  unsigned int py = static_cast<unsigned int>(sources[(4*ptsCnt)+1]*(__DTPMD__));
-  unsigned int pz = static_cast<unsigned int>(sources[(4*ptsCnt)+2]*(__DTPMD__));
-  ot::TreeNode tmpOct(px, py, pz, __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
-  assert(tmpOct >= linOct[i]);
-  if((tmpOct == linOct[i]) || (linOct[i].isAncestor(tmpOct))) {
-  if(isExpand) {
-  expandSources.push_back(sources[4*ptsCnt]);
-  expandSources.push_back(sources[(4*ptsCnt) + 1]);
-  expandSources.push_back(sources[(4*ptsCnt) + 2]);
-  expandSources.push_back(sources[(4*ptsCnt) + 3]);
-  } else {
-  directSources.push_back(sources[4*ptsCnt]);
-  directSources.push_back(sources[(4*ptsCnt) + 1]);
-  directSources.push_back(sources[(4*ptsCnt) + 2]);
-  directSources.push_back(sources[(4*ptsCnt) + 3]);
-  }
-  linOct[i].addWeight(1);
-  ++ptsCnt;
-  } else {
-  break;
-  }
-  }//end while
-  if(linOct[i].getWeight() > 0) {
-  if(isExpand) {
-  expandTree.push_back(linOct[i]);
-  } else {
-  directTree.push_back(linOct[i]);
-  }
-  }
-  }//end for i
-  linOct.clear();
+  int localSizes[2];
+  int globalSizes[2];
+  localSizes[0] = (expandSources.size())/4;
+  localSizes[1] = (directSources.size())/4;
+  MPI_Allreduce(localSizes, globalSizes, 2, MPI_INT, MPI_SUM, comm);
 
-  unsigned int localTreeSizes[2];
-  unsigned int globalTreeSizes[2];
-  localTreeSizes[0] = expandTree.size();
-  localTreeSizes[1] = directTree.size();
-  MPI_Allreduce(localTreeSizes, globalTreeSizes, 2, MPI_UNSIGNED, MPI_SUM, comm);
-
-  if(globalTreeSizes[0] == 0) {
-  //Only Direct
-  if(!rank) {
-  std::cout<<"THIS CASE IS NOT SUPPORTED!"<<std::endl;
-  }
-  assert(false);
-  } else if(globalTreeSizes[1] == 0) {
-  //Only Expand
-  if(!rank) {
-  std::cout<<"THIS CASE IS NOT SUPPORTED!"<<std::endl;
-  }
-  assert(false);
+  if(globalSizes[0] == 0) {
+    //Only Direct
+    if(!rank) {
+      std::cout<<"THIS CASE IS NOT SUPPORTED!"<<std::endl;
+    }
+    assert(false);
+  } else if(globalSizes[1] == 0) {
+    //Only Expand
+    if(!rank) {
+      std::cout<<"THIS CASE IS NOT SUPPORTED!"<<std::endl;
+    }
+    assert(false);
   } else if(npes == 1) {
-  //Serial
-  if(!rank) {
-  std::cout<<"THIS CASE IS NOT SUPPORTED!"<<std::endl;
-  }
-  assert(false);
-} else {
-  int npesExpand = (globalTreeSizes[0]*npes)/(globalTreeSizes[0] + globalTreeSizes[1]);
-  assert(npesExpand < npes);
-  if(npesExpand < 1) {
-    npesExpand = 1;
-  }
-  int npesDirect = npes - npesExpand;
-  assert(npesDirect > 0);
-
-  MPI_Comm subComm;
-  MPI_Group group, subGroup;
-  MPI_Comm_group(comm, &group);
-  if(rank < npesExpand) {
-    int* list = new int[npesExpand];
-    for(int i = 0; i < npesExpand; i++) {
-      list[i] = i;
-    }//end for i
-    MPI_Group_incl(group, npesExpand, list, &subGroup);
-    delete [] list;
+    //Serial
+    if(!rank) {
+      std::cout<<"THIS CASE IS NOT SUPPORTED!"<<std::endl;
+    }
+    assert(false);
   } else {
-    int* list = new int[npesDirect];
-    for(int i = 0; i < npesDirect; i++) {
-      list[i] = npesExpand + i;
-    }//end for i
-    MPI_Group_incl(group, npesDirect, list, &subGroup);
-    delete [] list;
+    int npesExpand = (globalSizes[0]*npes)/(globalSizes[0] + globalSizes[1]);
+    assert(npesExpand < npes);
+    if(npesExpand < 1) {
+      npesExpand = 1;
+    }
+    int npesDirect = npes - npesExpand;
+    assert(npesDirect > 0);
+
+    MPI_Comm subComm;
+    MPI_Group group, subGroup;
+    MPI_Comm_group(comm, &group);
+    if(rank < npesExpand) {
+      int* list = new int[npesExpand];
+      for(int i = 0; i < npesExpand; i++) {
+        list[i] = i;
+      }//end for i
+      MPI_Group_incl(group, npesExpand, list, &subGroup);
+      delete [] list;
+    } else {
+      int* list = new int[npesDirect];
+      for(int i = 0; i < npesDirect; i++) {
+        list[i] = npesExpand + i;
+      }//end for i
+      MPI_Group_incl(group, npesDirect, list, &subGroup);
+      delete [] list;
+    }
+    MPI_Group_free(&group);
+    MPI_Comm_create(comm, subGroup, &subComm);
+    MPI_Group_free(&subGroup);
+
+    int avgExpand = (globalSizes[0])/npesExpand;
+    int extraExpand = (globalSizes[0])%npesExpand; 
+    int avgDirect = (globalSizes[1])/npesDirect;
+    int extraDirect = (globalSizes[1])%npesDirect;
+
+    std::vector<double> finalExpandSources;
+    std::vector<double> finalDirectSources;
+
+    if(rank < extraExpand) {
+      par::scatterValues<double>(expandSources, finalExpandSources, (4*(avgExpand + 1)), comm);
+      par::scatterValues<double>(directSources, finalDirectSources, 0, comm);
+    } else if(rank < npesExpand) {
+      par::scatterValues<double>(expandSources, finalExpandSources, (4*avgExpand), comm);
+      par::scatterValues<double>(directSources, finalDirectSources, 0, comm);
+    } else if(rank < (npesExpand + extraDirect)) {
+      par::scatterValues<double>(expandSources, finalExpandSources, 0, comm);
+      par::scatterValues<double>(directSources, finalDirectSources, (4*(avgDirect + 1)), comm);
+    } else {
+      par::scatterValues<double>(expandSources, finalExpandSources, 0, comm);
+      par::scatterValues<double>(directSources, finalDirectSources, (4*avgDirect), comm);
+    }
+
+    expandSources.clear();
+    directSources.clear();
+
+    /*
+       if(rank < npesExpand) {
+       pfgtHybridExpand(finalExpandSources, P, L, FgtLev, delta, hFgt, subComm, comm);
+       } else {
+       pfgtHybridDirect(finalDirectSources, FgtLev, subComm, comm);
+       }
+       */
+
+    MPI_Comm_free(&subComm);
   }
-  MPI_Group_free(&group);
-  MPI_Comm_create(comm, subGroup, &subComm);
-  MPI_Group_free(&subGroup);
 
-  int avgExpand = (globalTreeSizes[0])/npesExpand;
-  int extraExpand = (globalTreeSizes[0])%npesExpand; 
-  int avgDirect = (globalTreeSizes[1])/npesDirect;
-  int extraDirect = (globalTreeSizes[1])%npesDirect;
-
-  std::vector<ot::TreeNode> finalExpandTree;
-  std::vector<ot::TreeNode> finalDirectTree;
-
-  if(rank < extraExpand) {
-    par::scatterValues<ot::TreeNode>(expandTree, finalExpandTree, (avgExpand + 1), comm);
-    par::scatterValues<ot::TreeNode>(directTree, finalDirectTree, 0, comm);
-  } else if(rank < npesExpand) {
-    par::scatterValues<ot::TreeNode>(expandTree, finalExpandTree, avgExpand, comm);
-    par::scatterValues<ot::TreeNode>(directTree, finalDirectTree, 0, comm);
-  } else if(rank < (npesExpand + extraDirect)) {
-    par::scatterValues<ot::TreeNode>(expandTree, finalExpandTree, 0, comm);
-    par::scatterValues<ot::TreeNode>(directTree, finalDirectTree, (avgDirect + 1), comm);
-  } else {
-    par::scatterValues<ot::TreeNode>(expandTree, finalExpandTree, 0, comm);
-    par::scatterValues<ot::TreeNode>(directTree, finalDirectTree, avgDirect, comm);
-  }
-
-  expandTree.clear();
-  directTree.clear();
-
-  int numRecvExpandPts = 0;
-  for(int i = 0; i < finalExpandTree.size(); ++i) {
-    numRecvExpandPts += (finalExpandTree[i].getWeight());
-  }//end for i
-
-  int numRecvDirectPts = 0;
-  for(int i = 0; i < finalDirectTree.size(); ++i) {
-    numRecvDirectPts += (finalDirectTree[i].getWeight());
-  }//end for i
-
-  std::vector<double> finalExpandSources;
-  std::vector<double> finalDirectSources;
-
-  par::scatterValues<double>(expandSources, finalExpandSources, (4*numRecvExpandPts), comm);
-  par::scatterValues<double>(directSources, finalDirectSources, (4*numRecvDirectPts), comm);
-
-  expandSources.clear();
-  directSources.clear();
-
-  if(rank < npesExpand) {
-    pfgtHybridExpand(finalExpandSources, finalExpandTree, P, L, FgtLev, delta, hFgt, subComm, comm);
-  } else {
-    pfgtHybridDirect(finalDirectSources, finalDirectTree, FgtLev, subComm, comm);
-  }
-
-  MPI_Comm_free(&subComm);
-}
-
-*/
-
-PetscLogEventEnd(fgtEvent, 0, 0, 0, 0);
+  PetscLogEventEnd(fgtEvent, 0, 0, 0, 0);
 }
 
 void pfgtHybridExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expandTree,
