@@ -615,7 +615,125 @@ void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt,
   int globalFlag;
   MPI_Allreduce(&localFlag, &globalFlag, 1, MPI_INT, MPI_SUM, comm);
 
-  if(globalFlag == 0) {
+  int prevRank = rank - 1;
+  int nextRank = rank + 1;
+
+  if(globalFlag > 0) {
+    int gatherSendBuf = 0;
+    if( (rank > 0) && (rank < (npes - 1)) && (fgtList.size() == 1) ) {
+      gatherSendBuf = sources.size();
+    }
+
+    int* gatherList = new int[npes];
+
+    MPI_Allgather((&gatherSendBuf), 1, MPI_INT, gatherList, 1, MPI_INT, comm);
+
+    if(rank > 0) {
+      while(gatherList[prevRank] > 0) {
+        --prevRank;
+      }//end while
+    }
+
+    if(rank < (npes - 1)) {
+      while(gatherList[nextRank] > 0) {
+        ++nextRank;
+      }//end while
+    }
+
+    int* sendFgtCnts = new int[npes];
+    int* recvFgtCnts = new int[npes];
+
+    int* sendSourceCnts = new int[npes];
+    int* recvSourceCnts = new int[npes];
+
+    for(int i = 0; i < npes; ++i) {
+      sendFgtCnts[i] = 0;
+      recvFgtCnts[i] = 0;
+      sendSourceCnts[i] = 0;
+      recvSourceCnts[i] = 0;
+    }//end i
+
+    if(gatherSendBuf > 0) {
+      sendFgtCnts[prevRank] = 1;
+      sendSourceCnts[prevRank] = gatherSendBuf;
+    }
+    for(int i = rank + 1; i < nextRank; ++i) {
+      recvFgtCnts[i] = 1;
+      recvSourceCnts[i] = gatherList[i];
+    }//end i
+
+    delete [] gatherList;
+
+    int* sendFgtDisps = new int[npes];
+    int* recvFgtDisps = new int[npes];
+    sendFgtDisps[0] = 0;
+    recvFgtDisps[0] = 0;
+    for(int i = 1; i < npes; ++i) {
+      sendFgtDisps[i] = sendFgtDisps[i - 1] + sendFgtCnts[i - 1];
+      recvFgtDisps[i] = recvFgtDisps[i - 1] + recvFgtCnts[i - 1];
+    }//end i
+
+    std::vector<ot::TreeNode> tmpFgtList(recvFgtDisps[npes - 1] + recvFgtCnts[npes - 1]);
+
+    ot::TreeNode* recvFgtBuf = NULL;
+    if(!(tmpFgtList.empty())) {
+      recvFgtBuf = (&(tmpFgtList[0]));
+    }
+
+    MPI_Alltoallv( (&(fgtList[0])), sendFgtCnts, sendFgtDisps, par::Mpi_datatype<ot::TreeNode>::value(),
+        recvFgtBuf, recvFgtCnts, recvFgtDisps, par::Mpi_datatype<ot::TreeNode>::value(), comm);
+
+    if(gatherSendBuf > 0) {
+      fgtList.clear();
+    } else {
+      for(int i = 0; i < tmpFgtList.size(); ++i) {
+        if(tmpFgtList[i] == fgtList[fgtList.size() - 1]) {
+          fgtList[fgtList.size() - 1].addWeight(tmpFgtList[i].getWeight());
+        } else {
+          fgtList.push_back(tmpFgtList[i]);
+        }
+      }//end i
+    }
+
+    delete [] sendFgtCnts;
+    delete [] recvFgtCnts;
+    delete [] sendFgtDisps;
+    delete [] recvFgtDisps;
+
+    int* sendSourceDisps = new int[npes];
+    int* recvSourceDisps = new int[npes];
+    sendSourceDisps[0] = 0;
+    recvSourceDisps[0] = 0;
+    for(int i = 1; i < npes; ++i) {
+      sendSourceDisps[i] = sendSourceDisps[i - 1] + sendSourceCnts[i - 1];
+      recvSourceDisps[i] = recvSourceDisps[i - 1] + recvSourceCnts[i - 1];
+    }//end i
+
+    std::vector<double> tmpSources(recvSourceDisps[npes - 1] + recvSourceCnts[npes - 1]);
+
+    double* recvSourceBuf = NULL;
+    if(!(tmpSources.empty())) {
+      recvSourceBuf = (&(tmpSources[0]));
+    }
+
+    MPI_Alltoallv( (&(sources[0])), sendSourceCnts, sendSourceDisps, MPI_DOUBLE,
+        recvSourceBuf, recvSourceCnts, recvSourceDisps, MPI_DOUBLE, comm);
+
+    if(gatherSendBuf > 0) {
+      sources.clear();
+    } else {
+      if(!(tmpSources.empty())) {
+        sources.insert(sources.end(), tmpSources.begin(), tmpSources.end());
+      }
+    }
+
+    delete [] sendSourceCnts;
+    delete [] recvSourceCnts;
+    delete [] sendSourceDisps;
+    delete [] recvSourceDisps;
+  }
+
+  if(!(fgtList.empty())) {
     ot::TreeNode prevFgt;
     ot::TreeNode nextFgt;
     ot::TreeNode firstFgt = fgtList[0];
@@ -626,15 +744,15 @@ void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt,
     MPI_Request sendLastReq;
     if(rank > 0) {
       MPI_Irecv(&prevFgt, 1, par::Mpi_datatype<ot::TreeNode>::value(),
-          (rank - 1), 1, comm, &recvPrevReq);
+          prevRank, 1, comm, &recvPrevReq);
       MPI_Isend(&firstFgt, 1, par::Mpi_datatype<ot::TreeNode>::value(),
-          (rank - 1), 2, comm, &sendFirstReq);
+          prevRank, 2, comm, &sendFirstReq);
     }
     if(rank < (npes - 1)) {
       MPI_Irecv(&nextFgt, 1, par::Mpi_datatype<ot::TreeNode>::value(),
-          (rank + 1), 2, comm, &recvNextReq);
+          nextRank, 2, comm, &recvNextReq);
       MPI_Isend(&lastFgt, 1, par::Mpi_datatype<ot::TreeNode>::value(),
-          (rank + 1), 1, comm, &sendLastReq);
+          nextRank, 1, comm, &sendLastReq);
     }
 
     if(rank > 0) {
@@ -665,11 +783,11 @@ void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt,
     if(addToLast) {
       sources.resize(4*(numPts + (nextFgt.getWeight())));
       fgtList[fgtList.size() - 1].addWeight(nextFgt.getWeight());
-      MPI_Irecv((&(sources[4*numPts])), (4*(nextFgt.getWeight())), MPI_DOUBLE, (rank + 1),
+      MPI_Irecv((&(sources[4*numPts])), (4*(nextFgt.getWeight())), MPI_DOUBLE, nextRank,
           3, comm, &recvPtsReq);
     }
     if(removeFirst) {
-      MPI_Send((&(sources[0])), (4*(firstFgt.getWeight())), MPI_DOUBLE, (rank - 1), 3, comm);
+      MPI_Send((&(sources[0])), (4*(firstFgt.getWeight())), MPI_DOUBLE, prevRank, 3, comm);
       fgtList.erase(fgtList.begin());
     }
     if(addToLast) {
@@ -679,109 +797,7 @@ void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt,
     if(removeFirst) {
       sources.erase(sources.begin(), sources.begin() + (4*(firstFgt.getWeight())));
     }
-  } else {
-
-    int gatherSendBuf = 0;
-    if( (rank > 0) && (rank < (npes - 1)) && (fgtList.size() == 1) ) {
-      gatherSendBuf = sources.size();
-    }
-
-    int* gatherList = new int[npes];
-
-    MPI_Allgather((&gatherSendBuf), 1, MPI_INT, gatherList, 1, MPI_INT, comm);
-
-    int* sendFgtCnts = new int[npes];
-    int* recvFgtCnts = new int[npes];
-
-    int* sendSourceCnts = new int[npes];
-    int* recvSourceCnts = new int[npes];
-
-    for(int i = 0; i < npes; ++i) {
-      sendFgtCnts[i] = 0;
-      recvFgtCnts[i] = 0;
-      sendSourceCnts[i] = 0;
-      recvSourceCnts[i] = 0;
-    }//end i
-
-    if(gatherSendBuf == 0) {
-      sendFgtCnts[rank] = fgtList.size();
-      recvFgtCnts[rank] = fgtList.size();
-      sendSourceCnts[rank] = sources.size();
-      recvSourceCnts[rank] = sources.size();
-    }
-
-    for(int i = 1; i < (npes - 1); ++i) {
-      int recv = i - 1;
-      while( (i < (npes - 1)) && (gatherList[i] != 0) ) {
-        if(rank == i) {
-          sendFgtCnts[recv] = sendFgtCnts[recv] + 1;
-          sendSourceCnts[recv] = sendSourceCnts[recv] + gatherList[i];
-        }
-        if(rank == recv) {
-          recvFgtCnts[i] = recvFgtCnts[i] + 1;
-          recvSourceCnts[i] = recvSourceCnts[i] + gatherList[i];
-        }
-        ++i;
-      }//end while
-    }//end i
-
-    delete [] gatherList;
-
-    int* sendFgtDisps = new int[npes];
-    int* recvFgtDisps = new int[npes];
-    sendFgtDisps[0] = 0;
-    recvFgtDisps[0] = 0;
-    for(int i = 1; i < npes; ++i) {
-      sendFgtDisps[i] = sendFgtDisps[i - 1] + sendFgtCnts[i - 1];
-      recvFgtDisps[i] = recvFgtDisps[i - 1] + recvFgtCnts[i - 1];
-    }//end i
-
-    std::vector<ot::TreeNode> tmpFgtList(recvFgtDisps[npes - 1] + recvFgtCnts[npes - 1]);
-
-    ot::TreeNode* recvFgtBuf = NULL;
-    if(!(tmpFgtList.empty())) {
-      recvFgtBuf = (&(tmpFgtList[0]));
-    }
-
-    MPI_Alltoallv( (&(fgtList[0])), sendFgtCnts, sendFgtDisps, par::Mpi_datatype<ot::TreeNode>::value(),
-        recvFgtBuf, recvFgtCnts, recvFgtDisps, par::Mpi_datatype<ot::TreeNode>::value(), comm);
-
-    swap(fgtList, tmpFgtList);
-
-    delete [] sendFgtCnts;
-    delete [] recvFgtCnts;
-    delete [] sendFgtDisps;
-    delete [] recvFgtDisps;
-
-    int* sendSourceDisps = new int[npes];
-    int* recvSourceDisps = new int[npes];
-    sendSourceDisps[0] = 0;
-    recvSourceDisps[0] = 0;
-    for(int i = 1; i < npes; ++i) {
-      sendSourceDisps[i] = sendSourceDisps[i - 1] + sendSourceCnts[i - 1];
-      recvSourceDisps[i] = recvSourceDisps[i - 1] + recvSourceCnts[i - 1];
-    }//end i
-
-    std::vector<double> tmpSources(recvSourceDisps[npes - 1] + recvSourceCnts[npes - 1]);
-
-    double* recvSourceBuf = NULL;
-    if(!(tmpSources.empty())) {
-      recvSourceBuf = (&(tmpSources[0]));
-    }
-
-    MPI_Alltoallv( (&(sources[0])), sendSourceCnts, sendSourceDisps, MPI_DOUBLE,
-        recvSourceBuf, recvSourceCnts, recvSourceDisps, MPI_DOUBLE, comm);
-
-    swap(sources, tmpSources);
-
-    delete [] sendSourceCnts;
-    delete [] recvSourceCnts;
-    delete [] sendSourceDisps;
-    delete [] recvSourceDisps;
-  }
-
-  if(!(fgtList.empty())) {
-  }
+  } 
 
   assert(expandSources.empty());
   assert(directSources.empty());
