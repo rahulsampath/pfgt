@@ -142,9 +142,30 @@ void pfgt(std::vector<double>& sources, const unsigned int minPtsInFgt, const un
     expandSources.clear();
     directSources.clear();
 
+    int numExpandPts = (finalExpandSources.size())/5;
+
+    for(int i = 0; i < numExpandPts; ++i) {
+      int flag = static_cast<int>(finalExpandSources[(5*i) + 4]);
+      if(flag > 0) {
+        unsigned int px = static_cast<unsigned int>(finalExpandSources[5*i]*(__DTPMD__));
+        unsigned int py = static_cast<unsigned int>(finalExpandSources[(5*i)+1]*(__DTPMD__));
+        unsigned int pz = static_cast<unsigned int>(finalExpandSources[(5*i)+2]*(__DTPMD__));
+        ot::TreeNode pt(px, py, pz, __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
+        ot::TreeNode box = pt.getAncestor(FgtLev);
+        box.setWeight(flag);
+        fgtList.push_back(box);
+      }
+      expandSources.push_back(finalExpandSources[5*i]);
+      expandSources.push_back(finalExpandSources[(5*i) + 1]);
+      expandSources.push_back(finalExpandSources[(5*i) + 2]);
+      expandSources.push_back(finalExpandSources[(5*i) + 3]);
+    }//end i
+
+    finalExpandSources.clear();
+
     /*
        if(rank < npesExpand) {
-       pfgtHybridExpand(finalExpandSources, P, L, FgtLev, delta, hFgt, subComm, comm);
+       pfgtHybridExpand(expandSources, P, L, FgtLev, delta, hFgt, subComm, comm);
        } else {
        pfgtHybridDirect(finalDirectSources, FgtLev, subComm, comm);
        }
