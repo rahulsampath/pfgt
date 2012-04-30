@@ -163,13 +163,11 @@ void pfgt(std::vector<double>& sources, const unsigned int minPtsInFgt, const un
 
     finalExpandSources.clear();
 
-    /*
-       if(rank < npesExpand) {
-       pfgtHybridExpand(expandSources, P, L, FgtLev, delta, hFgt, subComm, comm);
-       } else {
-       pfgtHybridDirect(finalDirectSources, FgtLev, subComm, comm);
-       }
-       */
+    if(rank < npesExpand) {
+      pfgtHybridExpand(expandSources, fgtList, FgtLev, subComm, comm);
+    } else {
+      pfgtHybridDirect(finalDirectSources, FgtLev, subComm, comm);
+    }
 
     MPI_Comm_free(&subComm);
   }
@@ -177,228 +175,28 @@ void pfgt(std::vector<double>& sources, const unsigned int minPtsInFgt, const un
   PetscLogEventEnd(fgtEvent, 0, 0, 0, 0);
 }
 
-void pfgtHybridExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> & expandTree,
-    const int P, const int L, const unsigned int FgtLev, const double delta, 
-    const double hFgt, MPI_Comm subComm, MPI_Comm comm) {
+void pfgtHybridExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> & fgtList,
+    const unsigned int FgtLev, MPI_Comm subComm, MPI_Comm comm) {
   PetscLogEventBegin(expandHybridEvent, 0, 0, 0, 0);
 
-  assert(!(expandTree.empty()));
-
-  std::vector<ot::TreeNode> fgtList;
-  createFGToctree(fgtList, expandTree, FgtLev, subComm);
+  assert(!(expandSources.empty()));
 
   std::vector<ot::TreeNode> fgtMins;
   computeFGTminsHybridExpand(fgtMins, fgtList, subComm, comm);
 
-  unsigned int numPtsInRemoteFGT;
-  computeNumPtsInFGT(expandSources, fgtList, numPtsInRemoteFGT);
-
-  ot::TreeNode remoteFGT;
-  if(numPtsInRemoteFGT > 0) {
-    assert((expandTree[0].getLevel()) > FgtLev);
-    remoteFGT = expandTree[0].getAncestor(FgtLev);
-  }
-
-  std::vector<double> wVec;
-  s2w(wVec, expandSources, remoteFGT, numPtsInRemoteFGT, fgtList, fgtMins, P, L, FgtLev, hFgt, subComm);
-
   PetscLogEventEnd(expandHybridEvent, 0, 0, 0, 0);
 }
 
-void computeNumPtsInFGT(std::vector<double> & sources, std::vector<ot::TreeNode> & fgtList, 
-    unsigned int & numPtsInRemoteFGT) {
-
-  int numPts = ((sources.size())/4);
-
-  if(fgtList.empty()) {
-    numPtsInRemoteFGT = numPts;
-  } else {
-    int ptsCnt = 0;
-    while(ptsCnt < numPts) {
-      unsigned int px = static_cast<unsigned int>(sources[4*ptsCnt]*(__DTPMD__));
-      unsigned int py = static_cast<unsigned int>(sources[(4*ptsCnt)+1]*(__DTPMD__));
-      unsigned int pz = static_cast<unsigned int>(sources[(4*ptsCnt)+2]*(__DTPMD__));
-      ot::TreeNode tmpOct(px, py, pz, __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
-      if(tmpOct < fgtList[0]) {
-        ++ptsCnt;
-      } else {
-        break;
-      }
-    }//end while
-
-    numPtsInRemoteFGT = ptsCnt;
-
-    for(int i = 0; i < fgtList.size(); ++i) {
-      fgtList[i].setWeight(0);
-      while(ptsCnt < numPts) {
-        unsigned int px = static_cast<unsigned int>(sources[4*ptsCnt]*(__DTPMD__));
-        unsigned int py = static_cast<unsigned int>(sources[(4*ptsCnt)+1]*(__DTPMD__));
-        unsigned int pz = static_cast<unsigned int>(sources[(4*ptsCnt)+2]*(__DTPMD__));
-        ot::TreeNode tmpOct(px, py, pz, __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
-        assert(tmpOct >= fgtList[i]);
-        if( (tmpOct == fgtList[i]) || (fgtList[i].isAncestor(tmpOct)) ) {
-          fgtList[i].addWeight(1);
-          ++ptsCnt;
-        } else {
-          break;
-        }
-      }//end while
-    }//end i
-  }
-
-}
-
-void s2w(std::vector<double> & localWlist, std::vector<double> & sources, ot::TreeNode remoteFGT, 
-    const unsigned int numPtsInRemoteFGT, std::vector<ot::TreeNode> & fgtList, 
-    std::vector<ot::TreeNode> & fgtMins, const int P, const int L, 
-    const unsigned int FgtLev, const double hFgt, MPI_Comm subComm) {
-  PetscLogEventBegin(s2wEvent, 0, 0, 0, 0);
-
-  int rank;
-  MPI_Comm_rank(subComm, &rank);
-
-  int remoteFGTowner = -1;
-  if(numPtsInRemoteFGT > 0) {
-    unsigned int retIdx;
-    seq::maxLowerBound(fgtMins, remoteFGT, retIdx, NULL, NULL);
-    remoteFGTowner = fgtMins[retIdx].getWeight();
-    assert(remoteFGTowner < rank);
-  }
-
-  int subNpes;
-  MPI_Comm_size(subComm, &subNpes);
-
-  //2P complex coefficients for each dimension.  
-  const unsigned int numWcoeffs = 16*P*P*P;
-
-  int* sendCnts = new int[subNpes];
-  for(int i = 0; i < subNpes; ++i) {
-    sendCnts[i] = 0;
-  }//end i
-  if(remoteFGTowner >= 0) {
-    sendCnts[remoteFGTowner] = numWcoeffs;
-  }
-
-  int* recvCnts = new int[subNpes]; 
-
-  MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, subComm);
-
-  int* sendDisps = new int[subNpes];
-  int* recvDisps = new int[subNpes]; 
-
-  sendDisps[0] = 0;
-  recvDisps[0] = 0;
-  for(int i = 1; i < subNpes; ++i) {
-    sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
-    recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
-  }//end i
-
-  const double LbyP = static_cast<double>(L)/static_cast<double>(P);
-  const double ImExpZfactor = LbyP/hFgt;
-
-  std::vector<double> sendWlist;
-  if(remoteFGTowner >= 0) {
-    sendWlist.resize(numWcoeffs, 0.0);
-    double cx = (0.5*hFgt) + ((static_cast<double>(remoteFGT.getX()))/(__DTPMD__));
-    double cy = (0.5*hFgt) + ((static_cast<double>(remoteFGT.getY()))/(__DTPMD__));
-    double cz = (0.5*hFgt) + ((static_cast<double>(remoteFGT.getZ()))/(__DTPMD__));
-    for(int i = 0; i < numPtsInRemoteFGT; ++i) {
-      double px = sources[4*i];
-      double py = sources[(4*i)+1];
-      double pz = sources[(4*i)+2];
-      double pf = sources[(4*i)+3];
-      for(int k3 = -P, di = 0; k3 < P; k3++) {
-        double thetaZ = ImExpZfactor*(static_cast<double>(k3)*(cz - pz));
-        for(int k2 = -P; k2 < P; k2++) {
-          double thetaY = ImExpZfactor*(static_cast<double>(k2)*(cy - py));
-          for(int k1 = -P; k1 < P; k1++, di++) {
-            double thetaX = ImExpZfactor*(static_cast<double>(k1)*(cx - px));
-            double theta = (thetaX + thetaY + thetaZ);
-            sendWlist[2*di] += (pf*cos(theta));
-            sendWlist[(2*di) + 1] += (pf*sin(theta));
-          }//end for k1
-        }//end for k2
-      }//end for k3
-    }//end i
-  }
-
-  std::vector<double> recvWlist(recvDisps[subNpes - 1] + recvCnts[subNpes - 1]);
-
-  double* sendBuf = NULL;
-  if(!(sendWlist.empty())) {
-    sendBuf = &(sendWlist[0]);
-  }
-  double* recvBuf = NULL;
-  if(!(recvWlist.empty())) {
-    recvBuf = &(recvWlist[0]);
-  }
-  MPI_Alltoallv(sendBuf, sendCnts, sendDisps, MPI_DOUBLE,
-      recvBuf, recvCnts, recvDisps, MPI_DOUBLE, subComm);
-
-  delete [] sendCnts;
-  delete [] sendDisps;
-  delete [] recvCnts;
-  delete [] recvDisps;
-
-  localWlist.resize( (numWcoeffs*(fgtList.size())), 0.0);
-
-  for(int i = 0; i < recvWlist.size(); i += numWcoeffs) {
-    for(int d = 0; d < numWcoeffs; ++d) {
-      localWlist[(numWcoeffs*(fgtList.size() - 1)) + d] += recvWlist[i + d];
-    }//end d
-  }//end i
-
-  for(int i = 0, ptsIdx = numPtsInRemoteFGT; i < fgtList.size(); ++i) {
-    double cx = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getX()))/(__DTPMD__));
-    double cy = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getY()))/(__DTPMD__));
-    double cz = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getZ()))/(__DTPMD__));
-    for(int j = 0; j < fgtList[i].getWeight(); ++j, ++ptsIdx) {
-      double px = sources[4*ptsIdx];
-      double py = sources[(4*ptsIdx)+1];
-      double pz = sources[(4*ptsIdx)+2];
-      double pf = sources[(4*ptsIdx)+3];
-      for(int k3 = -P, di = 0; k3 < P; k3++) {
-        double thetaZ = ImExpZfactor*(static_cast<double>(k3)*(cz - pz));
-        for(int k2 = -P; k2 < P; k2++) {
-          double thetaY = ImExpZfactor*(static_cast<double>(k2)*(cy - py));
-          for(int k1 = -P; k1 < P; k1++, di++) {
-            double thetaX = ImExpZfactor*(static_cast<double>(k1)*(cx - px));
-            double theta = (thetaX + thetaY + thetaZ);
-            localWlist[(numWcoeffs*i) + (2*di)] += (pf*cos(theta));
-            localWlist[(numWcoeffs*i) + (2*di) + 1] += (pf*sin(theta));
-          }//end for k1
-        }//end for k2
-      }//end for k3
-    }//end j
-  }//end i
-
-
-  PetscLogEventEnd(s2wEvent, 0, 0, 0, 0);
-}
-
-void pfgtHybridDirect(std::vector<double> & directSources, std::vector<ot::TreeNode> & directTree, 
-    const unsigned int FgtLev, MPI_Comm subComm, MPI_Comm comm) {
+void pfgtHybridDirect(std::vector<double> & directSources, const unsigned int FgtLev, 
+    MPI_Comm subComm, MPI_Comm comm) {
   PetscLogEventBegin(directHybridEvent, 0, 0, 0, 0);
 
-  assert(!(directTree.empty()));
-
-  std::vector<ot::TreeNode> directMins;
-  computeMins(directMins, directTree, subComm);
+  assert(!(directSources.empty()));
 
   std::vector<ot::TreeNode> fgtMins;
   computeFGTminsHybridDirect(fgtMins, comm);
 
   PetscLogEventEnd(directHybridEvent, 0, 0, 0, 0);
-}
-
-void computeMins(std::vector<ot::TreeNode> & mins, std::vector<ot::TreeNode> & subTree, MPI_Comm subComm) {
-  int subNpes;
-  MPI_Comm_size(subComm, &subNpes);
-
-  mins.resize(subNpes);
-
-  MPI_Allgather(&(subTree[0]), 1, par::Mpi_datatype<ot::TreeNode>::value(),
-      &(mins[0]), 1, par::Mpi_datatype<ot::TreeNode>::value(), subComm);
 }
 
 void computeFGTminsHybridExpand(std::vector<ot::TreeNode> & fgtMins, std::vector<ot::TreeNode> & fgtList,
@@ -456,97 +254,6 @@ void computeFGTminsHybridDirect(std::vector<ot::TreeNode> & fgtMins, MPI_Comm co
 
   fgtMins.resize(fgtMinSize);
   MPI_Bcast(&(fgtMins[0]), fgtMinSize, par::Mpi_datatype<ot::TreeNode>::value(), 0, comm);
-}
-
-void createFGToctree(std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & expandTree,
-    const unsigned int FgtLev, MPI_Comm subComm) {
-  PetscLogEventBegin(fgtOctConEvent, 0, 0, 0, 0);
-
-  std::vector<ot::TreeNode> tmpFgtListA;
-  std::vector<ot::TreeNode> tmpFgtListB;
-  for(size_t i = 0; i < expandTree.size(); ++i) {
-    unsigned int lev = expandTree[i].getLevel();
-    if(lev > FgtLev) {
-      tmpFgtListA.push_back(expandTree[i].getAncestor(FgtLev));
-    } else {
-      std::vector<ot::TreeNode> subTree;
-      subTree.push_back(expandTree[i]);
-      while(true) {
-        std::vector<ot::TreeNode> tmpSubTree;
-        for(int j = 0; j < subTree.size(); ++j) {
-          if((subTree[j].getLevel()) < FgtLev) {
-            subTree[j].addChildren(tmpSubTree);
-          } else {
-            assert((subTree[j].getLevel()) == FgtLev);
-            tmpSubTree.push_back(subTree[j]);
-          }
-        }//end j
-        if((tmpSubTree.size()) == (subTree.size())) {
-          break;
-        } else {
-          swap(subTree, tmpSubTree);
-        }
-      }//end while
-      tmpFgtListB.insert(tmpFgtListB.end(), subTree.begin(), subTree.end());
-    }
-  }//end i
-
-  seq::makeVectorUnique<ot::TreeNode>(tmpFgtListA, true);
-
-  int aIdx = 0;
-  int bIdx = 0;
-  while( (aIdx < tmpFgtListA.size()) && (bIdx < tmpFgtListB.size()) ) {
-    if(tmpFgtListA[aIdx] < tmpFgtListB[bIdx]) {
-      fgtList.push_back(tmpFgtListA[aIdx]);
-      ++aIdx;
-    } else {
-      fgtList.push_back(tmpFgtListB[bIdx]);
-      ++bIdx;
-    }
-  }
-  for(; aIdx < tmpFgtListA.size(); ++aIdx) {
-    fgtList.push_back(tmpFgtListA[aIdx]);
-  }
-  for(; bIdx < tmpFgtListB.size(); ++bIdx) {
-    fgtList.push_back(tmpFgtListB[bIdx]);
-  }
-
-  assert(!(fgtList.empty()));
-
-  int rank, npes;
-  MPI_Comm_rank(subComm, &rank);
-  MPI_Comm_size(subComm, &npes);
-
-  ot::TreeNode tmpOct;
-
-  MPI_Request recvRequest, sendRequest;
-  if(rank > 0) {
-    MPI_Irecv(&tmpOct, 1, par::Mpi_datatype<ot::TreeNode>::value(),
-        (rank - 1), 1, subComm, &recvRequest);
-  }
-
-  if(rank < (npes - 1)) {
-    MPI_Isend(&(fgtList[fgtList.size() - 1]), 1, par::Mpi_datatype<ot::TreeNode>::value(),
-        (rank + 1), 1, subComm, &sendRequest);
-  }
-
-  if(rank > 0) {
-    MPI_Status status;
-    MPI_Wait(&recvRequest, &status);
-  }
-
-  if(rank < (npes - 1)) {
-    MPI_Status status;
-    MPI_Wait(&sendRequest, &status);
-  }
-
-  if(rank > 0) {
-    if(tmpOct == fgtList[0]) {
-      fgtList.erase(fgtList.begin());
-    }
-  }
-
-  PetscLogEventEnd(fgtOctConEvent, 0, 0, 0, 0);
 }
 
 void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt, 
@@ -795,6 +502,133 @@ void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt,
   }//end i
   swap(dummyList, fgtList);
   assert((sources.size()) == ((directSources.size()) + (expandSources.size())));
+}
+
+void s2w(std::vector<double> & localWlist, std::vector<double> & sources, ot::TreeNode remoteFGT, 
+    const unsigned int numPtsInRemoteFGT, std::vector<ot::TreeNode> & fgtList, 
+    std::vector<ot::TreeNode> & fgtMins, const int P, const int L, 
+    const unsigned int FgtLev, const double hFgt, MPI_Comm subComm) {
+  PetscLogEventBegin(s2wEvent, 0, 0, 0, 0);
+
+  int rank;
+  MPI_Comm_rank(subComm, &rank);
+
+  int remoteFGTowner = -1;
+  if(numPtsInRemoteFGT > 0) {
+    unsigned int retIdx;
+    seq::maxLowerBound(fgtMins, remoteFGT, retIdx, NULL, NULL);
+    remoteFGTowner = fgtMins[retIdx].getWeight();
+    assert(remoteFGTowner < rank);
+  }
+
+  int subNpes;
+  MPI_Comm_size(subComm, &subNpes);
+
+  //2P complex coefficients for each dimension.  
+  const unsigned int numWcoeffs = 16*P*P*P;
+
+  int* sendCnts = new int[subNpes];
+  for(int i = 0; i < subNpes; ++i) {
+    sendCnts[i] = 0;
+  }//end i
+  if(remoteFGTowner >= 0) {
+    sendCnts[remoteFGTowner] = numWcoeffs;
+  }
+
+  int* recvCnts = new int[subNpes]; 
+
+  MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, subComm);
+
+  int* sendDisps = new int[subNpes];
+  int* recvDisps = new int[subNpes]; 
+
+  sendDisps[0] = 0;
+  recvDisps[0] = 0;
+  for(int i = 1; i < subNpes; ++i) {
+    sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
+    recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
+  }//end i
+
+  const double LbyP = static_cast<double>(L)/static_cast<double>(P);
+  const double ImExpZfactor = LbyP/hFgt;
+
+  std::vector<double> sendWlist;
+  if(remoteFGTowner >= 0) {
+    sendWlist.resize(numWcoeffs, 0.0);
+    double cx = (0.5*hFgt) + ((static_cast<double>(remoteFGT.getX()))/(__DTPMD__));
+    double cy = (0.5*hFgt) + ((static_cast<double>(remoteFGT.getY()))/(__DTPMD__));
+    double cz = (0.5*hFgt) + ((static_cast<double>(remoteFGT.getZ()))/(__DTPMD__));
+    for(int i = 0; i < numPtsInRemoteFGT; ++i) {
+      double px = sources[4*i];
+      double py = sources[(4*i)+1];
+      double pz = sources[(4*i)+2];
+      double pf = sources[(4*i)+3];
+      for(int k3 = -P, di = 0; k3 < P; k3++) {
+        double thetaZ = ImExpZfactor*(static_cast<double>(k3)*(cz - pz));
+        for(int k2 = -P; k2 < P; k2++) {
+          double thetaY = ImExpZfactor*(static_cast<double>(k2)*(cy - py));
+          for(int k1 = -P; k1 < P; k1++, di++) {
+            double thetaX = ImExpZfactor*(static_cast<double>(k1)*(cx - px));
+            double theta = (thetaX + thetaY + thetaZ);
+            sendWlist[2*di] += (pf*cos(theta));
+            sendWlist[(2*di) + 1] += (pf*sin(theta));
+          }//end for k1
+        }//end for k2
+      }//end for k3
+    }//end i
+  }
+
+  std::vector<double> recvWlist(recvDisps[subNpes - 1] + recvCnts[subNpes - 1]);
+
+  double* sendBuf = NULL;
+  if(!(sendWlist.empty())) {
+    sendBuf = &(sendWlist[0]);
+  }
+  double* recvBuf = NULL;
+  if(!(recvWlist.empty())) {
+    recvBuf = &(recvWlist[0]);
+  }
+  MPI_Alltoallv(sendBuf, sendCnts, sendDisps, MPI_DOUBLE,
+      recvBuf, recvCnts, recvDisps, MPI_DOUBLE, subComm);
+
+  delete [] sendCnts;
+  delete [] sendDisps;
+  delete [] recvCnts;
+  delete [] recvDisps;
+
+  localWlist.resize( (numWcoeffs*(fgtList.size())), 0.0);
+
+  for(int i = 0; i < recvWlist.size(); i += numWcoeffs) {
+    for(int d = 0; d < numWcoeffs; ++d) {
+      localWlist[(numWcoeffs*(fgtList.size() - 1)) + d] += recvWlist[i + d];
+    }//end d
+  }//end i
+
+  for(int i = 0, ptsIdx = numPtsInRemoteFGT; i < fgtList.size(); ++i) {
+    double cx = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getX()))/(__DTPMD__));
+    double cy = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getY()))/(__DTPMD__));
+    double cz = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getZ()))/(__DTPMD__));
+    for(int j = 0; j < fgtList[i].getWeight(); ++j, ++ptsIdx) {
+      double px = sources[4*ptsIdx];
+      double py = sources[(4*ptsIdx)+1];
+      double pz = sources[(4*ptsIdx)+2];
+      double pf = sources[(4*ptsIdx)+3];
+      for(int k3 = -P, di = 0; k3 < P; k3++) {
+        double thetaZ = ImExpZfactor*(static_cast<double>(k3)*(cz - pz));
+        for(int k2 = -P; k2 < P; k2++) {
+          double thetaY = ImExpZfactor*(static_cast<double>(k2)*(cy - py));
+          for(int k1 = -P; k1 < P; k1++, di++) {
+            double thetaX = ImExpZfactor*(static_cast<double>(k1)*(cx - px));
+            double theta = (thetaX + thetaY + thetaZ);
+            localWlist[(numWcoeffs*i) + (2*di)] += (pf*cos(theta));
+            localWlist[(numWcoeffs*i) + (2*di) + 1] += (pf*sin(theta));
+          }//end for k1
+        }//end for k2
+      }//end for k3
+    }//end j
+  }//end i
+
+  PetscLogEventEnd(s2wEvent, 0, 0, 0, 0);
 }
 
 
