@@ -37,9 +37,34 @@ void pfgt(std::vector<double>& sources, const unsigned int minPtsInFgt, const un
   splitSources(sources, minPtsInFgt, FgtLev, expandSources, directSources, fgtList, comm);
   sources.clear();
 
+  std::vector<double> tmpExpandSources;
+  int srcCnt = 0;
+  for(int i = 0; i < fgtList.size(); ++i) {
+    assert(fgtList[i].getWeight() > 0);
+    {
+      tmpExpandSources.push_back(expandSources[(4*srcCnt)]);
+      tmpExpandSources.push_back(expandSources[(4*srcCnt) + 1]);
+      tmpExpandSources.push_back(expandSources[(4*srcCnt) + 2]);
+      tmpExpandSources.push_back(expandSources[(4*srcCnt) + 3]);
+      tmpExpandSources.push_back(fgtList[i].getWeight());
+      srcCnt++;
+    }
+    for(int j = 1; j < fgtList[i].getWeight(); ++j) {
+      tmpExpandSources.push_back(expandSources[(4*srcCnt)]);
+      tmpExpandSources.push_back(expandSources[(4*srcCnt) + 1]);
+      tmpExpandSources.push_back(expandSources[(4*srcCnt) + 2]);
+      tmpExpandSources.push_back(expandSources[(4*srcCnt) + 3]);
+      tmpExpandSources.push_back(0);
+      srcCnt++;
+    }//end j
+  }//end i
+  swap(expandSources, tmpExpandSources);
+  tmpExpandSources.clear();
+  fgtList.clear();
+
   int localSizes[2];
   int globalSizes[2];
-  localSizes[0] = (expandSources.size())/4;
+  localSizes[0] = (expandSources.size())/5;
   localSizes[1] = (directSources.size())/4;
   MPI_Allreduce(localSizes, globalSizes, 2, MPI_INT, MPI_SUM, comm);
 
@@ -101,10 +126,10 @@ void pfgt(std::vector<double>& sources, const unsigned int minPtsInFgt, const un
     std::vector<double> finalDirectSources;
 
     if(rank < extraExpand) {
-      par::scatterValues<double>(expandSources, finalExpandSources, (4*(avgExpand + 1)), comm);
+      par::scatterValues<double>(expandSources, finalExpandSources, (5*(avgExpand + 1)), comm);
       par::scatterValues<double>(directSources, finalDirectSources, 0, comm);
     } else if(rank < npesExpand) {
-      par::scatterValues<double>(expandSources, finalExpandSources, (4*avgExpand), comm);
+      par::scatterValues<double>(expandSources, finalExpandSources, (5*avgExpand), comm);
       par::scatterValues<double>(directSources, finalDirectSources, 0, comm);
     } else if(rank < (npesExpand + extraDirect)) {
       par::scatterValues<double>(expandSources, finalExpandSources, 0, comm);
