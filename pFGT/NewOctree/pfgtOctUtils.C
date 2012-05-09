@@ -467,7 +467,7 @@ void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt,
 
     MPI_Request recvPtsReq;
     if(addToLast) {
-      int numPts = ((sources.size())/4);
+      numPts = ((sources.size())/4);
       sources.resize(4*(numPts + (nextFgt.getWeight())));
       fgtList[fgtList.size() - 1].addWeight(nextFgt.getWeight());
       MPI_Irecv((&(sources[4*numPts])), (4*(nextFgt.getWeight())), MPI_DOUBLE, nextRank,
