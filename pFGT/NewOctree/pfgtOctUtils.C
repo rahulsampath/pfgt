@@ -191,7 +191,19 @@ void pfgtHybridDirect(std::vector<double> & directSources, const unsigned int Fg
     MPI_Comm subComm, MPI_Comm comm) {
   PetscLogEventBegin(directHybridEvent, 0, 0, 0, 0);
 
+  int subNpes;
+  MPI_Comm_size(subComm, &subNpes);
+
   assert(!(directSources.empty()));
+
+  unsigned int px = static_cast<unsigned int>(directSources[0]*(__DTPMD__));
+  unsigned int py = static_cast<unsigned int>(directSources[1]*(__DTPMD__));
+  unsigned int pz = static_cast<unsigned int>(directSources[2]*(__DTPMD__));
+  ot::TreeNode firstPt(px, py, pz, __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
+
+  std::vector<ot::TreeNode> directMins(subNpes);
+  MPI_Allgather(&firstPt, 1, par::Mpi_datatype<ot::TreeNode>::value(),
+      &(directMins[0]), 1, par::Mpi_datatype<ot::TreeNode>::value(), subComm);
 
   std::vector<ot::TreeNode> fgtMins;
   computeFGTminsHybridDirect(fgtMins, comm);
