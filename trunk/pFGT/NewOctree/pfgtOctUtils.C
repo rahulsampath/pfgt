@@ -163,8 +163,32 @@ void pfgt(std::vector<double>& sources, const unsigned int minPtsInFgt, const un
 
     finalExpandSources.clear();
 
+    int numPtsInRemoteFgt = 0;
+    for( ; numPtsInRemoteFgt < numExpandPts; ++numPtsInRemoteFgt) {
+      unsigned int px = static_cast<unsigned int>(expandSources[4*numPtsInRemoteFgt]*(__DTPMD__));
+      unsigned int py = static_cast<unsigned int>(expandSources[(4*numPtsInRemoteFgt)+1]*(__DTPMD__));
+      unsigned int pz = static_cast<unsigned int>(expandSources[(4*numPtsInRemoteFgt)+2]*(__DTPMD__));
+      ot::TreeNode pt(px, py, pz, __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
+      if(pt >= fgtList[0]) {
+        break;
+      }
+    }//end 
+
+    int sumFgtWts = 0;
+    for(int i = 0; i < fgtList.size(); ++i) {
+      sumFgtWts += fgtList[i].getWeight();
+    }//end i
+
+    int excessWt = sumFgtWts + numPtsInRemoteFgt - numExpandPts;
+    assert(excessWt >= 0);
+    if(!(fgtList.empty())) {
+      int lastWt = fgtList[fgtList.size() - 1].getWeight();
+      assert(lastWt > excessWt);
+      fgtList[fgtList.size() - 1].setWeight(lastWt - excessWt);
+    }
+
     if(rank < npesExpand) {
-      pfgtHybridExpand(expandSources, fgtList, FgtLev, subComm, comm);
+      pfgtHybridExpand(expandSources, numPtsInRemoteFgt, fgtList, FgtLev, subComm, comm);
     } else {
       pfgtHybridDirect(finalDirectSources, FgtLev, subComm, comm);
     }
@@ -175,8 +199,9 @@ void pfgt(std::vector<double>& sources, const unsigned int minPtsInFgt, const un
   PetscLogEventEnd(fgtEvent, 0, 0, 0, 0);
 }
 
-void pfgtHybridExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> & fgtList,
-    const unsigned int FgtLev, MPI_Comm subComm, MPI_Comm comm) {
+void pfgtHybridExpand(std::vector<double> & expandSources, int numPtsInRemoteFgt, 
+    std::vector<ot::TreeNode> & fgtList, const unsigned int FgtLev,
+    MPI_Comm subComm, MPI_Comm comm) {
   PetscLogEventBegin(expandHybridEvent, 0, 0, 0, 0);
 
   assert(!(expandSources.empty()));
