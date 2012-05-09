@@ -8,10 +8,6 @@
 #include "dtypes.h"
 
 extern PetscLogEvent fgtEvent;
-extern PetscLogEvent s2wEvent;
-extern PetscLogEvent fgtOctConEvent;
-extern PetscLogEvent expandHybridEvent;
-extern PetscLogEvent directHybridEvent;
 
 void pfgt(std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev,
     const int P, const int L, const int K, MPI_Comm comm) {
@@ -20,16 +16,6 @@ void pfgt(std::vector<double>& sources, const unsigned int minPtsInFgt, const un
   int npes, rank;
   MPI_Comm_size(comm, &npes);
   MPI_Comm_rank(comm, &rank);
-
-  //FGT box size = sqrt(delta)
-  const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
-
-  //Kernel Bandwidth
-  const double delta = hFgt*hFgt;
-
-  if(!rank) {
-    std::cout<<"delta = "<<delta<<std::endl;
-  }
 
   std::vector<double> expandSources;
   std::vector<double> directSources;
@@ -188,7 +174,7 @@ void pfgt(std::vector<double>& sources, const unsigned int minPtsInFgt, const un
     }
 
     if(rank < npesExpand) {
-      pfgtHybridExpand(expandSources, numPtsInRemoteFgt, fgtList, FgtLev, subComm, comm);
+      pfgtHybridExpand(expandSources, numPtsInRemoteFgt, fgtList, FgtLev, P, L, subComm, comm);
     } else {
       pfgtHybridDirect(finalDirectSources, FgtLev, subComm, comm);
     }
@@ -200,21 +186,21 @@ void pfgt(std::vector<double>& sources, const unsigned int minPtsInFgt, const un
 }
 
 void pfgtHybridExpand(std::vector<double> & expandSources, int numPtsInRemoteFgt, 
-    std::vector<ot::TreeNode> & fgtList, const unsigned int FgtLev,
+    std::vector<ot::TreeNode> & fgtList, const unsigned int FgtLev, const int P, const int L,
     MPI_Comm subComm, MPI_Comm comm) {
-  PetscLogEventBegin(expandHybridEvent, 0, 0, 0, 0);
 
   assert(!(expandSources.empty()));
 
   std::vector<ot::TreeNode> fgtMins;
-  computeFGTminsHybridExpand(fgtMins, fgtList, subComm, comm);
+  computeFgtMinsHybridExpand(fgtMins, fgtList, subComm, comm);
 
-  PetscLogEventEnd(expandHybridEvent, 0, 0, 0, 0);
+  std::vector<double> localWlist;
+  s2w(localWlist, expandSources, numPtsInRemoteFgt, fgtList, fgtMins, FgtLev, P, L, subComm);
+
 }
 
 void pfgtHybridDirect(std::vector<double> & directSources, const unsigned int FgtLev, 
     MPI_Comm subComm, MPI_Comm comm) {
-  PetscLogEventBegin(directHybridEvent, 0, 0, 0, 0);
 
   int subNpes;
   MPI_Comm_size(subComm, &subNpes);
@@ -231,12 +217,11 @@ void pfgtHybridDirect(std::vector<double> & directSources, const unsigned int Fg
       &(directMins[0]), 1, par::Mpi_datatype<ot::TreeNode>::value(), subComm);
 
   std::vector<ot::TreeNode> fgtMins;
-  computeFGTminsHybridDirect(fgtMins, comm);
+  computeFgtMinsHybridDirect(fgtMins, comm);
 
-  PetscLogEventEnd(directHybridEvent, 0, 0, 0, 0);
 }
 
-void computeFGTminsHybridExpand(std::vector<ot::TreeNode> & fgtMins, std::vector<ot::TreeNode> & fgtList,
+void computeFgtMinsHybridExpand(std::vector<ot::TreeNode> & fgtMins, std::vector<ot::TreeNode> & fgtList,
     MPI_Comm subComm, MPI_Comm comm) {
   int subNpes;
   MPI_Comm_size(subComm, &subNpes);
@@ -285,7 +270,7 @@ void computeFGTminsHybridExpand(std::vector<ot::TreeNode> & fgtMins, std::vector
   MPI_Bcast(&(fgtMins[0]), fgtMinSize, par::Mpi_datatype<ot::TreeNode>::value(), 0, comm);
 }
 
-void computeFGTminsHybridDirect(std::vector<ot::TreeNode> & fgtMins, MPI_Comm comm) {
+void computeFgtMinsHybridDirect(std::vector<ot::TreeNode> & fgtMins, MPI_Comm comm) {
   int fgtMinSize;
   MPI_Bcast(&fgtMinSize, 1, MPI_INT, 0, comm);
 
@@ -542,21 +527,29 @@ void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt,
   assert((sources.size()) == ((directSources.size()) + (expandSources.size())));
 }
 
-void s2w(std::vector<double> & localWlist, std::vector<double> & sources, ot::TreeNode remoteFGT, 
-    const unsigned int numPtsInRemoteFGT, std::vector<ot::TreeNode> & fgtList, 
-    std::vector<ot::TreeNode> & fgtMins, const int P, const int L, 
-    const unsigned int FgtLev, const double hFgt, MPI_Comm subComm) {
-  PetscLogEventBegin(s2wEvent, 0, 0, 0, 0);
+void s2w(std::vector<double> & localWlist, std::vector<double> & sources,  
+    const int numPtsInRemoteFgt, std::vector<ot::TreeNode> & fgtList, 
+    std::vector<ot::TreeNode> & fgtMins, const unsigned int FgtLev,
+    const int P, const int L, MPI_Comm subComm) {
+
+  //Fgt box size = sqrt(delta)
+  const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
 
   int rank;
   MPI_Comm_rank(subComm, &rank);
 
-  int remoteFGTowner = -1;
-  if(numPtsInRemoteFGT > 0) {
+  int remoteFgtOwner = -1;
+  ot::TreeNode remoteFgt;
+  if(numPtsInRemoteFgt > 0) {
+    unsigned int px = static_cast<unsigned int>(sources[0]*(__DTPMD__));
+    unsigned int py = static_cast<unsigned int>(sources[1]*(__DTPMD__));
+    unsigned int pz = static_cast<unsigned int>(sources[2]*(__DTPMD__));
+    ot::TreeNode ptOct(px, py, pz, __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
+    remoteFgt = ptOct.getAncestor(FgtLev);
     unsigned int retIdx;
-    seq::maxLowerBound(fgtMins, remoteFGT, retIdx, NULL, NULL);
-    remoteFGTowner = fgtMins[retIdx].getWeight();
-    assert(remoteFGTowner < rank);
+    seq::maxLowerBound(fgtMins, remoteFgt, retIdx, NULL, NULL);
+    remoteFgtOwner = fgtMins[retIdx].getWeight();
+    assert(remoteFgtOwner < rank);
   }
 
   int subNpes;
@@ -569,12 +562,14 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources, ot::Tr
   for(int i = 0; i < subNpes; ++i) {
     sendCnts[i] = 0;
   }//end i
-  if(remoteFGTowner >= 0) {
-    sendCnts[remoteFGTowner] = numWcoeffs;
+  if(remoteFgtOwner >= 0) {
+    sendCnts[remoteFgtOwner] = numWcoeffs;
   }
 
   int* recvCnts = new int[subNpes]; 
 
+  //Performance Improvement: This Alltoall can be avoided by doing a simple
+  //calculation using excessWt, avgExpand and extraExpand.
   MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, subComm);
 
   int* sendDisps = new int[subNpes];
@@ -591,12 +586,12 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources, ot::Tr
   const double ImExpZfactor = LbyP/hFgt;
 
   std::vector<double> sendWlist;
-  if(remoteFGTowner >= 0) {
+  if(remoteFgtOwner >= 0) {
     sendWlist.resize(numWcoeffs, 0.0);
-    double cx = (0.5*hFgt) + ((static_cast<double>(remoteFGT.getX()))/(__DTPMD__));
-    double cy = (0.5*hFgt) + ((static_cast<double>(remoteFGT.getY()))/(__DTPMD__));
-    double cz = (0.5*hFgt) + ((static_cast<double>(remoteFGT.getZ()))/(__DTPMD__));
-    for(int i = 0; i < numPtsInRemoteFGT; ++i) {
+    double cx = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getX()))/(__DTPMD__));
+    double cy = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getY()))/(__DTPMD__));
+    double cz = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getZ()))/(__DTPMD__));
+    for(int i = 0; i < numPtsInRemoteFgt; ++i) {
       double px = sources[4*i];
       double py = sources[(4*i)+1];
       double pz = sources[(4*i)+2];
@@ -642,7 +637,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources, ot::Tr
     }//end d
   }//end i
 
-  for(int i = 0, ptsIdx = numPtsInRemoteFGT; i < fgtList.size(); ++i) {
+  for(int i = 0, ptsIdx = numPtsInRemoteFgt; i < fgtList.size(); ++i) {
     double cx = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getX()))/(__DTPMD__));
     double cy = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getY()))/(__DTPMD__));
     double cz = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getZ()))/(__DTPMD__));
@@ -666,7 +661,6 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources, ot::Tr
     }//end j
   }//end i
 
-  PetscLogEventEnd(s2wEvent, 0, 0, 0, 0);
 }
 
 
