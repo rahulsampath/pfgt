@@ -26,8 +26,8 @@ void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt,
     const unsigned int FgtLev, std::vector<double>& expandSources, std::vector<double>& directSources, 
     std::vector<ot::TreeNode>& fgtList, MPI_Comm comm);
 
-void pfgtHybridExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> & fgtList, 
-    const unsigned int FgtLev, MPI_Comm subComm, MPI_Comm comm);
+void pfgtHybridExpand(std::vector<double> & expandSources, int numPtsInRemoteFgt, 
+    std::vector<ot::TreeNode> & fgtList, const unsigned int FgtLev, MPI_Comm subComm, MPI_Comm comm);
 
 void pfgtHybridDirect(std::vector<double> & directSources, const unsigned int FgtLev,
     MPI_Comm subComm, MPI_Comm comm);
