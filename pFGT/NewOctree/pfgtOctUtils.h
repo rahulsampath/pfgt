@@ -27,15 +27,21 @@ void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt,
     std::vector<ot::TreeNode>& fgtList, MPI_Comm comm);
 
 void pfgtHybridExpand(std::vector<double> & expandSources, int numPtsInRemoteFgt, 
-    std::vector<ot::TreeNode> & fgtList, const unsigned int FgtLev, MPI_Comm subComm, MPI_Comm comm);
+    std::vector<ot::TreeNode> & fgtList, const unsigned int FgtLev, const int P,
+    const int L, MPI_Comm subComm, MPI_Comm comm);
 
 void pfgtHybridDirect(std::vector<double> & directSources, const unsigned int FgtLev,
     MPI_Comm subComm, MPI_Comm comm);
 
-void computeFGTminsHybridExpand(std::vector<ot::TreeNode> & fgtMins, std::vector<ot::TreeNode> & fgtList,
+void computeFgtMinsHybridExpand(std::vector<ot::TreeNode> & fgtMins, std::vector<ot::TreeNode> & fgtList,
     MPI_Comm subComm, MPI_Comm comm);
 
-void computeFGTminsHybridDirect(std::vector<ot::TreeNode> & fgtMins, MPI_Comm comm);
+void computeFgtMinsHybridDirect(std::vector<ot::TreeNode> & fgtMins, MPI_Comm comm);
+
+void s2w(std::vector<double> & localWlist, std::vector<double> & sources,  
+    const int numPtsInRemoteFgt, std::vector<ot::TreeNode> & fgtList, 
+    std::vector<ot::TreeNode> & fgtMins, const unsigned int FgtLev,
+    const int P, const int L, MPI_Comm subComm);
 
 #endif
 

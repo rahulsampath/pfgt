@@ -14,16 +14,8 @@
 
 #include "pfgtOctUtils.h"
 
-#ifdef MPI_WTIME_IS_GLOBAL
-#undef MPI_WTIME_IS_GLOBAL
-#endif
-
 PetscCookie fgtCookie;
 PetscLogEvent fgtEvent;
-PetscLogEvent s2wEvent;
-PetscLogEvent fgtOctConEvent;
-PetscLogEvent expandHybridEvent;
-PetscLogEvent directHybridEvent;
 
 bool softEquals(double a, double b) {
   return ((fabs(a - b)) < 1.0e-14);
@@ -39,12 +31,8 @@ int main(int argc, char** argv) {
   PetscInitialize(&argc, &argv, NULL, NULL);
   ot::RegisterEvents();
 
-  PetscCookieRegister("FGT", &fgtCookie);
-  PetscLogEventRegister("FGT", fgtCookie, &fgtEvent);
-  PetscLogEventRegister("FGToctCon", fgtCookie, &fgtOctConEvent);
-  PetscLogEventRegister("Expand-H", fgtCookie, &expandHybridEvent);
-  PetscLogEventRegister("Direct-H", fgtCookie, &directHybridEvent);
-  PetscLogEventRegister("S2W", fgtCookie, &s2wEvent);
+  PetscCookieRegister("Fgt", &fgtCookie);
+  PetscLogEventRegister("Fgt", fgtCookie, &fgtEvent);
 
   int npes, rank;
   MPI_Comm_size(MPI_COMM_WORLD, &npes);
@@ -63,6 +51,12 @@ int main(int argc, char** argv) {
   unsigned int FgtLev = atoi(argv[4]);
   unsigned int minPtsInFgt = atoi(argv[5]);
 
+  //Fgt box size = sqrt(delta)
+  const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
+
+  //Kernel Bandwidth
+  const double delta = hFgt*hFgt;
+
   assert(FgtLev <= __MAX_DEPTH__);
 
   if(!rank) {
@@ -71,6 +65,7 @@ int main(int argc, char** argv) {
     std::cout<<"epsilon = "<<epsilon<<std::endl;
     std::cout<<"FgtLev = "<<FgtLev<<std::endl;
     std::cout<<"minPtsInFgt = "<<minPtsInFgt<<std::endl;
+    std::cout<<"delta = "<<delta<<std::endl;
   }
 
   int P, L, K;
@@ -143,7 +138,7 @@ int main(int argc, char** argv) {
   }//end i
   pts.clear();
 
-  //FGT
+  //Fgt
   pfgt(sources, minPtsInFgt, FgtLev, P, L, K, MPI_COMM_WORLD);
 
   PetscFinalize();
