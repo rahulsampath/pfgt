@@ -1,12 +1,12 @@
 
 #include "mpi.h"
 #include "petsc.h"
-#include "sys.h"
+#include "sys/sys.h"
 #include <cmath>
 #include <cassert>
-#include "parUtils.h"
-#include "octUtils.h"
-#include "TreeNode.h"
+#include "par/parUtils.h"
+#include "oct/octUtils.h"
+#include "oct/TreeNode.h"
 #include <cstdlib>
 #include <vector>
 #include "externVars.h"

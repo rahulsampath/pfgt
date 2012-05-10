@@ -3,7 +3,7 @@
 #define __PFGT_OCT_UTILS__
 
 #include "petsc.h"
-#include "TreeNode.h"
+#include "oct/TreeNode.h"
 #include <vector>
 
 #define __PI__ 3.1415926535897932

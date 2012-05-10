@@ -4,8 +4,8 @@
 #include <algorithm>
 #include "mpi.h"
 #include "pfgtOctUtils.h"
-#include "parUtils.h"
-#include "dtypes.h"
+#include "par/parUtils.h"
+#include "par/dtypes.h"
 
 extern PetscLogEvent fgtEvent;
 
