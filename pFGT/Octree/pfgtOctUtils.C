@@ -2,8 +2,8 @@
 #include "mpi.h"
 #include "petscda.h"
 #include "pfgtOctUtils.h"
-#include "seqUtils.h"
-#include "parUtils.h"
+#include "seq/seqUtils.h"
+#include "par/parUtils.h"
 #include <cmath>
 #include <cstdlib>
 #include <cassert>
