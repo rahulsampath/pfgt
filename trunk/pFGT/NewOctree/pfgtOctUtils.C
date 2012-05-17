@@ -197,6 +197,13 @@ void pfgtExpand(std::vector<double> & expandSources, int numPtsInRemoteFgt,
   std::vector<double> localWlist;
   s2w(localWlist, expandSources, numPtsInRemoteFgt, fgtList, fgtMins, FgtLev, P, L, subComm);
 
+  w2l();
+
+  d2lExpand();
+
+  w2dExpand();
+
+  l2t();
 }
 
 void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev, 
@@ -219,6 +226,11 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev,
   std::vector<ot::TreeNode> fgtMins;
   computeFgtMinsDirect(fgtMins, comm);
 
+  d2d();
+
+  d2lDirect();
+
+  w2dDirect();
 }
 
 void computeFgtMinsExpand(std::vector<ot::TreeNode> & fgtMins, std::vector<ot::TreeNode> & fgtList,
