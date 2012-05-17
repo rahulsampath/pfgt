@@ -9,7 +9,7 @@
 
 extern PetscLogEvent fgtEvent;
 
-void pfgt(std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev,
+void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev,
     const int P, const int L, const int K, MPI_Comm comm) {
   PetscLogEventBegin(fgtEvent, 0, 0, 0, 0);
 
@@ -174,9 +174,9 @@ void pfgt(std::vector<double>& sources, const unsigned int minPtsInFgt, const un
     }
 
     if(rank < npesExpand) {
-      pfgtHybridExpand(expandSources, numPtsInRemoteFgt, fgtList, FgtLev, P, L, subComm, comm);
+      pfgtExpand(expandSources, numPtsInRemoteFgt, fgtList, FgtLev, P, L, subComm, comm);
     } else {
-      pfgtHybridDirect(finalDirectSources, FgtLev, subComm, comm);
+      pfgtDirect(finalDirectSources, FgtLev, subComm, comm);
     }
 
     MPI_Comm_free(&subComm);
@@ -185,21 +185,21 @@ void pfgt(std::vector<double>& sources, const unsigned int minPtsInFgt, const un
   PetscLogEventEnd(fgtEvent, 0, 0, 0, 0);
 }
 
-void pfgtHybridExpand(std::vector<double> & expandSources, int numPtsInRemoteFgt, 
+void pfgtExpand(std::vector<double> & expandSources, int numPtsInRemoteFgt, 
     std::vector<ot::TreeNode> & fgtList, const unsigned int FgtLev, const int P, const int L,
     MPI_Comm subComm, MPI_Comm comm) {
 
   assert(!(expandSources.empty()));
 
   std::vector<ot::TreeNode> fgtMins;
-  computeFgtMinsHybridExpand(fgtMins, fgtList, subComm, comm);
+  computeFgtMinsExpand(fgtMins, fgtList, subComm, comm);
 
   std::vector<double> localWlist;
   s2w(localWlist, expandSources, numPtsInRemoteFgt, fgtList, fgtMins, FgtLev, P, L, subComm);
 
 }
 
-void pfgtHybridDirect(std::vector<double> & directSources, const unsigned int FgtLev, 
+void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev, 
     MPI_Comm subComm, MPI_Comm comm) {
 
   int subNpes;
@@ -217,11 +217,11 @@ void pfgtHybridDirect(std::vector<double> & directSources, const unsigned int Fg
       &(directMins[0]), 1, par::Mpi_datatype<ot::TreeNode>::value(), subComm);
 
   std::vector<ot::TreeNode> fgtMins;
-  computeFgtMinsHybridDirect(fgtMins, comm);
+  computeFgtMinsDirect(fgtMins, comm);
 
 }
 
-void computeFgtMinsHybridExpand(std::vector<ot::TreeNode> & fgtMins, std::vector<ot::TreeNode> & fgtList,
+void computeFgtMinsExpand(std::vector<ot::TreeNode> & fgtMins, std::vector<ot::TreeNode> & fgtList,
     MPI_Comm subComm, MPI_Comm comm) {
   int subNpes;
   MPI_Comm_size(subComm, &subNpes);
@@ -270,7 +270,7 @@ void computeFgtMinsHybridExpand(std::vector<ot::TreeNode> & fgtMins, std::vector
   MPI_Bcast(&(fgtMins[0]), fgtMinSize, par::Mpi_datatype<ot::TreeNode>::value(), 0, comm);
 }
 
-void computeFgtMinsHybridDirect(std::vector<ot::TreeNode> & fgtMins, MPI_Comm comm) {
+void computeFgtMinsDirect(std::vector<ot::TreeNode> & fgtMins, MPI_Comm comm) {
   int fgtMinSize;
   MPI_Bcast(&fgtMinSize, 1, MPI_INT, 0, comm);
 
@@ -660,7 +660,27 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
       }//end for k3
     }//end j
   }//end i
+}
 
+void d2lExpand() {
+}
+
+void d2lDirect() {
+}
+
+void w2dExpand() {
+}
+
+void w2dDirect() {
+}
+
+void d2d() {
+}
+
+void l2t() {
+}
+
+void w2l() {
 }
 
 
