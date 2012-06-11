@@ -266,8 +266,6 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
     std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & fgtMins,
     const unsigned int FgtLev, const int P, const int L,
     int* sendCnts, int* sendDisps, int* recvCnts, int* recvDisps, MPI_Comm subComm) {
-  int rank;
-  MPI_Comm_rank(subComm, &rank);
 
   int npes;
   MPI_Comm_size(subComm, &npes);
@@ -356,6 +354,10 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
     std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & fgtMins,
     const unsigned int FgtLev, const int P, const int L,
     int* sendCnts, int* sendDisps, int* recvCnts, int* recvDisps, MPI_Comm subComm) {
+
+  int npes;
+  MPI_Comm_size(subComm, &npes);
+
   //Fgt box size = sqrt(delta)
   const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
 
@@ -366,12 +368,6 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
 
   //2P complex coefficients for each dimension.  
   const unsigned int numWcoeffs = 16*P*P*P;
-
-  int rank;
-  MPI_Comm_rank(subComm, &rank);
-
-  int npes;
-  MPI_Comm_size(subComm, &npes);
 
 }
 
