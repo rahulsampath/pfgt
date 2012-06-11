@@ -185,20 +185,39 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
   PetscLogEventEnd(fgtEvent, 0, 0, 0, 0);
 }
 
-void pfgtExpand(std::vector<double> & expandSources, int numPtsInRemoteFgt, 
+void pfgtExpand(std::vector<double> & expandSources, const int numPtsInRemoteFgt, 
     std::vector<ot::TreeNode> & fgtList, const unsigned int FgtLev, const int P, const int L,
     MPI_Comm subComm, MPI_Comm comm) {
 
   assert(!(expandSources.empty()));
 
+  int subRank;
+  MPI_Comm_rank(subComm, &subRank);
+
   std::vector<ot::TreeNode> fgtMins;
   computeFgtMinsExpand(fgtMins, fgtList, subComm, comm);
+
+  int remoteFgtOwner = -1;
+  ot::TreeNode remoteFgt;
+  if(numPtsInRemoteFgt > 0) {
+    computeRemoteFgt(remoteFgt, remoteFgtOwner, FgtLev, expandSources, fgtMins);
+  }
+  assert(remoteFgtOwner < subRank);
 
   //2P complex coefficients for each dimension.  
   const unsigned int numWcoeffs = 16*P*P*P;
 
+  int* s2wSendCnts = NULL;
+  int* s2wSendDisps = NULL;
+  int* s2wRecvCnts = NULL;
+  int* s2wRecvDisps = NULL;
+
+  createS2WcommInfo(s2wSendCnts, s2wSendDisps, s2wRecvCnts, s2wRecvDisps, 
+      remoteFgtOwner, numWcoeffs, subComm);
+
   std::vector<double> localWlist( (numWcoeffs*(fgtList.size())), 0.0);
-  s2w(localWlist, expandSources, numPtsInRemoteFgt, fgtList, fgtMins, FgtLev, P, L, subComm);
+  s2w(localWlist, expandSources, remoteFgt, remoteFgtOwner, numPtsInRemoteFgt, fgtList,
+      fgtMins, FgtLev, P, L, s2wSendCnts, s2wSendDisps, s2wRecvCnts, s2wRecvDisps, subComm);
 
   std::vector<double> localLlist( (localWlist.size()), 0.0);
   w2l();
@@ -208,7 +227,10 @@ void pfgtExpand(std::vector<double> & expandSources, int numPtsInRemoteFgt,
   w2dExpand();
 
   std::vector<double> results(((expandSources.size())/4), 0.0);
-  l2t(results, localLlist, expandSources, numPtsInRemoteFgt, fgtList, fgtMins, FgtLev, P, L, subComm);
+  l2t(results, localLlist, expandSources, remoteFgt, remoteFgtOwner, numPtsInRemoteFgt, 
+      fgtList, fgtMins, FgtLev, P, L, s2wSendCnts, s2wSendDisps, s2wRecvCnts, s2wRecvDisps, subComm);
+
+  destroyS2WcommInfo(s2wSendCnts, s2wSendDisps, s2wRecvCnts, s2wRecvDisps); 
 }
 
 void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev, 
@@ -240,55 +262,24 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev,
 }
 
 void s2w(std::vector<double> & localWlist, std::vector<double> & sources,  
-    const int numPtsInRemoteFgt, std::vector<ot::TreeNode> & fgtList, 
-    std::vector<ot::TreeNode> & fgtMins, const unsigned int FgtLev,
-    const int P, const int L, MPI_Comm subComm) {
-
-  //Fgt box size = sqrt(delta)
-  const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
-
+    const ot::TreeNode remoteFgt, const int remoteFgtOwner, const int numPtsInRemoteFgt,
+    std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & fgtMins,
+    const unsigned int FgtLev, const int P, const int L,
+    int* sendCnts, int* sendDisps, int* recvCnts, int* recvDisps, MPI_Comm subComm) {
   int rank;
   MPI_Comm_rank(subComm, &rank);
 
   int npes;
   MPI_Comm_size(subComm, &npes);
 
-  int remoteFgtOwner = -1;
-  ot::TreeNode remoteFgt;
-  if(numPtsInRemoteFgt > 0) {
-    computeRemoteFgt(remoteFgt, remoteFgtOwner, FgtLev, sources, fgtMins);
-  }
-  assert(remoteFgtOwner < rank);
-
-  //2P complex coefficients for each dimension.  
-  const unsigned int numWcoeffs = 16*P*P*P;
-
-  int* sendCnts = new int[npes];
-  for(int i = 0; i < npes; ++i) {
-    sendCnts[i] = 0;
-  }//end i
-  if(remoteFgtOwner >= 0) {
-    sendCnts[remoteFgtOwner] = numWcoeffs;
-  }
-
-  int* recvCnts = new int[npes]; 
-
-  //Performance Improvement: This Alltoall can be avoided by doing a simple
-  //calculation using excessWt, avgExpand and extraExpand.
-  MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, subComm);
-
-  int* sendDisps = new int[npes];
-  int* recvDisps = new int[npes]; 
-
-  sendDisps[0] = 0;
-  recvDisps[0] = 0;
-  for(int i = 1; i < npes; ++i) {
-    sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
-    recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
-  }//end i
+  //Fgt box size = sqrt(delta)
+  const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
 
   const double LbyP = static_cast<double>(L)/static_cast<double>(P);
   const double ImExpZfactor = LbyP/hFgt;
+
+  //2P complex coefficients for each dimension.  
+  const unsigned int numWcoeffs = 16*P*P*P;
 
   std::vector<double> sendWlist;
   if(remoteFgtOwner >= 0) {
@@ -329,13 +320,8 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
   MPI_Alltoallv(sendBuf, sendCnts, sendDisps, MPI_DOUBLE,
       recvBuf, recvCnts, recvDisps, MPI_DOUBLE, subComm);
 
-  delete [] sendCnts;
-  delete [] sendDisps;
-  delete [] recvCnts;
-  delete [] recvDisps;
-
-  for(int i = 0; i < recvWlist.size(); i += numWcoeffs) {
-    for(int d = 0; d < numWcoeffs; ++d) {
+  for(size_t i = 0; i < recvWlist.size(); i += numWcoeffs) {
+    for(unsigned int d = 0; d < numWcoeffs; ++d) {
       localWlist[(numWcoeffs*(fgtList.size() - 1)) + d] += recvWlist[i + d];
     }//end d
   }//end i
@@ -365,14 +351,16 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
   }//end i
 }
 
-void l2t(std::vector<double> & results, std::vector<double> & localLlist,
-    std::vector<double> & sources, const int numPtsInRemoteFgt,
+void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::vector<double> & sources, 
+    const ot::TreeNode remoteFgt, const int remoteFgtOwner, const int numPtsInRemoteFgt,
     std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & fgtMins,
-    const unsigned int FgtLev, const int P, const int L, MPI_Comm subComm) {
+    const unsigned int FgtLev, const int P, const int L,
+    int* sendCnts, int* sendDisps, int* recvCnts, int* recvDisps, MPI_Comm subComm) {
   //Fgt box size = sqrt(delta)
   const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
 
   const double LbyP = static_cast<double>(L)/static_cast<double>(P);
+  const double ImExpZfactor = LbyP/hFgt;
   const double ReExpZfactor = -0.25*LbyP*LbyP;
   const double C0 = ( pow((0.5/sqrt(__PI__)), 3.0)*LbyP*LbyP*LbyP );
 
@@ -403,6 +391,42 @@ void d2d() {
 }
 
 void w2l() {
+}
+
+void createS2WcommInfo(int*& sendCnts, int*& sendDisps, int*& recvCnts, int*& recvDisps, 
+    const int remoteFgtOwner, const unsigned int numWcoeffs, MPI_Comm subComm) {
+  int npes;
+  MPI_Comm_size(subComm, &npes);
+
+  sendCnts = new int[npes];
+  recvCnts = new int[npes]; 
+  sendDisps = new int[npes];
+  recvDisps = new int[npes]; 
+
+  for(int i = 0; i < npes; ++i) {
+    sendCnts[i] = 0;
+  }//end i
+  if(remoteFgtOwner >= 0) {
+    sendCnts[remoteFgtOwner] = numWcoeffs;
+  }
+
+  //Performance Improvement: This Alltoall can be avoided by doing a simple
+  //calculation using excessWt, avgExpand and extraExpand.
+  MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, subComm);
+
+  sendDisps[0] = 0;
+  recvDisps[0] = 0;
+  for(int i = 1; i < npes; ++i) {
+    sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
+    recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
+  }//end i
+}
+
+void destroyS2WcommInfo(int* sendCnts, int* sendDisps, int* recvCnts, int* recvDisps) {
+  delete [] sendCnts;
+  delete [] sendDisps;
+  delete [] recvCnts;
+  delete [] recvDisps;
 }
 
 void computeRemoteFgt(ot::TreeNode & remoteFgt, int & remoteFgtOwner, const unsigned int FgtLev,
