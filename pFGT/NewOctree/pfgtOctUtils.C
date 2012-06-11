@@ -370,8 +370,8 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
   int rank;
   MPI_Comm_rank(subComm, &rank);
 
-  int subNpes;
-  MPI_Comm_size(subComm, &subNpes);
+  int npes;
+  MPI_Comm_size(subComm, &npes);
 
 }
 
