@@ -573,7 +573,15 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
     sendCnts[i] = 0;
   }//end i 
 
-  //TODO: Compute sendCnts using fgtMins
+  //Performance Improvement: This binary search can be avoided by using the
+  //fact that sendBoxList is sorted.
+  for(size_t i = 0; i < sendBoxList.size(); ++i) {
+    unsigned int retIdx;
+    bool found = seq::maxLowerBound(fgtMins, sendBoxList[i], retIdx, NULL, NULL);
+    if(found) {
+      ++(sendCnts[fgtMins[retIdx].getWeight()]);
+    }
+  }//end i
 
   MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, subComm);
 
@@ -626,8 +634,17 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
   delete [] recvCnts;
   delete [] recvDisps;
 
-  //TODO: add recvLlist to localLlist
-
+  //Performance Improvement: This binary search can be avoided by making use of
+  //the fact that recvBoxList is sorted within each processor chunk.
+  for(size_t i = 0; i < recvBoxList.size(); ++i) {
+    unsigned int retIdx;
+    bool found = seq::BinarySearch(&(fgtList[0]), fgtList.size(), recvBoxList[i], &retIdx);
+    if(found) {
+      for(int d = 0; d < numWcoeffs; ++d) {
+        localLlist[(numWcoeffs*retIdx) + d] += recvLlist[(numWcoeffs*i) + d];
+      }//end d
+    }
+  }//end i
 }
 
 void d2lExpand() {
