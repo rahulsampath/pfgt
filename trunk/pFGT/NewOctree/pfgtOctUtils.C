@@ -452,8 +452,181 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
     std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & fgtMins,
     const unsigned int FgtLev, const int P, const int L, const int K, MPI_Comm subComm) {
 
+  int npes;
+  MPI_Comm_size(subComm, &npes);
+
+  //Fgt box size = sqrt(delta)
+  const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
+
+  const unsigned int cellsPerFgt = (1u << (__MAX_DEPTH__ - FgtLev));
+
   //2P complex coefficients for each dimension.  
   const unsigned int numWcoeffs = 16*P*P*P;
+
+  const double LbyP = static_cast<double>(L)/static_cast<double>(P);
+  const double ImExpZfactor = LbyP/hFgt;
+
+  std::vector<ot::TreeNode> tmpBoxes;
+  std::vector<double> tmpVals;
+
+  for(size_t i = 0; i < fgtList.size(); ++i) {
+    unsigned int bAx = fgtList[i].getX();
+    unsigned int bAy = fgtList[i].getY();
+    unsigned int bAz = fgtList[i].getZ();
+    double bx = (0.5*hFgt) + ((static_cast<double>(bAx))/(__DTPMD__));
+    double by = (0.5*hFgt) + ((static_cast<double>(bAy))/(__DTPMD__));
+    double bz = (0.5*hFgt) + ((static_cast<double>(bAz))/(__DTPMD__));
+    unsigned int dAxs, dAxe, dAys, dAye, dAzs, dAze;
+    if(bAx >= (K*cellsPerFgt)) {
+      dAxs = bAx - (K*cellsPerFgt);
+    } else {
+      dAxs = 0; 
+    }
+    if((bAx + ((K + 1)*cellsPerFgt)) <= (__ITPMD__)) {
+      dAxe = bAx + (K*cellsPerFgt);
+    } else {
+      dAxe = (__ITPMD__) - cellsPerFgt;
+    }
+    if(bAy >= (K*cellsPerFgt)) {
+      dAys = bAy - (K*cellsPerFgt);
+    } else {
+      dAys = 0; 
+    }
+    if((bAy + ((K + 1)*cellsPerFgt)) <= (__ITPMD__)) {
+      dAye = bAy + (K*cellsPerFgt);
+    } else {
+      dAye = (__ITPMD__) - cellsPerFgt;
+    }
+    if(bAz >= (K*cellsPerFgt)) {
+      dAzs = bAz - (K*cellsPerFgt);
+    } else {
+      dAzs = 0; 
+    }
+    if((bAz + ((K + 1)*cellsPerFgt)) <= (__ITPMD__)) {
+      dAze = bAz + (K*cellsPerFgt);
+    } else {
+      dAze = (__ITPMD__) - cellsPerFgt;
+    }
+    for(int dAz = dAzs; dAz <= dAze; dAz += cellsPerFgt) {
+      for(int dAy = dAys; dAy <= dAye; dAy += cellsPerFgt) {
+        for(int dAx = dAxs; dAx <= dAxe; dAx += cellsPerFgt) {
+          ot::TreeNode boxD(dAx, dAy, dAz, FgtLev, __DIM__, __MAX_DEPTH__);
+          boxD.setWeight(tmpBoxes.size());
+          tmpBoxes.push_back(boxD);
+          double dx = (0.5*hFgt) + ((static_cast<double>(dAx))/(__DTPMD__));
+          double dy = (0.5*hFgt) + ((static_cast<double>(dAy))/(__DTPMD__));
+          double dz = (0.5*hFgt) + ((static_cast<double>(dAz))/(__DTPMD__));
+          for(int k3 = -P, di = 0; k3 < P; ++k3) {
+            double thetaZ = (static_cast<double>(k3))*(dz - bz);
+            for(int k2 = -P; k2 < P; ++k2) {
+              double thetaY = (static_cast<double>(k2))*(dy - by);
+              for(int k1 = -P; k1 < P; ++k1, ++di) {
+                double thetaX = (static_cast<double>(k1))*(dx - bx);
+                double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
+                double a = localWlist[(numWcoeffs*i) + (2*di)];
+                double b = localWlist[(numWcoeffs*i) + (2*di) + 1];
+                double c = cos(theta);
+                double d = sin(theta);
+                double reVal = ((a*c) - (b*d));
+                double imVal = ((a*d) + (b*c));
+                tmpVals.push_back(reVal);
+                tmpVals.push_back(imVal);
+              }//end for k1
+            }//end for k2
+          }//end for k3
+        }//end dAx
+      }//end dAy
+    }//end dAz
+  }//end i
+
+  std::vector<ot::TreeNode> sendBoxList;
+  std::vector<double> sendLlist;
+
+  if(!(tmpBoxes.empty())) {
+    std::sort(tmpBoxes.begin(), tmpBoxes.end());
+
+    sendLlist.insert(sendLlist.end(), tmpVals.begin() + (numWcoeffs*(tmpBoxes[0].getWeight())),
+        tmpVals.begin() + (numWcoeffs*(tmpBoxes[0].getWeight() + 1)));
+    sendBoxList.push_back(tmpBoxes[0]);
+    for(size_t i = 1; i < tmpBoxes.size(); ++i) {
+      if(tmpBoxes[i] == tmpBoxes[i - 1]) {
+        for(int d = 0; d < numWcoeffs; ++d) {
+          sendLlist[sendLlist.size() - 1 - d] += tmpVals[(numWcoeffs*(tmpBoxes[i].getWeight() + 1)) - 1 - d];
+        }//end d
+      } else {
+        sendLlist.insert(sendLlist.end(), tmpVals.begin() + (numWcoeffs*(tmpBoxes[i].getWeight())),
+            tmpVals.begin() + (numWcoeffs*(tmpBoxes[i].getWeight() + 1)));
+        sendBoxList.push_back(tmpBoxes[i]);
+      }
+    }//end i
+  }
+
+  tmpBoxes.clear();
+  tmpVals.clear();
+
+  int* sendCnts = new int[npes];
+  int* sendDisps = new int[npes];
+  int* recvCnts = new int[npes];
+  int* recvDisps = new int[npes];
+
+  for(int i = 0; i < npes; ++i) {
+    sendCnts[i] = 0;
+  }//end i 
+
+  //TODO: Compute sendCnts using fgtMins
+
+  MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, subComm);
+
+  sendDisps[0] = 0;
+  recvDisps[0] = 0;
+  for(int i = 1; i < npes; ++i) {
+    sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
+    recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
+  }//end i
+
+  std::vector<ot::TreeNode> recvBoxList(recvDisps[npes - 1] + recvCnts[npes - 1]);
+
+  ot::TreeNode* sendBuf1 = NULL;
+  if(!(sendBoxList.empty())) {
+    sendBuf1 = &(sendBoxList[0]);
+  }
+
+  ot::TreeNode* recvBuf1 = NULL;
+  if(!(recvBoxList.empty())) {
+    recvBuf1 = &(recvBoxList[0]);
+  }
+
+  MPI_Alltoallv(sendBuf1, sendCnts, sendDisps, par::Mpi_datatype<ot::TreeNode>::value(),
+      recvBuf1, recvCnts, recvDisps, par::Mpi_datatype<ot::TreeNode>::value(), subComm);
+
+  for(int i = 0; i < npes; ++i) {
+    sendCnts[i] *= numWcoeffs;
+    sendDisps[i] *= numWcoeffs;
+    recvCnts[i] *= numWcoeffs;
+    recvDisps[i] *= numWcoeffs;
+  }//end i 
+
+  std::vector<double> recvLlist(recvDisps[npes - 1] + recvCnts[npes - 1]);
+
+  double* sendBuf2 = NULL;
+  if(!(sendLlist.empty())) {
+    sendBuf2 = &(sendLlist[0]);
+  }
+
+  double* recvBuf2 = NULL;
+  if(!(recvLlist.empty())) {
+    recvBuf2 = &(recvLlist[0]);
+  }
+
+  MPI_Alltoallv(sendBuf2, sendCnts, sendDisps, MPI_DOUBLE,
+      recvBuf2, recvCnts, recvDisps, MPI_DOUBLE, subComm);
+
+  delete [] sendCnts;
+  delete [] sendDisps;
+  delete [] recvCnts;
+  delete [] recvDisps;
+
+  //TODO: add recvLlist to localLlist
 
 }
 
