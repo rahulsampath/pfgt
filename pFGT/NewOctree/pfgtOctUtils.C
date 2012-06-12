@@ -369,6 +369,30 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
   //2P complex coefficients for each dimension.  
   const unsigned int numWcoeffs = 16*P*P*P;
 
+  std::vector<double> sendLlist(recvDisps[npes - 1] + recvCnts[npes - 1]);
+
+  for(size_t i = 0; i < sendLlist.size(); i += numWcoeffs) {
+    for(unsigned int d = 0; d < numWcoeffs; ++d) {
+      sendLlist[i + d] = localLlist[(numWcoeffs*(fgtList.size() - 1)) + d];
+    }//end d
+  }//end i
+
+  std::vector<double> recvLlist;
+  if(remoteFgtOwner >= 0) {
+    recvLlist.resize(numWcoeffs);
+  }
+
+  double* sendBuf = NULL;
+  if(!(sendLlist.empty())) {
+    sendBuf = &(sendLlist[0]);
+  }
+  double* recvBuf = NULL;
+  if(!(recvLlist.empty())) {
+    recvBuf = &(recvLlist[0]);
+  }
+  MPI_Alltoallv(sendBuf, recvCnts, recvDisps, MPI_DOUBLE,
+      recvBuf, sendCnts, sendDisps, MPI_DOUBLE, subComm);
+
 }
 
 void d2lExpand() {
