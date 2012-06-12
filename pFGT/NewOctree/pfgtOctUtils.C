@@ -174,7 +174,7 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
     }
 
     if(rank < npesExpand) {
-      pfgtExpand(expandSources, numPtsInRemoteFgt, fgtList, FgtLev, P, L, subComm, comm);
+      pfgtExpand(expandSources, numPtsInRemoteFgt, fgtList, FgtLev, P, L, K, subComm, comm);
     } else {
       pfgtDirect(finalDirectSources, FgtLev, subComm, comm);
     }
@@ -186,8 +186,8 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
 }
 
 void pfgtExpand(std::vector<double> & expandSources, const int numPtsInRemoteFgt, 
-    std::vector<ot::TreeNode> & fgtList, const unsigned int FgtLev, const int P, const int L,
-    MPI_Comm subComm, MPI_Comm comm) {
+    std::vector<ot::TreeNode> & fgtList, const unsigned int FgtLev, const int P, 
+    const int L, const int K, MPI_Comm subComm, MPI_Comm comm) {
 
   assert(!(expandSources.empty()));
 
@@ -220,7 +220,7 @@ void pfgtExpand(std::vector<double> & expandSources, const int numPtsInRemoteFgt
       fgtMins, FgtLev, P, L, s2wSendCnts, s2wSendDisps, s2wRecvCnts, s2wRecvDisps, subComm);
 
   std::vector<double> localLlist( (localWlist.size()), 0.0);
-  w2l();
+  w2l(localLlist, localWlist, fgtList, fgtMins, FgtLev, P, L, K, subComm);
 
   d2lExpand();
 
@@ -291,12 +291,12 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
       double pz = sources[(4*i)+2];
       double pf = sources[(4*i)+3];
       for(int k3 = -P, di = 0; k3 < P; k3++) {
-        double thetaZ = ImExpZfactor*(static_cast<double>(k3)*(cz - pz));
+        double thetaZ = (static_cast<double>(k3))*(cz - pz);
         for(int k2 = -P; k2 < P; k2++) {
-          double thetaY = ImExpZfactor*(static_cast<double>(k2)*(cy - py));
+          double thetaY = (static_cast<double>(k2))*(cy - py);
           for(int k1 = -P; k1 < P; k1++, di++) {
-            double thetaX = ImExpZfactor*(static_cast<double>(k1)*(cx - px));
-            double theta = (thetaX + thetaY + thetaZ);
+            double thetaX = (static_cast<double>(k1))*(cx - px);
+            double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
             sendWlist[2*di] += (pf*cos(theta));
             sendWlist[(2*di) + 1] += (pf*sin(theta));
           }//end for k1
@@ -334,12 +334,12 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
       double pz = sources[(4*ptsIdx)+2];
       double pf = sources[(4*ptsIdx)+3];
       for(int k3 = -P, di = 0; k3 < P; k3++) {
-        double thetaZ = ImExpZfactor*(static_cast<double>(k3)*(cz - pz));
+        double thetaZ = (static_cast<double>(k3))*(cz - pz);
         for(int k2 = -P; k2 < P; k2++) {
-          double thetaY = ImExpZfactor*(static_cast<double>(k2)*(cy - py));
+          double thetaY = (static_cast<double>(k2))*(cy - py);
           for(int k1 = -P; k1 < P; k1++, di++) {
-            double thetaX = ImExpZfactor*(static_cast<double>(k1)*(cx - px));
-            double theta = (thetaX + thetaY + thetaZ);
+            double thetaX = (static_cast<double>(k1))*(cx - px);
+            double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
             localWlist[(numWcoeffs*i) + (2*di)] += (pf*cos(theta));
             localWlist[(numWcoeffs*i) + (2*di) + 1] += (pf*sin(theta));
           }//end for k1
@@ -402,12 +402,12 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
       double py = sources[(4*i)+1];
       double pz = sources[(4*i)+2];
       for(int k3 = -P, di = 0; k3 < P; k3++) {
-        double thetaZ = ImExpZfactor*(static_cast<double>(k3)*(pz - cz));
+        double thetaZ = (static_cast<double>(k3))*(pz - cz);
         for(int k2 = -P; k2 < P; k2++) {
-          double thetaY = ImExpZfactor*(static_cast<double>(k2)*(py - cy));
+          double thetaY = (static_cast<double>(k2))*(py - cy);
           for(int k1 = -P; k1 < P; k1++, di++) {
-            double thetaX = ImExpZfactor*(static_cast<double>(k1)*(px - cx));
-            double theta = (thetaX + thetaY + thetaZ);
+            double thetaX = (static_cast<double>(k1))*(px - cx);
+            double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
             double factor = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
             double a = recvLlist[2*di];
             double b = recvLlist[(2*di) + 1];
@@ -429,12 +429,12 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
       double py = sources[(4*ptsIdx)+1];
       double pz = sources[(4*ptsIdx)+2];
       for(int k3 = -P, di = 0; k3 < P; k3++) {
-        double thetaZ = ImExpZfactor*(static_cast<double>(k3)*(pz - cz));
+        double thetaZ = (static_cast<double>(k3))*(pz - cz);
         for(int k2 = -P; k2 < P; k2++) {
-          double thetaY = ImExpZfactor*(static_cast<double>(k2)*(py - cy));
+          double thetaY = (static_cast<double>(k2))*(py - cy);
           for(int k1 = -P; k1 < P; k1++, di++) {
-            double thetaX = ImExpZfactor*(static_cast<double>(k1)*(px - cx));
-            double theta = (thetaX + thetaY + thetaZ);
+            double thetaX = (static_cast<double>(k1))*(px - cx);
+            double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
             double factor = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
             double a = localLlist[(numWcoeffs*i) + (2*di)];
             double b = localLlist[(numWcoeffs*i) + (2*di) + 1];
@@ -446,6 +446,15 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
       }//end for k3
     }//end j
   }//end i
+}
+
+void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist, 
+    std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & fgtMins,
+    const unsigned int FgtLev, const int P, const int L, const int K, MPI_Comm subComm) {
+
+  //2P complex coefficients for each dimension.  
+  const unsigned int numWcoeffs = 16*P*P*P;
+
 }
 
 void d2lExpand() {
@@ -461,9 +470,6 @@ void w2dDirect() {
 }
 
 void d2d() {
-}
-
-void w2l() {
 }
 
 void createS2WcommInfo(int*& sendCnts, int*& sendDisps, int*& recvCnts, int*& recvDisps, 

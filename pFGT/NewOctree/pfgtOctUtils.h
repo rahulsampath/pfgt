@@ -30,7 +30,7 @@ void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt,
 
 void pfgtExpand(std::vector<double> & expandSources, const int numPtsInRemoteFgt, 
     std::vector<ot::TreeNode> & fgtList, const unsigned int FgtLev, const int P,
-    const int L, MPI_Comm subComm, MPI_Comm comm);
+    const int L, const int K, MPI_Comm subComm, MPI_Comm comm);
 
 void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev,
     MPI_Comm subComm, MPI_Comm comm);
@@ -60,6 +60,10 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
     const unsigned int FgtLev, const int P, const int L,
     int* sendCnts, int* sendDisps, int* recvCnts, int* recvDisps, MPI_Comm subComm);
 
+void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist, 
+    std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & fgtMins,
+    const unsigned int FgtLev, const int P, const int L, const int K, MPI_Comm subComm);
+
 void d2lExpand();
 
 void d2lDirect();
@@ -69,8 +73,6 @@ void w2dExpand();
 void w2dDirect();
 
 void d2d();
-
-void w2l();
 
 #endif
 
