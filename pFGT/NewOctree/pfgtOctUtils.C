@@ -393,6 +393,44 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
   MPI_Alltoallv(sendBuf, recvCnts, recvDisps, MPI_DOUBLE,
       recvBuf, sendCnts, sendDisps, MPI_DOUBLE, subComm);
 
+  if(remoteFgtOwner >= 0) {
+    double cx = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getX()))/(__DTPMD__));
+    double cy = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getY()))/(__DTPMD__));
+    double cz = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getZ()))/(__DTPMD__));
+    for(int i = 0; i < numPtsInRemoteFgt; ++i) {
+      double px = sources[4*i];
+      double py = sources[(4*i)+1];
+      double pz = sources[(4*i)+2];
+      for(int k3 = -P, di = 0; k3 < P; k3++) {
+        for(int k2 = -P; k2 < P; k2++) {
+          for(int k1 = -P; k1 < P; k1++, di++) {
+            // recvLlist[2*di];
+            // recvLlist[(2*di) + 1]; 
+          }//end for k1
+        }//end for k2
+      }//end for k3
+    }//end i
+  }
+
+  for(int i = 0, ptsIdx = numPtsInRemoteFgt; i < fgtList.size(); ++i) {
+    double cx = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getX()))/(__DTPMD__));
+    double cy = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getY()))/(__DTPMD__));
+    double cz = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getZ()))/(__DTPMD__));
+    for(int j = 0; j < fgtList[i].getWeight(); ++j, ++ptsIdx) {
+      double px = sources[4*ptsIdx];
+      double py = sources[(4*ptsIdx)+1];
+      double pz = sources[(4*ptsIdx)+2];
+      for(int k3 = -P, di = 0; k3 < P; k3++) {
+        for(int k2 = -P; k2 < P; k2++) {
+          for(int k1 = -P; k1 < P; k1++, di++) {
+            //localLlist[(numWcoeffs*i) + (2*di)];
+            //localLlist[(numWcoeffs*i) + (2*di) + 1];
+          }//end for k1
+        }//end for k2
+      }//end for k3
+    }//end j
+  }//end i
+
 }
 
 void d2lExpand() {
