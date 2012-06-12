@@ -364,7 +364,7 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
   const double LbyP = static_cast<double>(L)/static_cast<double>(P);
   const double ImExpZfactor = LbyP/hFgt;
   const double ReExpZfactor = -0.25*LbyP*LbyP;
-  const double C0 = ( pow((0.5/sqrt(__PI__)), 3.0)*LbyP*LbyP*LbyP );
+  const double C0 = (0.125*LbyP*LbyP*LbyP/(__SQRT_PI__*__SQRT_PI__*__SQRT_PI__));
 
   //2P complex coefficients for each dimension.  
   const unsigned int numWcoeffs = 16*P*P*P;
@@ -402,10 +402,18 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
       double py = sources[(4*i)+1];
       double pz = sources[(4*i)+2];
       for(int k3 = -P, di = 0; k3 < P; k3++) {
+        double thetaZ = ImExpZfactor*(static_cast<double>(k3)*(pz - cz));
         for(int k2 = -P; k2 < P; k2++) {
+          double thetaY = ImExpZfactor*(static_cast<double>(k2)*(py - cy));
           for(int k1 = -P; k1 < P; k1++, di++) {
-            // recvLlist[2*di];
-            // recvLlist[(2*di) + 1]; 
+            double thetaX = ImExpZfactor*(static_cast<double>(k1)*(px - cx));
+            double theta = (thetaX + thetaY + thetaZ);
+            double factor = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
+            double a = recvLlist[2*di];
+            double b = recvLlist[(2*di) + 1];
+            double c = cos(theta);
+            double d = sin(theta);
+            results[i] += (factor*( (a*c) - (b*d) ));
           }//end for k1
         }//end for k2
       }//end for k3
@@ -421,16 +429,23 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
       double py = sources[(4*ptsIdx)+1];
       double pz = sources[(4*ptsIdx)+2];
       for(int k3 = -P, di = 0; k3 < P; k3++) {
+        double thetaZ = ImExpZfactor*(static_cast<double>(k3)*(pz - cz));
         for(int k2 = -P; k2 < P; k2++) {
+          double thetaY = ImExpZfactor*(static_cast<double>(k2)*(py - cy));
           for(int k1 = -P; k1 < P; k1++, di++) {
-            //localLlist[(numWcoeffs*i) + (2*di)];
-            //localLlist[(numWcoeffs*i) + (2*di) + 1];
+            double thetaX = ImExpZfactor*(static_cast<double>(k1)*(px - cx));
+            double theta = (thetaX + thetaY + thetaZ);
+            double factor = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
+            double a = localLlist[(numWcoeffs*i) + (2*di)];
+            double b = localLlist[(numWcoeffs*i) + (2*di) + 1];
+            double c = cos(theta);
+            double d = sin(theta);
+            results[ptsIdx] += (factor*( (a*c) - (b*d) ));
           }//end for k1
         }//end for k2
       }//end for k3
     }//end j
   }//end i
-
 }
 
 void d2lExpand() {

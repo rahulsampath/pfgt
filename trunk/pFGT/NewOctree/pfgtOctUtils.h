@@ -8,6 +8,8 @@
 
 #define __PI__ 3.1415926535897932
 
+#define __SQRT_PI__ 1.7724538509055160
+
 #define __DIM__ 3
 
 #define __MAX_DEPTH__ 30
