@@ -661,7 +661,7 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
 
   const double Iwidth = hFgt*(sqrt(-log(epsilon)));
 
-  const double IwidthSquare = Iwidth*Iwidth;
+  const double IwidthSqr = Iwidth*Iwidth;
 
   const double delta = hFgt*hFgt;
 
@@ -797,10 +797,16 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
     //This source point was sent only to those procs whose directMin <= maxPt
     assert(foundMax);
 
+    for(int j = minIdx; j <= maxIdx; ++j) {
+      double distSqr = 0.0;
+      for(int d = 0; d < 3; ++d) {
+        distSqr += ((sources[(4*j) + d] - recvList[i + d])*(sources[(4*j) + d] - recvList[i + d]));
+      }//end d
+      if(distSqr < IwidthSqr) {
+        results[j] += (recvList[i + 3]*exp(-distSqr/delta));
+      }
+    }//end j
   }//end i
-
-  //TODO: Complete this!
-
 }
 
 void d2lExpand() {
