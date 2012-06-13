@@ -22,7 +22,7 @@
 #define __COMP_MUL_IM(a, ai, b, bi) ( ((a)*(bi)) + ((ai)*(b)) )
 
 void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev,
-    const int P, const int L, const int K, MPI_Comm comm);
+    const int P, const int L, const int K, const double epsilon, MPI_Comm comm);
 
 void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt, 
     const unsigned int FgtLev, std::vector<double>& expandSources, std::vector<double>& directSources, 
@@ -33,7 +33,7 @@ void pfgtExpand(std::vector<double> & expandSources, const int numPtsInRemoteFgt
     const int L, const int K, MPI_Comm subComm, MPI_Comm comm);
 
 void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev,
-    MPI_Comm subComm, MPI_Comm comm);
+    const double epsilon, MPI_Comm subComm, MPI_Comm comm);
 
 void computeFgtMinsExpand(std::vector<ot::TreeNode> & fgtMins, std::vector<ot::TreeNode> & fgtList,
     MPI_Comm subComm, MPI_Comm comm);
@@ -64,6 +64,10 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
     std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & fgtMins,
     const unsigned int FgtLev, const int P, const int L, const int K, MPI_Comm subComm);
 
+void d2d(std::vector<double>& results, std::vector<double> & sources,
+    std::vector<ot::TreeNode> directMins, const unsigned int FgtLev, 
+    const double epsilon, MPI_Comm subComm);
+
 void d2lExpand();
 
 void d2lDirect();
@@ -71,8 +75,6 @@ void d2lDirect();
 void w2dExpand();
 
 void w2dDirect();
-
-void d2d();
 
 #endif
 
