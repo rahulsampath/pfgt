@@ -10,7 +10,7 @@
 extern PetscLogEvent fgtEvent;
 
 void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev,
-    const int P, const int L, const int K, MPI_Comm comm) {
+    const int P, const int L, const int K, const double epsilon, MPI_Comm comm) {
   PetscLogEventBegin(fgtEvent, 0, 0, 0, 0);
 
   int npes, rank;
@@ -176,7 +176,7 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
     if(rank < npesExpand) {
       pfgtExpand(expandSources, numPtsInRemoteFgt, fgtList, FgtLev, P, L, K, subComm, comm);
     } else {
-      pfgtDirect(finalDirectSources, FgtLev, subComm, comm);
+      pfgtDirect(finalDirectSources, FgtLev, epsilon, subComm, comm);
     }
 
     MPI_Comm_free(&subComm);
@@ -233,8 +233,8 @@ void pfgtExpand(std::vector<double> & expandSources, const int numPtsInRemoteFgt
   destroyS2WcommInfo(s2wSendCnts, s2wSendDisps, s2wRecvCnts, s2wRecvDisps); 
 }
 
-void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev, 
-    MPI_Comm subComm, MPI_Comm comm) {
+void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev,
+    const double epsilon, MPI_Comm subComm, MPI_Comm comm) {
 
   int subNpes;
   MPI_Comm_size(subComm, &subNpes);
@@ -254,7 +254,7 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev,
   computeFgtMinsDirect(fgtMins, comm);
 
   std::vector<double> results(((directSources.size())/4), 0.0);
-  d2d();
+  d2d(results, directSources, directMins, FgtLev, epsilon, subComm);
 
   d2lDirect();
 
@@ -647,6 +647,89 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
   }//end i
 }
 
+void d2d(std::vector<double>& results, std::vector<double> & sources,
+    std::vector<ot::TreeNode> directMins, const unsigned int FgtLev, 
+    const double epsilon, MPI_Comm subComm) {
+  int npes;
+  MPI_Comm_size(subComm, &npes);
+
+  //Fgt box size = sqrt(delta)
+  const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
+
+  const double Iwidth = hFgt*(sqrt(-log(epsilon)));
+
+  int* sendCnts = new int[npes];
+  int* sendDisps = new int[npes];
+  int* recvCnts = new int[npes];
+  int* recvDisps = new int[npes];
+
+  for(int i = 0; i < npes; ++i) {
+    sendCnts[i] = 0;
+  }//end i
+
+  size_t numPoints = (sources.size())/4; 
+
+  std::vector<unsigned int> part(2*numPoints);
+
+  for(size_t i = 0; i < numPoints; ++i) {
+    unsigned int uiMinPt[3];
+    unsigned int uiMaxPt[3];
+    for(int d = 0; d < 3; ++d) {
+      double minPt, maxPt;
+      minPt = sources[(4*i) + d] - Iwidth;
+      if(minPt < 0.0) {
+        minPt = 0.0;
+      }
+      maxPt = sources[(4*i) + d] + Iwidth;
+      if(maxPt > 1.0) {
+        maxPt = 1.0;
+      }
+      uiMinPt[d] = static_cast<unsigned int>(floor(minPt*(__DTPMD__)));
+      uiMaxPt[d] = static_cast<unsigned int>(ceil(maxPt*(__DTPMD__)));
+    }//end d
+
+    ot::TreeNode minNode(uiMinPt[0], uiMinPt[1], uiMinPt[2], __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
+    ot::TreeNode maxNode((uiMaxPt[0] - 1), (uiMaxPt[1] - 1), (uiMaxPt[2] - 1), __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
+
+    unsigned int minIdx;
+    bool foundMin = seq::maxLowerBound<ot::TreeNode>(directMins, minNode, minIdx, NULL, NULL);
+
+    if(!foundMin) {
+      minIdx = 0;
+    }
+
+    unsigned int maxIdx;
+    bool foundMax = seq::maxLowerBound<ot::TreeNode>(directMins, maxNode, maxIdx, NULL, NULL);
+
+    //maxPt >= currPt and currPt is a direct point
+    assert(foundMax);
+
+    part[2*i] = minIdx;
+    part[(2*i) + 1] = maxIdx;
+
+    for(int j = minIdx; j <= maxIdx; ++j) {
+      sendCnts[j] += 4;
+    }//end j
+  }//end i
+
+  MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, subComm);
+
+  sendDisps[0] = 0;
+  recvDisps[0] = 0;
+  for(int i = 1; i < npes; ++i) {
+    sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
+    recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
+  }//end i
+
+  //TODO: Complete this!
+
+  delete [] sendCnts;
+  delete [] sendDisps;
+  delete [] recvCnts;
+  delete [] recvDisps;
+
+}
+
 void d2lExpand() {
 }
 
@@ -657,9 +740,6 @@ void w2dExpand() {
 }
 
 void w2dDirect() {
-}
-
-void d2d() {
 }
 
 void createS2WcommInfo(int*& sendCnts, int*& sendDisps, int*& recvCnts, int*& recvDisps, 

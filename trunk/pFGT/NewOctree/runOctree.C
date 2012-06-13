@@ -139,7 +139,7 @@ int main(int argc, char** argv) {
   pts.clear();
 
   //Fgt
-  pfgtMain(sources, minPtsInFgt, FgtLev, P, L, K, MPI_COMM_WORLD);
+  pfgtMain(sources, minPtsInFgt, FgtLev, P, L, K, epsilon, MPI_COMM_WORLD);
 
   PetscFinalize();
 }
