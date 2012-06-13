@@ -669,7 +669,7 @@ void d2d(std::vector<double>& results, std::vector<double> & sources,
 
   size_t numPoints = (sources.size())/4; 
 
-  std::vector<unsigned int> part(2*numPoints);
+  std::vector<std::vector<double> > tmpSendList(npes);
 
   for(size_t i = 0; i < numPoints; ++i) {
     unsigned int uiMinPt[3];
@@ -704,10 +704,10 @@ void d2d(std::vector<double>& results, std::vector<double> & sources,
     //maxPt >= currPt and currPt is a direct point
     assert(foundMax);
 
-    part[2*i] = minIdx;
-    part[(2*i) + 1] = maxIdx;
-
     for(int j = minIdx; j <= maxIdx; ++j) {
+      for(int d = 0; d < 4; ++d) {
+        tmpSendList[j].push_back(sources[(4*i) + d]);
+      }//end d
       sendCnts[j] += 4;
     }//end j
   }//end i
@@ -721,12 +721,39 @@ void d2d(std::vector<double>& results, std::vector<double> & sources,
     recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
   }//end i
 
-  //TODO: Complete this!
+  std::vector<double> sendList(sendDisps[npes - 1] + sendCnts[npes - 1]);
+
+  for(int i = 0; i < npes; ++i) {
+    for(int j = 0; j < sendCnts[i]; ++j) {
+      sendList[sendDisps[i] + j] = tmpSendList[i][j];
+    }//end j
+  }//end i
+
+  tmpSendList.clear();
+
+  std::vector<double> recvList(recvDisps[npes - 1] + recvCnts[npes - 1]);
+
+  double* sendBuf = NULL;
+  if(!(sendList.empty())) {
+    sendBuf = &(sendList[0]);
+  }
+
+  double* recvBuf = NULL;
+  if(!(recvList.empty())) {
+    recvBuf = &(recvList[0]);
+  }
+
+  MPI_Alltoallv(sendBuf, sendCnts, sendDisps, MPI_DOUBLE,
+      recvBuf, recvCnts, recvDisps, MPI_DOUBLE, subComm);
+
+  sendList.clear();
 
   delete [] sendCnts;
   delete [] sendDisps;
   delete [] recvCnts;
   delete [] recvDisps;
+
+  //TODO: Complete this!
 
 }
 
