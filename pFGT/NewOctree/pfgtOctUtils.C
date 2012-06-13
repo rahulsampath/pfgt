@@ -241,20 +241,23 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev,
 
   assert(!(directSources.empty()));
 
-  unsigned int px = static_cast<unsigned int>(directSources[0]*(__DTPMD__));
-  unsigned int py = static_cast<unsigned int>(directSources[1]*(__DTPMD__));
-  unsigned int pz = static_cast<unsigned int>(directSources[2]*(__DTPMD__));
-  ot::TreeNode firstPt(px, py, pz, __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
+  std::vector<ot::TreeNode> directNodes( directSources.size()/4 );
+  for(size_t i = 0; i < directNodes.size(); ++i) {
+    unsigned int px = static_cast<unsigned int>(directSources[(4*i) + 0]*(__DTPMD__));
+    unsigned int py = static_cast<unsigned int>(directSources[(4*i) + 1]*(__DTPMD__));
+    unsigned int pz = static_cast<unsigned int>(directSources[(4*i) + 2]*(__DTPMD__));
+    directNodes[i] = ot::TreeNode(px, py, pz, __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
+  }//end i
 
   std::vector<ot::TreeNode> directMins(subNpes);
-  MPI_Allgather(&firstPt, 1, par::Mpi_datatype<ot::TreeNode>::value(),
+  MPI_Allgather(&(directNodes[0]), 1, par::Mpi_datatype<ot::TreeNode>::value(),
       &(directMins[0]), 1, par::Mpi_datatype<ot::TreeNode>::value(), subComm);
 
   std::vector<ot::TreeNode> fgtMins;
   computeFgtMinsDirect(fgtMins, comm);
 
-  std::vector<double> results(((directSources.size())/4), 0.0);
-  d2d(results, directSources, directMins, FgtLev, epsilon, subComm);
+  std::vector<double> results(directNodes.size(), 0.0);
+  d2d(results, directSources, directNodes, directMins, FgtLev, epsilon, subComm);
 
   d2lDirect();
 
@@ -647,9 +650,9 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
   }//end i
 }
 
-void d2d(std::vector<double>& results, std::vector<double> & sources,
-    std::vector<ot::TreeNode> directMins, const unsigned int FgtLev, 
-    const double epsilon, MPI_Comm subComm) {
+void d2d(std::vector<double> & results, std::vector<double> & sources,
+    std::vector<ot::TreeNode> & nodes, std::vector<ot::TreeNode> & directMins,
+    const unsigned int FgtLev, const double epsilon, MPI_Comm subComm) {
   int npes;
   MPI_Comm_size(subComm, &npes);
 
@@ -657,6 +660,10 @@ void d2d(std::vector<double>& results, std::vector<double> & sources,
   const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
 
   const double Iwidth = hFgt*(sqrt(-log(epsilon)));
+
+  const double IwidthSquare = Iwidth*Iwidth;
+
+  const double delta = hFgt*hFgt;
 
   int* sendCnts = new int[npes];
   int* sendDisps = new int[npes];
@@ -667,20 +674,24 @@ void d2d(std::vector<double>& results, std::vector<double> & sources,
     sendCnts[i] = 0;
   }//end i
 
-  size_t numPoints = (sources.size())/4; 
+  //Performance Improvement: All the searches can be avoided by making use of
+  //the fact that sources is sorted and so the minPts are sorted and the maxPts
+  //are sorted. Also, each processor's chunk of the sendList is sorted, i.e.
+  //tmpSendList[i] is sorted for all i. Although, sendList may not be sorted.
+  //recvList will be sorted.
 
   std::vector<std::vector<double> > tmpSendList(npes);
 
-  for(size_t i = 0; i < numPoints; ++i) {
+  for(size_t i = 0; i < sources.size(); i += 4) {
     unsigned int uiMinPt[3];
     unsigned int uiMaxPt[3];
     for(int d = 0; d < 3; ++d) {
       double minPt, maxPt;
-      minPt = sources[(4*i) + d] - Iwidth;
+      minPt = sources[i + d] - Iwidth;
       if(minPt < 0.0) {
         minPt = 0.0;
       }
-      maxPt = sources[(4*i) + d] + Iwidth;
+      maxPt = sources[i + d] + Iwidth;
       if(maxPt > 1.0) {
         maxPt = 1.0;
       }
@@ -706,7 +717,7 @@ void d2d(std::vector<double>& results, std::vector<double> & sources,
 
     for(int j = minIdx; j <= maxIdx; ++j) {
       for(int d = 0; d < 4; ++d) {
-        tmpSendList[j].push_back(sources[(4*i) + d]);
+        tmpSendList[j].push_back(sources[i + d]);
       }//end d
       sendCnts[j] += 4;
     }//end j
@@ -752,6 +763,41 @@ void d2d(std::vector<double>& results, std::vector<double> & sources,
   delete [] sendDisps;
   delete [] recvCnts;
   delete [] recvDisps;
+
+  for(size_t i = 0; i < recvList.size(); i += 4) {
+    unsigned int uiMinPt[3];
+    unsigned int uiMaxPt[3];
+    for(int d = 0; d < 3; ++d) {
+      double minPt, maxPt;
+      minPt = recvList[i + d] - Iwidth;
+      if(minPt < 0.0) {
+        minPt = 0.0;
+      }
+      maxPt = recvList[i + d] + Iwidth;
+      if(maxPt > 1.0) {
+        maxPt = 1.0;
+      }
+      uiMinPt[d] = static_cast<unsigned int>(floor(minPt*(__DTPMD__)));
+      uiMaxPt[d] = static_cast<unsigned int>(ceil(maxPt*(__DTPMD__)));
+    }//end d
+
+    ot::TreeNode minNode(uiMinPt[0], uiMinPt[1], uiMinPt[2], __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
+    ot::TreeNode maxNode((uiMaxPt[0] - 1), (uiMaxPt[1] - 1), (uiMaxPt[2] - 1), __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
+
+    unsigned int minIdx;
+    bool foundMin = seq::maxLowerBound<ot::TreeNode>(nodes, minNode, minIdx, NULL, NULL);
+
+    if(!foundMin) {
+      minIdx = 0;
+    }
+
+    unsigned int maxIdx;
+    bool foundMax = seq::maxLowerBound<ot::TreeNode>(nodes, maxNode, maxIdx, NULL, NULL);
+
+    //This source point was sent only to those procs whose directMin <= maxPt
+    assert(foundMax);
+
+  }//end i
 
   //TODO: Complete this!
 

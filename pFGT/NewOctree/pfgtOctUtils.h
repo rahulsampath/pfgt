@@ -64,9 +64,9 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
     std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & fgtMins,
     const unsigned int FgtLev, const int P, const int L, const int K, MPI_Comm subComm);
 
-void d2d(std::vector<double>& results, std::vector<double> & sources,
-    std::vector<ot::TreeNode> directMins, const unsigned int FgtLev, 
-    const double epsilon, MPI_Comm subComm);
+void d2d(std::vector<double> & results, std::vector<double> & sources,
+    std::vector<ot::TreeNode> & nodes, std::vector<ot::TreeNode> & directMins,
+    const unsigned int FgtLev, const double epsilon, MPI_Comm subComm);
 
 void d2lExpand();
 
