@@ -222,9 +222,7 @@ void pfgtExpand(std::vector<double> & expandSources, const int numPtsInRemoteFgt
   std::vector<double> localLlist( (localWlist.size()), 0.0);
   w2l(localLlist, localWlist, fgtList, fgtMins, FgtLev, P, L, K, subComm);
 
-  d2lExpand();
-
-  w2dExpand();
+  w2dAndD2lExpand();
 
   std::vector<double> results(((expandSources.size())/4), 0.0);
   l2t(results, localLlist, expandSources, remoteFgt, remoteFgtOwner, numPtsInRemoteFgt, 
@@ -259,9 +257,7 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev,
   std::vector<double> results(directNodes.size(), 0.0);
   d2d(results, directSources, directNodes, directMins, FgtLev, epsilon, subComm);
 
-  d2lDirect();
-
-  w2dDirect();
+  w2dAndD2lDirect();
 }
 
 void s2w(std::vector<double> & localWlist, std::vector<double> & sources,  
@@ -809,16 +805,10 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
   }//end i
 }
 
-void d2lExpand() {
+void w2dAndD2lExpand() {
 }
 
-void d2lDirect() {
-}
-
-void w2dExpand() {
-}
-
-void w2dDirect() {
+void w2dAndD2lDirect() {
 }
 
 void createS2WcommInfo(int*& sendCnts, int*& sendDisps, int*& recvCnts, int*& recvDisps, 
