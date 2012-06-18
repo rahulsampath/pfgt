@@ -68,13 +68,9 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
     std::vector<ot::TreeNode> & nodes, std::vector<ot::TreeNode> & directMins,
     const unsigned int FgtLev, const double epsilon, MPI_Comm subComm);
 
-void d2lExpand();
+void w2dAndD2lExpand();
 
-void d2lDirect();
-
-void w2dExpand();
-
-void w2dDirect();
+void w2dAndD2lDirect();
 
 #endif
 
