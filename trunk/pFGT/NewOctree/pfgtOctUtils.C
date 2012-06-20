@@ -176,7 +176,7 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
     if(rank < npesExpand) {
       pfgtExpand(expandSources, numPtsInRemoteFgt, fgtList, FgtLev, P, L, K, subComm, comm);
     } else {
-      pfgtDirect(finalDirectSources, FgtLev, epsilon, subComm, comm);
+      pfgtDirect(finalDirectSources, FgtLev, P, K, epsilon, subComm, comm);
     }
 
     MPI_Comm_free(&subComm);
@@ -222,7 +222,7 @@ void pfgtExpand(std::vector<double> & expandSources, const int numPtsInRemoteFgt
   std::vector<double> localLlist( (localWlist.size()), 0.0);
   w2l(localLlist, localWlist, fgtList, fgtMins, FgtLev, P, L, K, subComm);
 
-  w2dAndD2lExpand();
+  w2dAndD2lExpand(localLlist, localWlist, fgtList, P, comm);
 
   std::vector<double> results(((expandSources.size())/4), 0.0);
   l2t(results, localLlist, expandSources, remoteFgt, remoteFgtOwner, numPtsInRemoteFgt, 
@@ -232,7 +232,7 @@ void pfgtExpand(std::vector<double> & expandSources, const int numPtsInRemoteFgt
 }
 
 void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev,
-    const double epsilon, MPI_Comm subComm, MPI_Comm comm) {
+    const int P, const int K, const double epsilon, MPI_Comm subComm, MPI_Comm comm) {
 
   int subNpes;
   MPI_Comm_size(subComm, &subNpes);
@@ -257,7 +257,7 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev,
   std::vector<double> results(directNodes.size(), 0.0);
   d2d(results, directSources, directNodes, directMins, FgtLev, epsilon, subComm);
 
-  w2dAndD2lDirect();
+  w2dAndD2lDirect(results, directSources, fgtMins, FgtLev, P, K, epsilon, comm);
 }
 
 void s2w(std::vector<double> & localWlist, std::vector<double> & sources,  
@@ -805,10 +805,21 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
   }//end i
 }
 
-void w2dAndD2lExpand() {
+void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & localWlist, 
+    std::vector<ot::TreeNode> & fgtList, const int P, MPI_Comm comm) {
+  //2P complex coefficients for each dimension.  
+  const unsigned int numWcoeffs = 16*P*P*P;
+
 }
 
-void w2dAndD2lDirect() {
+void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & sources,
+    std::vector<ot::TreeNode> & fgtMins, const unsigned int FgtLev, 
+    const int P, const int K, const double epsilon, MPI_Comm comm) {
+  //2P complex coefficients for each dimension.  
+  const unsigned int numWcoeffs = 16*P*P*P;
+
+  //Fgt box size = sqrt(delta)
+  const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
 }
 
 void createS2WcommInfo(int*& sendCnts, int*& sendDisps, int*& recvCnts, int*& recvDisps, 

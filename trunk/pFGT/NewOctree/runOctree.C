@@ -68,24 +68,20 @@ int main(int argc, char** argv) {
     std::cout<<"delta = "<<delta<<std::endl;
   }
 
-  int P, L, K;
+  int P, L;
 
   if(softEquals(epsilon, 1.0e-3)) {
     P = 6;
     L = 5;
-    K = 3;
   } else if(softEquals(epsilon, 1.0e-6)) {
     P = 10;
     L = 7;
-    K = 4;
   } else if(softEquals(epsilon, 1.0e-9)) {
     P = 16;
     L = 10;
-    K = 5;
   } else if(softEquals(epsilon, 1.0e-12)) {
     P = 20;
     L = 11;
-    K = 6;
   } else {
     if(!rank) {
       std::cout<<"Wrong epsilon!"<<std::endl;
@@ -93,6 +89,8 @@ int main(int argc, char** argv) {
     assert(false);
     PetscFinalize();
   }
+
+  int K = ceil(sqrt(-log(epsilon)) - 0.5);
 
   if(!rank) {
     std::cout<<"P = "<<P<<std::endl;
