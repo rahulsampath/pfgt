@@ -450,7 +450,6 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
 void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist, 
     std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & fgtMins,
     const unsigned int FgtLev, const int P, const int L, const int K, MPI_Comm subComm) {
-
   int npes;
   MPI_Comm_size(subComm, &npes);
 
@@ -807,19 +806,78 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
 
 void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & localWlist, 
     std::vector<ot::TreeNode> & fgtList, const int P, MPI_Comm comm) {
+  int npes;
+  MPI_Comm_size(comm, &npes);
+
   //2P complex coefficients for each dimension.  
   const unsigned int numWcoeffs = 16*P*P*P;
 
+  int* sendCnts = new int[npes];
+  int* sendDisps = new int[npes];
+  int* recvCnts = new int[npes];
+  int* recvDisps = new int[npes];
+
+  for(int i = 0; i < npes; ++i) {
+    sendCnts[i] = 0;
+  }//end i 
+
+  MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, comm);
+
+  sendDisps[0] = 0;
+  recvDisps[0] = 0;
+  for(int i = 1; i < npes; ++i) {
+    sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
+    recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
+  }//end i
+
+  delete [] sendCnts;
+  delete [] sendDisps;
+  delete [] recvCnts;
+  delete [] recvDisps;
 }
 
 void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & sources,
     std::vector<ot::TreeNode> & fgtMins, const unsigned int FgtLev, 
     const int P, const int K, const double epsilon, MPI_Comm comm) {
+  int npes;
+  MPI_Comm_size(comm, &npes);
+
   //2P complex coefficients for each dimension.  
   const unsigned int numWcoeffs = 16*P*P*P;
 
+  const unsigned int cellsPerFgt = (1u << (__MAX_DEPTH__ - FgtLev));
+
   //Fgt box size = sqrt(delta)
   const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
+
+  const double ptIwidth = hFgt*(sqrt(-log(epsilon)));
+
+  const double ptIwidthSqr = ptIwidth*ptIwidth;
+
+  const double delta = hFgt*hFgt;
+
+  int* sendCnts = new int[npes];
+  int* sendDisps = new int[npes];
+  int* recvCnts = new int[npes];
+  int* recvDisps = new int[npes];
+
+  for(int i = 0; i < npes; ++i) {
+    sendCnts[i] = 0;
+  }//end i 
+
+  MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, comm);
+
+  sendDisps[0] = 0;
+  recvDisps[0] = 0;
+  for(int i = 1; i < npes; ++i) {
+    sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
+    recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
+  }//end i
+
+  delete [] sendCnts;
+  delete [] sendDisps;
+  delete [] recvCnts;
+  delete [] recvDisps;
 }
 
 void createS2WcommInfo(int*& sendCnts, int*& sendDisps, int*& recvCnts, int*& recvDisps, 
