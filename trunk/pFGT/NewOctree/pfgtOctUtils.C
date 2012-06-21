@@ -883,8 +883,8 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
   std::vector<std::vector<ot::TreeNode> > sendBoxList(npes);
 
   for(int i = 0; i < sources.size(); i += 4) {
-    unsigned int uiMinPt[3];
-    unsigned int uiMaxPt[3];
+    unsigned int uiMinPt1[3];
+    unsigned int uiMaxPt1[3];
     for(int d = 0; d < 3; ++d) {
       double minPt, maxPt;
       minPt = sources[i + d] - ptIwidth;
@@ -895,13 +895,13 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
       if(maxPt > 1.0) {
         maxPt = 1.0;
       }
-      uiMinPt[d] = static_cast<unsigned int>(floor(minPt*invHfgt));
-      uiMaxPt[d] = static_cast<unsigned int>(ceil(maxPt*invHfgt));
+      uiMinPt1[d] = static_cast<unsigned int>(floor(minPt*invHfgt));
+      uiMaxPt1[d] = static_cast<unsigned int>(ceil(maxPt*invHfgt));
     }//end d
     std::vector<ot::TreeNode> selectedBoxes;
-    for(int zi = uiMinPt[2]; zi < uiMaxPt[2]; ++zi) {
-      for(int yi = uiMinPt[1]; yi < uiMaxPt[1]; ++yi) {
-        for(int xi = uiMinPt[0]; xi < uiMaxPt[0]; ++xi) {
+    for(int zi = uiMinPt1[2]; zi < uiMaxPt1[2]; ++zi) {
+      for(int yi = uiMinPt1[1]; yi < uiMaxPt1[1]; ++yi) {
+        for(int xi = uiMinPt1[0]; xi < uiMaxPt1[0]; ++xi) {
           ot::TreeNode tmpBox((xi*cellsPerFgt), (yi*cellsPerFgt), (zi*cellsPerFgt),
               FgtLev, __DIM__, __MAX_DEPTH__);
           selectedBoxes.push_back(tmpBox);
