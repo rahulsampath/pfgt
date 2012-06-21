@@ -830,6 +830,13 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
     recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
   }//end i
 
+  for(int i = 0; i < npes; ++i) {
+    sendCnts[i] *= numWcoeffs;
+    sendDisps[i] *= numWcoeffs;
+    recvCnts[i] *= numWcoeffs;
+    recvDisps[i] *= numWcoeffs;
+  }//end i
+
   delete [] sendCnts;
   delete [] sendDisps;
   delete [] recvCnts;
@@ -847,8 +854,12 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
 
   const unsigned int cellsPerFgt = (1u << (__MAX_DEPTH__ - FgtLev));
 
+  const unsigned int twoPowFgtLev = (1u << FgtLev);
+
+  const double invHfgt =  static_cast<double>(twoPowFgtLev);
+
   //Fgt box size = sqrt(delta)
-  const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
+  const double hFgt = 1.0/invHfgt;
 
   const double ptIwidth = hFgt*(sqrt(-log(epsilon)));
 
@@ -869,7 +880,34 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
   //the fact that sources is sorted and so the minPts are sorted and the maxPts
   //are sorted. 
 
+  std::vector<std::vector<ot::TreeNode> > sendBoxList(npes);
+
   for(int i = 0; i < sources.size(); i += 4) {
+    unsigned int uiMinPt[3];
+    unsigned int uiMaxPt[3];
+    for(int d = 0; d < 3; ++d) {
+      double minPt, maxPt;
+      minPt = sources[i + d] - ptIwidth;
+      if(minPt < 0.0) {
+        minPt = 0.0;
+      }
+      maxPt = sources[i + d] + ptIwidth;
+      if(maxPt > 1.0) {
+        maxPt = 1.0;
+      }
+      uiMinPt[d] = static_cast<unsigned int>(floor(minPt*invHfgt));
+      uiMaxPt[d] = static_cast<unsigned int>(ceil(maxPt*invHfgt));
+    }//end d
+    std::vector<ot::TreeNode> selectedBoxes;
+    for(int zi = uiMinPt[2]; zi < uiMaxPt[2]; ++zi) {
+      for(int yi = uiMinPt[1]; yi < uiMaxPt[1]; ++yi) {
+        for(int xi = uiMinPt[0]; xi < uiMaxPt[0]; ++xi) {
+          ot::TreeNode tmpBox((xi*cellsPerFgt), (yi*cellsPerFgt), (zi*cellsPerFgt),
+              FgtLev, __DIM__, __MAX_DEPTH__);
+          selectedBoxes.push_back(tmpBox);
+        }//end xi
+      }//end yi
+    }//end zi
   }//end i
 
   MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, comm);
@@ -879,6 +917,13 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
   for(int i = 1; i < npes; ++i) {
     sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
     recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
+  }//end i
+
+  for(int i = 0; i < npes; ++i) {
+    sendCnts[i] *= numWcoeffs;
+    sendDisps[i] *= numWcoeffs;
+    recvCnts[i] *= numWcoeffs;
+    recvDisps[i] *= numWcoeffs;
   }//end i
 
   delete [] sendCnts;
