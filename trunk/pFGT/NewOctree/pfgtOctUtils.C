@@ -865,6 +865,13 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
     sendCnts[i] = 0;
   }//end i 
 
+  //Performance Improvement: All the searches can be avoided by making use of
+  //the fact that sources is sorted and so the minPts are sorted and the maxPts
+  //are sorted. 
+
+  for(int i = 0; i < sources.size(); i += 4) {
+  }//end i
+
   MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, comm);
 
   sendDisps[0] = 0;
