@@ -813,22 +813,23 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
   const unsigned int numWcoeffs = 16*P*P*P;
 
   int* sendCnts = new int[npes];
-  int* sendDisps = new int[npes];
-  int* recvCnts = new int[npes];
-  int* recvDisps = new int[npes];
-
   for(int i = 0; i < npes; ++i) {
     sendCnts[i] = 0;
   }//end i 
 
+  int* recvCnts = new int[npes];
   MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, comm);
 
+  int* sendDisps = new int[npes];
+  int* recvDisps = new int[npes];
   sendDisps[0] = 0;
   recvDisps[0] = 0;
   for(int i = 1; i < npes; ++i) {
     sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
     recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
   }//end i
+
+  std::vector<ot::TreeNode> recvBoxList(recvDisps[npes - 1] + recvCnts[npes - 1]);
 
   for(int i = 0; i < npes; ++i) {
     sendCnts[i] *= numWcoeffs;
@@ -867,38 +868,37 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
 
   const double delta = hFgt*hFgt;
 
-  int* sendCnts = new int[npes];
-  int* sendDisps = new int[npes];
-  int* recvCnts = new int[npes];
-  int* recvDisps = new int[npes];
-
-  for(int i = 0; i < npes; ++i) {
-    sendCnts[i] = 0;
-  }//end i 
-
-  //Performance Improvement: All the searches can be avoided by making use of
-  //the fact that sources is sorted and so the minPts are sorted and the maxPts
-  //are sorted. 
-
-  std::vector<std::vector<ot::TreeNode> > sendBoxList(npes);
+  std::vector<ot::TreeNode> tmpSendBoxList;
 
   for(int i = 0; i < sources.size(); i += 4) {
     unsigned int uiMinPt1[3];
     unsigned int uiMaxPt1[3];
+    unsigned int uiMinPt2[3];
+    unsigned int uiMaxPt2[3];
     for(int d = 0; d < 3; ++d) {
-      double minPt, maxPt;
-      minPt = sources[i + d] - ptIwidth;
-      if(minPt < 0.0) {
-        minPt = 0.0;
+      double minPt1 = sources[i + d] - ptIwidth;
+      double maxPt1 = sources[i + d] + ptIwidth;
+      double minVal2 = ((__DTPMD__)*sources[i + d]) - static_cast<double>((K + 1)*cellsPerFgt);
+      double maxVal2 = ((__DTPMD__)*sources[i + d]) + static_cast<double>(K*cellsPerFgt);
+      if(minPt1 < 0.0) {
+        minPt1 = 0.0;
       }
-      maxPt = sources[i + d] + ptIwidth;
-      if(maxPt > 1.0) {
-        maxPt = 1.0;
+      if(maxPt1 > 1.0) {
+        maxPt1 = 1.0;
       }
-      uiMinPt1[d] = static_cast<unsigned int>(floor(minPt*invHfgt));
-      uiMaxPt1[d] = static_cast<unsigned int>(ceil(maxPt*invHfgt));
+      if(minVal2 < 0.0) {
+        minVal2 = 0.0;
+      }
+      if(maxVal2 > (__DTPMD__)) {
+        maxVal2 = (__DTPMD__);
+      }
+      uiMinPt1[d] = static_cast<unsigned int>(floor(minPt1*invHfgt));
+      uiMaxPt1[d] = static_cast<unsigned int>(ceil(maxPt1*invHfgt));
+      uiMinPt2[d] = 1 + static_cast<unsigned int>(floor(minVal2));
+      uiMaxPt2[d] = static_cast<unsigned int>(ceil(maxVal2));
     }//end d
     std::vector<ot::TreeNode> selectedBoxes;
+    //Target box is in interaction list of source point.
     for(int zi = uiMinPt1[2]; zi < uiMaxPt1[2]; ++zi) {
       for(int yi = uiMinPt1[1]; yi < uiMaxPt1[1]; ++yi) {
         for(int xi = uiMinPt1[0]; xi < uiMaxPt1[0]; ++xi) {
@@ -908,10 +908,68 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
         }//end xi
       }//end yi
     }//end zi
+    //Target point is in interaction list of source box.
+    for(int zi = uiMinPt2[2]; zi < uiMaxPt2[2]; zi += cellsPerFgt) {
+      for(int yi = uiMinPt2[1]; yi < uiMaxPt2[1]; yi += cellsPerFgt) {
+        for(int xi = uiMinPt2[0]; xi < uiMaxPt2[0]; xi += cellsPerFgt) {
+          ot::TreeNode tmpBox(xi, yi, zi, FgtLev, __DIM__, __MAX_DEPTH__);
+          selectedBoxes.push_back(tmpBox);
+        }//end xi
+      }//end yi
+    }//end zi
+    seq::makeVectorUnique(selectedBoxes, false);
+    for(int j = 0; j < selectedBoxes.size(); ++j) {
+      selectedBoxes[j].setWeight(i);
+      tmpSendBoxList.push_back(selectedBoxes[j]);
+    }//end j
   }//end i
 
+  std::vector<ot::TreeNode> sendBoxList;
+  std::vector<std::vector<unsigned int> > box2PtMap;
+
+  if(!(tmpSendBoxList.empty())) {
+    std::sort((&(tmpSendBoxList[0])), (&(tmpSendBoxList[0])) + tmpSendBoxList.size());
+    sendBoxList.push_back(tmpSendBoxList[0]);
+    unsigned int ptId = tmpSendBoxList[0].getWeight();
+    std::vector<unsigned int> tmpPtIdVec(1, ptId);
+    box2PtMap.push_back(tmpPtIdVec);
+  }
+
+  for(int i = 1; i < tmpSendBoxList.size(); ++i) {
+    unsigned int ptId = tmpSendBoxList[i].getWeight();
+    if(tmpSendBoxList[i] == sendBoxList[sendBoxList.size() - 1]) {
+      box2PtMap[box2PtMap.size() - 1].push_back(ptId);
+    } else {
+      sendBoxList.push_back(tmpSendBoxList[i]);
+      std::vector<unsigned int> tmpPtIdVec(1, ptId);
+      box2PtMap.push_back(tmpPtIdVec);
+    }
+  }//end i
+
+  tmpSendBoxList.clear();
+
+  int* sendCnts = new int[npes];
+  for(int i = 0; i < npes; ++i) {
+    sendCnts[i] = 0;
+  }//end i
+
+  //Performance Improvement: We could make use of the fact that sendBoxList is
+  //sorted and avoid the searches.
+  for(int i = 0; i < sendBoxList.size(); ++i) {
+    unsigned int idx;
+    bool found = seq::maxLowerBound<ot::TreeNode>(fgtMins, sendBoxList[i], idx, NULL, NULL);
+    if(found) {
+      ++(sendCnts[fgtMins[idx].getWeight()]);
+    }
+  }//end i
+
+  int* recvCnts = new int[npes];
+
+  //Performance improvement: This could be Alltoallv instead of Alltoall.
   MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, comm);
 
+  int* sendDisps = new int[npes];
+  int* recvDisps = new int[npes]; 
   sendDisps[0] = 0;
   recvDisps[0] = 0;
   for(int i = 1; i < npes; ++i) {
@@ -921,8 +979,8 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
 
   for(int i = 0; i < npes; ++i) {
     sendCnts[i] *= numWcoeffs;
-    sendDisps[i] *= numWcoeffs;
     recvCnts[i] *= numWcoeffs;
+    sendDisps[i] *= numWcoeffs;
     recvDisps[i] *= numWcoeffs;
   }//end i
 
