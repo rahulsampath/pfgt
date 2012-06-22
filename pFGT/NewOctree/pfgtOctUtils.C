@@ -813,27 +813,33 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
   const unsigned int numWcoeffs = 16*P*P*P;
 
   int* sendCnts = new int[npes];
+  int* sendDisps = new int[npes];
   for(int i = 0; i < npes; ++i) {
     sendCnts[i] = 0;
+    sendDisps[i] = 0;
   }//end i 
 
   int* recvCnts = new int[npes];
+
+  //Performance Improvement: This could be alltoallv instead of alltoall.
   MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, comm);
 
-  int* sendDisps = new int[npes];
   int* recvDisps = new int[npes];
-  sendDisps[0] = 0;
   recvDisps[0] = 0;
   for(int i = 1; i < npes; ++i) {
-    sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
     recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
   }//end i
 
   std::vector<ot::TreeNode> recvBoxList(recvDisps[npes - 1] + recvCnts[npes - 1]);
 
+  ot::TreeNode* recvBoxListPtr = NULL;
+  if(!(recvBoxList.empty())) {
+    recvBoxListPtr = &(recvBoxList[0]);
+  }
+  MPI_Alltoallv(NULL, sendCnts, sendDisps, par::Mpi_datatype<ot::TreeNode>::value(),
+      recvBoxListPtr, recvCnts, recvDisps, par::Mpi_datatype<ot::TreeNode>::value(), comm);
+
   for(int i = 0; i < npes; ++i) {
-    sendCnts[i] *= numWcoeffs;
-    sendDisps[i] *= numWcoeffs;
     recvCnts[i] *= numWcoeffs;
     recvDisps[i] *= numWcoeffs;
   }//end i
@@ -949,8 +955,10 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
   tmpSendBoxList.clear();
 
   int* sendCnts = new int[npes];
+  int* recvDisps = new int[npes]; 
   for(int i = 0; i < npes; ++i) {
     sendCnts[i] = 0;
+    recvDisps[i] = 0;
   }//end i
 
   //Performance Improvement: We could make use of the fact that sendBoxList is
@@ -969,19 +977,21 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
   MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, comm);
 
   int* sendDisps = new int[npes];
-  int* recvDisps = new int[npes]; 
   sendDisps[0] = 0;
-  recvDisps[0] = 0;
   for(int i = 1; i < npes; ++i) {
     sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
-    recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
   }//end i
+
+  ot::TreeNode* sendBoxListPtr = NULL;
+  if(!(sendBoxList.empty())) {
+    sendBoxListPtr = &(sendBoxList[0]);
+  }
+  MPI_Alltoallv(sendBoxListPtr, sendCnts, sendDisps, par::Mpi_datatype<ot::TreeNode>::value(),
+      NULL, recvCnts, recvDisps, par::Mpi_datatype<ot::TreeNode>::value(), comm);
 
   for(int i = 0; i < npes; ++i) {
     sendCnts[i] *= numWcoeffs;
-    recvCnts[i] *= numWcoeffs;
     sendDisps[i] *= numWcoeffs;
-    recvDisps[i] *= numWcoeffs;
   }//end i
 
   delete [] sendCnts;
