@@ -820,8 +820,6 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
   }//end i 
 
   int* recvCnts = new int[npes];
-
-  //Performance Improvement: This could be alltoallv instead of alltoall.
   MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, comm);
 
   int* recvDisps = new int[npes];
@@ -972,8 +970,6 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
   }//end i
 
   int* recvCnts = new int[npes];
-
-  //Performance improvement: This could be Alltoallv instead of Alltoall.
   MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, comm);
 
   int* sendDisps = new int[npes];
