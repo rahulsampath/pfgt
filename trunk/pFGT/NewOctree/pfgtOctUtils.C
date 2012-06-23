@@ -850,6 +850,9 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
   std::vector<double> sendWlist(recvDisps[npes - 1] + recvCnts[npes - 1]);
   std::vector<double> recvLlist(recvDisps[npes - 1] + recvCnts[npes - 1]);
 
+  double* sendWlistPtr = NULL;
+  double* recvLlistPtr = NULL;
+
   delete [] recvCnts;
   delete [] recvDisps;
 }
@@ -1003,6 +1006,9 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
 
   std::vector<double> recvWlist(sendDisps[npes - 1] + sendCnts[npes - 1]);
   std::vector<double> sendLlist(sendDisps[npes - 1] + sendCnts[npes - 1]);
+
+  double* recvWlistPtr = NULL;
+  double* sendLlistPtr = NULL;
 
   delete [] sendCnts;
   delete [] sendDisps;
