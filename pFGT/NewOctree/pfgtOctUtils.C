@@ -820,6 +820,7 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
   }//end i 
 
   int* recvCnts = new int[npes];
+
   MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, comm);
 
   int* recvDisps = new int[npes];
@@ -834,16 +835,21 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
   if(!(recvBoxList.empty())) {
     recvBoxListPtr = &(recvBoxList[0]);
   }
+
   MPI_Alltoallv(NULL, sendCnts, sendDisps, par::Mpi_datatype<ot::TreeNode>::value(),
       recvBoxListPtr, recvCnts, recvDisps, par::Mpi_datatype<ot::TreeNode>::value(), comm);
+
+  delete [] sendCnts;
+  delete [] sendDisps;
 
   for(int i = 0; i < npes; ++i) {
     recvCnts[i] *= numWcoeffs;
     recvDisps[i] *= numWcoeffs;
   }//end i
 
-  delete [] sendCnts;
-  delete [] sendDisps;
+  std::vector<double> sendWlist(recvDisps[npes - 1] + recvCnts[npes - 1]);
+  std::vector<double> recvLlist(recvDisps[npes - 1] + recvCnts[npes - 1]);
+
   delete [] recvCnts;
   delete [] recvDisps;
 }
@@ -970,6 +976,7 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
   }//end i
 
   int* recvCnts = new int[npes];
+
   MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, comm);
 
   int* sendDisps = new int[npes];
@@ -982,18 +989,23 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
   if(!(sendBoxList.empty())) {
     sendBoxListPtr = &(sendBoxList[0]);
   }
+
   MPI_Alltoallv(sendBoxListPtr, sendCnts, sendDisps, par::Mpi_datatype<ot::TreeNode>::value(),
       NULL, recvCnts, recvDisps, par::Mpi_datatype<ot::TreeNode>::value(), comm);
+
+  delete [] recvCnts;
+  delete [] recvDisps;
 
   for(int i = 0; i < npes; ++i) {
     sendCnts[i] *= numWcoeffs;
     sendDisps[i] *= numWcoeffs;
   }//end i
 
+  std::vector<double> recvWlist(sendDisps[npes - 1] + sendCnts[npes - 1]);
+  std::vector<double> sendLlist(sendDisps[npes - 1] + sendCnts[npes - 1]);
+
   delete [] sendCnts;
   delete [] sendDisps;
-  delete [] recvCnts;
-  delete [] recvDisps;
 }
 
 void createS2WcommInfo(int*& sendCnts, int*& sendDisps, int*& recvCnts, int*& recvDisps, 
