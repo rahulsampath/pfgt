@@ -842,6 +842,17 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
   delete [] sendCnts;
   delete [] sendDisps;
 
+  //Performance Improvement: We can use the fact that each processor's chunk in
+  //the recvBoxList is sorted and avoid the searches.
+  std::vector<int> recvBoxIds(recvBoxList.size(), -1);
+  for(int i = 0; i < recvBoxList.size(); ++i) { 
+    unsigned int retIdx;
+    bool found = seq::BinarySearch(&(fgtList[0]), fgtList.size(), recvBoxList[i], &retIdx);
+    if(found) {
+      recvBoxIds[i] = retIdx;
+    }
+  }//end i
+
   for(int i = 0; i < npes; ++i) {
     recvCnts[i] *= numWcoeffs;
     recvDisps[i] *= numWcoeffs;
