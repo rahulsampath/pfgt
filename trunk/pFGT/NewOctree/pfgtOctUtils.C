@@ -859,6 +859,14 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
   }//end i
 
   std::vector<double> sendWlist((recvDisps[npes - 1] + recvCnts[npes - 1]), 0.0);
+  for(int i = 0; i < recvBoxIds.size(); ++i) {
+    if(recvBoxIds[i] >= 0) {
+      for(int d = 0; d < numWcoeffs; ++d) {
+        sendWlist[(numWcoeffs*i) + d] = localWlist[(numWcoeffs*recvBoxIds[i]) + d];
+      }//end d
+    }
+  }//end i
+
   std::vector<double> recvLlist(recvDisps[npes - 1] + recvCnts[npes - 1]);
 
   double* sendWlistPtr = NULL;
@@ -873,6 +881,14 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
 
   MPI_Alltoallv(sendWlistPtr, recvCnts, recvDisps, par::Mpi_datatype<ot::TreeNode>::value(),
       recvLlistPtr, recvCnts, recvDisps, par::Mpi_datatype<ot::TreeNode>::value(), comm);
+
+  for(int i = 0; i < recvBoxIds.size(); ++i) {
+    if(recvBoxIds[i] >= 0) {
+      for(int d = 0; d < numWcoeffs; ++d) {
+        localLlist[(numWcoeffs*recvBoxIds[i]) + d] += recvLlist[(numWcoeffs*i) + d];
+      }//end d
+    }
+  }//end i
 
   delete [] recvCnts;
   delete [] recvDisps;
