@@ -33,7 +33,7 @@ void pfgtExpand(std::vector<double> & expandSources, const int numPtsInRemoteFgt
     const int L, const int K, MPI_Comm subComm, MPI_Comm comm);
 
 void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev,
-    const int P, const int K, const double epsilon, MPI_Comm subComm, MPI_Comm comm);
+    const int P, const int L, const int K, const double epsilon, MPI_Comm subComm, MPI_Comm comm);
 
 void computeFgtMinsExpand(std::vector<ot::TreeNode> & fgtMins, std::vector<ot::TreeNode> & fgtList,
     MPI_Comm subComm, MPI_Comm comm);
@@ -73,7 +73,7 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
 
 void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & sources,
     std::vector<ot::TreeNode> & fgtMins, const unsigned int FgtLev, 
-    const int P, const int K, const double epsilon, MPI_Comm comm);
+    const int P, const int L, const int K, const double epsilon, MPI_Comm comm);
 
 #endif
 
