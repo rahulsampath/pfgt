@@ -174,7 +174,8 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
     }
 
     if(rank < npesExpand) {
-      pfgtExpand(expandSources, numPtsInRemoteFgt, fgtList, FgtLev, P, L, K, subComm, comm);
+      pfgtExpand(expandSources, numPtsInRemoteFgt, fgtList, FgtLev, P, L, K, 
+          excessWt, avgExpand, extraExpand, subComm, comm);
     } else {
       pfgtDirect(finalDirectSources, FgtLev, P, L, K, epsilon, subComm, comm);
     }
@@ -187,7 +188,8 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
 
 void pfgtExpand(std::vector<double> & expandSources, const int numPtsInRemoteFgt, 
     std::vector<ot::TreeNode> & fgtList, const unsigned int FgtLev, const int P, 
-    const int L, const int K, MPI_Comm subComm, MPI_Comm comm) {
+    const int L, const int K, const int excessWt, const int avgExpand, const int extraExpand,
+    MPI_Comm subComm, MPI_Comm comm) {
 
   assert(!(expandSources.empty()));
 
@@ -213,7 +215,7 @@ void pfgtExpand(std::vector<double> & expandSources, const int numPtsInRemoteFgt
   int* s2wRecvDisps = NULL;
 
   createS2WcommInfo(s2wSendCnts, s2wSendDisps, s2wRecvCnts, s2wRecvDisps, 
-      remoteFgtOwner, numWcoeffs, subComm);
+      remoteFgtOwner, numWcoeffs, excessWt, avgExpand, extraExpand, subComm);
 
   std::vector<double> localWlist( (numWcoeffs*(fgtList.size())), 0.0);
   s2w(localWlist, expandSources, remoteFgt, remoteFgtOwner, numPtsInRemoteFgt, fgtList,
@@ -1128,9 +1130,13 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
 }
 
 void createS2WcommInfo(int*& sendCnts, int*& sendDisps, int*& recvCnts, int*& recvDisps, 
-    const int remoteFgtOwner, const unsigned int numWcoeffs, MPI_Comm subComm) {
+    const int remoteFgtOwner, const unsigned int numWcoeffs, const int excessWt,
+    const int avgExpand, const int extraExpand, MPI_Comm subComm) {
   int npes;
   MPI_Comm_size(subComm, &npes);
+
+  int rank;
+  MPI_Comm_rank(subComm, &rank);
 
   sendCnts = new int[npes];
   recvCnts = new int[npes]; 
@@ -1139,14 +1145,25 @@ void createS2WcommInfo(int*& sendCnts, int*& sendDisps, int*& recvCnts, int*& re
 
   for(int i = 0; i < npes; ++i) {
     sendCnts[i] = 0;
+    recvCnts[i] = 0;
   }//end i
+
   if(remoteFgtOwner >= 0) {
     sendCnts[remoteFgtOwner] = numWcoeffs;
   }
 
-  //Performance Improvement: This Alltoall can be avoided by doing a simple
-  //calculation using excessWt, avgExpand and extraExpand.
-  MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, subComm);
+  for(int i = (rank + 1), leftOver = excessWt; i < npes; ++i) {
+    if(leftOver > 0) {
+      recvCnts[i] = numWcoeffs;
+      if(i < extraExpand) {
+        leftOver = leftOver - (avgExpand + 1);
+      } else {
+        leftOver = leftOver - avgExpand;
+      }
+    } else {
+      break;
+    }
+  }//end i
 
   sendDisps[0] = 0;
   recvDisps[0] = 0;

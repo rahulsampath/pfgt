@@ -30,7 +30,8 @@ void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt,
 
 void pfgtExpand(std::vector<double> & expandSources, const int numPtsInRemoteFgt, 
     std::vector<ot::TreeNode> & fgtList, const unsigned int FgtLev, const int P,
-    const int L, const int K, MPI_Comm subComm, MPI_Comm comm);
+    const int L, const int K, const int excessWt, const int avgExpand, 
+    const int extraExpand, MPI_Comm subComm, MPI_Comm comm);
 
 void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev,
     const int P, const int L, const int K, const double epsilon, MPI_Comm subComm, MPI_Comm comm);
@@ -44,7 +45,8 @@ void computeRemoteFgt(ot::TreeNode & remoteFgt, int & remoteFgtOwner, const unsi
     std::vector<double> & sources, std::vector<ot::TreeNode> & fgtMins);
 
 void createS2WcommInfo(int*& sendCnts, int*& sendDisps, int*& recvCnts, int*& recvDisps, 
-    const int remoteFgtOwner, const unsigned int numWcoeffs, MPI_Comm subComm);
+    const int remoteFgtOwner, const unsigned int numWcoeffs, const int excessWt,
+    const int avgExpand, const int extraExpand, MPI_Comm subComm);
 
 void destroyS2WcommInfo(int* sendCnts, int* sendDisps, int* recvCnts, int* recvDisps);
 
