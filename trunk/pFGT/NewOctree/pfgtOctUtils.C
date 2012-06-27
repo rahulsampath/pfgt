@@ -853,6 +853,12 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
     }
   }//end i
 
+  //Performance Improvement (Probably necessary when sources != targets) Incur
+  //a synchronization penalty and remove invalid boxes. This will reduce the
+  //message size for the subsequent communication. Also mark the boxes as d2l
+  //candidates, w2d candidates or both. This info could be used to further reduce the
+  //message size for the subsequent communication.   
+
   for(int i = 0; i < npes; ++i) {
     recvCnts[i] *= numWcoeffs;
     recvDisps[i] *= numWcoeffs;
@@ -1038,6 +1044,12 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
 
   delete [] recvCnts;
   delete [] recvDisps;
+
+  //Performance Improvement (Probably necessary when sources != targets) Incur
+  //a synchronization penalty and remove invalid boxes. This will reduce the
+  //message size for the subsequent communication. Also mark the boxes as d2l
+  //candidates, w2d candidates or both. This info could be used to further reduce the
+  //message size for the subsequent communication.   
 
   for(int i = 0; i < npes; ++i) {
     sendCnts[i] *= numWcoeffs;
