@@ -57,19 +57,19 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
   if(globalSizes[0] == 0) {
     //Only Direct
     if(!rank) {
-      std::cout<<"THIS CASE IS NOT SUPPORTED!"<<std::endl;
+      std::cout<<"THIS CASE (Only Direct Points) IS NOT SUPPORTED!"<<std::endl;
     }
     assert(false);
   } else if(globalSizes[1] == 0) {
     //Only Expand
     if(!rank) {
-      std::cout<<"THIS CASE IS NOT SUPPORTED!"<<std::endl;
+      std::cout<<"THIS CASE (Only Expand Points) IS NOT SUPPORTED!"<<std::endl;
     }
     assert(false);
   } else if(npes == 1) {
     //Serial
     if(!rank) {
-      std::cout<<"THIS CASE IS NOT SUPPORTED!"<<std::endl;
+      std::cout<<"THIS CASE (Serial) IS NOT SUPPORTED!"<<std::endl;
     }
     assert(false);
   } else {
