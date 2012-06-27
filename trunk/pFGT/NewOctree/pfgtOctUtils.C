@@ -176,7 +176,7 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
     if(rank < npesExpand) {
       pfgtExpand(expandSources, numPtsInRemoteFgt, fgtList, FgtLev, P, L, K, subComm, comm);
     } else {
-      pfgtDirect(finalDirectSources, FgtLev, P, K, epsilon, subComm, comm);
+      pfgtDirect(finalDirectSources, FgtLev, P, L, K, epsilon, subComm, comm);
     }
 
     MPI_Comm_free(&subComm);
@@ -232,7 +232,7 @@ void pfgtExpand(std::vector<double> & expandSources, const int numPtsInRemoteFgt
 }
 
 void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev,
-    const int P, const int K, const double epsilon, MPI_Comm subComm, MPI_Comm comm) {
+    const int P, const int L, const int K, const double epsilon, MPI_Comm subComm, MPI_Comm comm) {
 
   int subNpes;
   MPI_Comm_size(subComm, &subNpes);
@@ -257,7 +257,7 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev,
   std::vector<double> results(directNodes.size(), 0.0);
   d2d(results, directSources, directNodes, directMins, FgtLev, epsilon, subComm);
 
-  w2dAndD2lDirect(results, directSources, fgtMins, FgtLev, P, K, epsilon, comm);
+  w2dAndD2lDirect(results, directSources, fgtMins, FgtLev, P, L, K, epsilon, comm);
 }
 
 void s2w(std::vector<double> & localWlist, std::vector<double> & sources,  
@@ -896,7 +896,7 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
 
 void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & sources,
     std::vector<ot::TreeNode> & fgtMins, const unsigned int FgtLev, 
-    const int P, const int K, const double epsilon, MPI_Comm comm) {
+    const int P, const int L, const int K, const double epsilon, MPI_Comm comm) {
   int npes;
   MPI_Comm_size(comm, &npes);
 
@@ -911,12 +911,15 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
 
   //Fgt box size = sqrt(delta)
   const double hFgt = 1.0/invHfgt;
+  const double delta = hFgt*hFgt;
 
   const double ptIwidth = hFgt*(sqrt(-log(epsilon)));
-
   const double ptIwidthSqr = ptIwidth*ptIwidth;
 
-  const double delta = hFgt*hFgt;
+  const double LbyP = static_cast<double>(L)/static_cast<double>(P);
+  const double ImExpZfactor = LbyP/hFgt;
+  const double ReExpZfactor = -0.25*LbyP*LbyP;
+  const double C0 = (0.125*LbyP*LbyP*LbyP/(__SQRT_PI__*__SQRT_PI__*__SQRT_PI__));
 
   std::vector<ot::TreeNode> tmpSendBoxList;
 
@@ -1042,6 +1045,30 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
   }//end i
 
   std::vector<double> sendLlist((sendDisps[npes - 1] + sendCnts[npes - 1]), 0.0);
+  for(int i = 0; i < sendBoxList.size(); ++i) {
+    double cx = (0.5*hFgt) + ((static_cast<double>(sendBoxList[i].getX()))/(__DTPMD__));
+    double cy = (0.5*hFgt) + ((static_cast<double>(sendBoxList[i].getY()))/(__DTPMD__));
+    double cz = (0.5*hFgt) + ((static_cast<double>(sendBoxList[i].getZ()))/(__DTPMD__));
+    for(int j = 0; j < box2PtMap[i].size(); ++j) {
+      double px = sources[box2PtMap[i][j]];
+      double py = sources[box2PtMap[i][j] + 1];
+      double pz = sources[box2PtMap[i][j] + 2];
+      double pf = sources[box2PtMap[i][j] + 3];
+      for(int k3 = -P, di = 0; k3 < P; k3++) {
+        double thetaZ = (static_cast<double>(k3))*(cz - pz);
+        for(int k2 = -P; k2 < P; k2++) {
+          double thetaY = (static_cast<double>(k2))*(cy - py);
+          for(int k1 = -P; k1 < P; k1++, di++) {
+            double thetaX = (static_cast<double>(k1))*(cx - px);
+            double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
+            sendLlist[(numWcoeffs*i) + (2*di)] += (pf*cos(theta));
+            sendLlist[(numWcoeffs*i) + (2*di) + 1] += (pf*sin(theta));
+          }//end for k1
+        }//end for k2
+      }//end for k3
+    }//end j
+  }//end i
+
   std::vector<double> recvWlist(sendDisps[npes - 1] + sendCnts[npes - 1]);
 
   double* sendLlistPtr = NULL;
@@ -1059,6 +1086,33 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
 
   delete [] sendCnts;
   delete [] sendDisps;
+
+  for(int i = 0; i < sendBoxList.size(); ++i) {
+    double cx = (0.5*hFgt) + ((static_cast<double>(sendBoxList[i].getX()))/(__DTPMD__));
+    double cy = (0.5*hFgt) + ((static_cast<double>(sendBoxList[i].getY()))/(__DTPMD__));
+    double cz = (0.5*hFgt) + ((static_cast<double>(sendBoxList[i].getZ()))/(__DTPMD__));
+    for(int j = 0; j < box2PtMap[i].size(); ++j) {
+      double px = sources[box2PtMap[i][j]];
+      double py = sources[box2PtMap[i][j] + 1];
+      double pz = sources[box2PtMap[i][j] + 2];
+      for(int k3 = -P, di = 0; k3 < P; k3++) {
+        double thetaZ = (static_cast<double>(k3))*(pz - cz);
+        for(int k2 = -P; k2 < P; k2++) {
+          double thetaY = (static_cast<double>(k2))*(py - cy);
+          for(int k1 = -P; k1 < P; k1++, di++) {
+            double thetaX = (static_cast<double>(k1))*(px - cx);
+            double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
+            double factor = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
+            double a = recvWlist[(numWcoeffs*i) + (2*di)];
+            double b = recvWlist[(numWcoeffs*i) + (2*di) + 1];
+            double c = cos(theta);
+            double d = sin(theta);
+            results[(box2PtMap[i][j])/4] += (factor*( (a*c) - (b*d) ));
+          }//end for k1
+        }//end for k2
+      }//end for k3
+    }//end j
+  }//end i
 }
 
 void createS2WcommInfo(int*& sendCnts, int*& sendDisps, int*& recvCnts, int*& recvDisps, 
