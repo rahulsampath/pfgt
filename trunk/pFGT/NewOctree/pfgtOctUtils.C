@@ -10,6 +10,7 @@
 extern PetscLogEvent pfgtMainEvent;
 extern PetscLogEvent pfgtExpandEvent;
 extern PetscLogEvent pfgtDirectEvent;
+extern PetscLogEvent splitSourcesEvent;
 
 void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev,
     const int P, const int L, const int K, const double epsilon, MPI_Comm comm) {
@@ -1260,6 +1261,7 @@ void computeFgtMinsDirect(std::vector<ot::TreeNode> & fgtMins, MPI_Comm comm) {
 void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt, 
     const unsigned int FgtLev, std::vector<double>& expandSources, std::vector<double>& directSources, 
     std::vector<ot::TreeNode>& fgtList, MPI_Comm comm) {
+  PetscLogEventBegin(splitSourcesEvent, 0, 0, 0, 0);
 
   int numPts = ((sources.size())/4);
 
@@ -1504,6 +1506,8 @@ void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt,
   }//end i
   swap(dummyList, fgtList);
   assert((sources.size()) == ((directSources.size()) + (expandSources.size())));
+
+  PetscLogEventEnd(splitSourcesEvent, 0, 0, 0, 0);
 }
 
 
