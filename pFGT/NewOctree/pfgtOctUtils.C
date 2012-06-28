@@ -8,6 +8,8 @@
 #include "par/dtypes.h"
 
 extern PetscLogEvent pfgtMainEvent;
+extern PetscLogEvent pfgtExpandEvent;
+extern PetscLogEvent pfgtDirectEvent;
 
 void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev,
     const int P, const int L, const int K, const double epsilon, MPI_Comm comm) {
@@ -190,6 +192,7 @@ void pfgtExpand(std::vector<double> & expandSources, const int numPtsInRemoteFgt
     std::vector<ot::TreeNode> & fgtList, const unsigned int FgtLev, const int P, 
     const int L, const int K, const int excessWt, const int avgExpand, const int extraExpand,
     MPI_Comm subComm, MPI_Comm comm) {
+  PetscLogEventBegin(pfgtExpandEvent, 0, 0, 0, 0);
 
   assert(!(expandSources.empty()));
 
@@ -231,10 +234,13 @@ void pfgtExpand(std::vector<double> & expandSources, const int numPtsInRemoteFgt
       fgtList, fgtMins, FgtLev, P, L, s2wSendCnts, s2wSendDisps, s2wRecvCnts, s2wRecvDisps, subComm);
 
   destroyS2WcommInfo(s2wSendCnts, s2wSendDisps, s2wRecvCnts, s2wRecvDisps); 
+
+  PetscLogEventEnd(pfgtExpandEvent, 0, 0, 0, 0);
 }
 
 void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev,
     const int P, const int L, const int K, const double epsilon, MPI_Comm subComm, MPI_Comm comm) {
+  PetscLogEventBegin(pfgtDirectEvent, 0, 0, 0, 0);
 
   int subNpes;
   MPI_Comm_size(subComm, &subNpes);
@@ -260,6 +266,8 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev,
   d2d(results, directSources, directNodes, directMins, FgtLev, epsilon, subComm);
 
   w2dAndD2lDirect(results, directSources, fgtMins, FgtLev, P, L, K, epsilon, comm);
+
+  PetscLogEventEnd(pfgtDirectEvent, 0, 0, 0, 0);
 }
 
 void s2w(std::vector<double> & localWlist, std::vector<double> & sources,  
