@@ -15,7 +15,7 @@
 #include "pfgtOctUtils.h"
 
 PetscCookie fgtCookie;
-PetscLogEvent fgtEvent;
+PetscLogEvent pfgtMainEvent;
 
 bool softEquals(double a, double b) {
   return ((fabs(a - b)) < 1.0e-14);
@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
   ot::RegisterEvents();
 
   PetscCookieRegister("Fgt", &fgtCookie);
-  PetscLogEventRegister("Fgt", fgtCookie, &fgtEvent);
+  PetscLogEventRegister("FgtMain", fgtCookie, &pfgtMainEvent);
 
   int npes, rank;
   MPI_Comm_size(MPI_COMM_WORLD, &npes);
