@@ -7,11 +7,11 @@
 #include "par/parUtils.h"
 #include "par/dtypes.h"
 
-extern PetscLogEvent fgtEvent;
+extern PetscLogEvent pfgtMainEvent;
 
 void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev,
     const int P, const int L, const int K, const double epsilon, MPI_Comm comm) {
-  PetscLogEventBegin(fgtEvent, 0, 0, 0, 0);
+  PetscLogEventBegin(pfgtMainEvent, 0, 0, 0, 0);
 
   int npes, rank;
   MPI_Comm_size(comm, &npes);
@@ -183,7 +183,7 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
     MPI_Comm_free(&subComm);
   }
 
-  PetscLogEventEnd(fgtEvent, 0, 0, 0, 0);
+  PetscLogEventEnd(pfgtMainEvent, 0, 0, 0, 0);
 }
 
 void pfgtExpand(std::vector<double> & expandSources, const int numPtsInRemoteFgt, 
