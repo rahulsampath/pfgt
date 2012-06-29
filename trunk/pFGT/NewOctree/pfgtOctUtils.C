@@ -55,13 +55,21 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
   }//end i
   swap(expandSources, tmpExpandSources);
   tmpExpandSources.clear();
-  fgtList.clear();
 
-  int localSizes[2];
-  int globalSizes[2];
+  int localSizes[3];
+  int globalSizes[3];
   localSizes[0] = (expandSources.size())/5;
   localSizes[1] = (directSources.size())/4;
-  MPI_Allreduce(localSizes, globalSizes, 2, MPI_INT, MPI_SUM, comm);
+  localSizes[2] = fgtList.size();
+  MPI_Allreduce(localSizes, globalSizes, 3, MPI_INT, MPI_SUM, comm);
+
+  if(!rank) {
+    std::cout<<"Total Number of Expand Pts = "<<(globalSizes[0])<<std::endl;
+    std::cout<<"Total Number of Direct Pts = "<<(globalSizes[1])<<std::endl;
+    std::cout<<"Total Number of FGT boxes = "<<(globalSizes[2])<<std::endl;
+  }
+
+  fgtList.clear();
 
   if(globalSizes[0] == 0) {
     //Only Direct
