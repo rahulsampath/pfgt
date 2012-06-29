@@ -1263,7 +1263,7 @@ void computeFgtMinsExpand(std::vector<ot::TreeNode> & fgtMins, std::vector<ot::T
         tmpMins.push_back(fgtMins[i]);
       }
     }//end i
-    fgtMins = tmpMins;
+    swap(fgtMins, tmpMins);
     fgtMinSize = fgtMins.size();
   }
 
