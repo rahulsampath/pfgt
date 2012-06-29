@@ -24,9 +24,13 @@
 void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev,
     const int P, const int L, const int K, const double epsilon, MPI_Comm comm);
 
-void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt, 
-    const unsigned int FgtLev, std::vector<double>& expandSources, std::vector<double>& directSources, 
-    std::vector<ot::TreeNode>& fgtList, MPI_Comm comm);
+void pfgtSetup(std::vector<double>& expandSources, std::vector<double>& directSources, std::vector<ot::TreeNode>& fgtList,
+    int & npesExpand, int & avgExpand, int & extraExpand, MPI_Comm & subComm, std::vector<double>& sources,
+    const unsigned int minPtsInFgt, const unsigned int FgtLev, MPI_Comm comm);
+
+void splitSources(std::vector<double>& expandSources, std::vector<double>& directSources, 
+    std::vector<ot::TreeNode>& fgtList, std::vector<double>& sources, const unsigned int minPtsInFgt, 
+    const unsigned int FgtLev, MPI_Comm comm);
 
 void pfgtExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> & fgtList, const unsigned int FgtLev, 
     const int P, const int L, const int K, const int avgExpand, const int extraExpand, MPI_Comm subComm, MPI_Comm comm);

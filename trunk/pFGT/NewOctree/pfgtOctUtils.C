@@ -23,17 +23,56 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
     const int P, const int L, const int K, const double epsilon, MPI_Comm comm) {
   PetscLogEventBegin(pfgtMainEvent, 0, 0, 0, 0);
 
-  PetscLogEventBegin(pfgtSetupEvent, 0, 0, 0, 0);
-
-  int npes, rank;
-  MPI_Comm_size(comm, &npes);
-  MPI_Comm_rank(comm, &rank);
-
   std::vector<double> expandSources;
   std::vector<double> directSources;
   std::vector<ot::TreeNode> fgtList;
-  splitSources(sources, minPtsInFgt, FgtLev, expandSources, directSources, fgtList, comm);
+
+  int npesExpand, avgExpand, extraExpand;
+  MPI_Comm subComm = MPI_COMM_NULL;
+
+  pfgtSetup(expandSources, directSources, fgtList, npesExpand, avgExpand, 
+      extraExpand, subComm, sources, minPtsInFgt, FgtLev, comm);
+
+  int rank;
+  MPI_Comm_rank(comm, &rank);
+
+  if(rank < npesExpand) {
+    pfgtExpand(expandSources, fgtList, FgtLev, P, L, K, avgExpand, extraExpand, subComm, comm);
+  } else {
+    pfgtDirect(directSources, FgtLev, P, L, K, epsilon, subComm, comm);
+  }
+
+  if(subComm != MPI_COMM_NULL) {
+    MPI_Comm_free(&subComm);
+  }
+
+  PetscLogEventEnd(pfgtMainEvent, 0, 0, 0, 0);
+}
+
+void pfgtSetup(std::vector<double>& expandSources, std::vector<double>& directSources, std::vector<ot::TreeNode>& fgtList,
+    int & npesExpand, int & avgExpand, int & extraExpand, MPI_Comm & subComm, std::vector<double>& sources, 
+    const unsigned int minPtsInFgt, const unsigned int FgtLev, MPI_Comm comm) {
+  PetscLogEventBegin(pfgtSetupEvent, 0, 0, 0, 0);
+
+  splitSources(expandSources, directSources, fgtList, sources, minPtsInFgt, FgtLev, comm);
   sources.clear();
+
+  int localSizes[3];
+  int globalSizes[3];
+  localSizes[0] = (expandSources.size())/4;
+  localSizes[1] = (directSources.size())/4;
+  localSizes[2] = fgtList.size();
+
+  MPI_Allreduce(localSizes, globalSizes, 3, MPI_INT, MPI_SUM, comm);
+
+  int rank;
+  MPI_Comm_rank(comm, &rank);
+
+  if(!rank) {
+    std::cout<<"Total Number of Expand Pts = "<<(globalSizes[0])<<std::endl;
+    std::cout<<"Total Number of Direct Pts = "<<(globalSizes[1])<<std::endl;
+    std::cout<<"Total Number of FGT boxes = "<<(globalSizes[2])<<std::endl;
+  }
 
   std::vector<double> tmpExpandSources;
   int srcCnt = 0;
@@ -58,21 +97,10 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
   }//end i
   swap(expandSources, tmpExpandSources);
   tmpExpandSources.clear();
-
-  int localSizes[3];
-  int globalSizes[3];
-  localSizes[0] = (expandSources.size())/5;
-  localSizes[1] = (directSources.size())/4;
-  localSizes[2] = fgtList.size();
-  MPI_Allreduce(localSizes, globalSizes, 3, MPI_INT, MPI_SUM, comm);
-
-  if(!rank) {
-    std::cout<<"Total Number of Expand Pts = "<<(globalSizes[0])<<std::endl;
-    std::cout<<"Total Number of Direct Pts = "<<(globalSizes[1])<<std::endl;
-    std::cout<<"Total Number of FGT boxes = "<<(globalSizes[2])<<std::endl;
-  }
-
   fgtList.clear();
+
+  int npes;
+  MPI_Comm_size(comm, &npes);
 
   if(globalSizes[0] == 0) {
     //Only Direct
@@ -93,7 +121,7 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
     }
     assert(false);
   } else {
-    int npesExpand = (globalSizes[0]*npes)/(globalSizes[0] + globalSizes[1]);
+    npesExpand = (globalSizes[0]*npes)/(globalSizes[0] + globalSizes[1]);
     assert(npesExpand < npes);
     if(npesExpand < 1) {
       npesExpand = 1;
@@ -101,7 +129,6 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
     int npesDirect = npes - npesExpand;
     assert(npesDirect > 0);
 
-    MPI_Comm subComm;
     MPI_Group group, subGroup;
     MPI_Comm_group(comm, &group);
     if(rank < npesExpand) {
@@ -123,8 +150,8 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
     MPI_Comm_create(comm, subGroup, &subComm);
     MPI_Group_free(&subGroup);
 
-    int avgExpand = (globalSizes[0])/npesExpand;
-    int extraExpand = (globalSizes[0])%npesExpand; 
+    avgExpand = (globalSizes[0])/npesExpand;
+    extraExpand = (globalSizes[0])%npesExpand; 
     int avgDirect = (globalSizes[1])/npesDirect;
     int extraDirect = (globalSizes[1])%npesDirect;
 
@@ -145,9 +172,10 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
       par::scatterValues<double>(directSources, finalDirectSources, (4*avgDirect), comm);
     }
 
-    expandSources.clear();
-    directSources.clear();
+    swap(directSources, finalDirectSources);
+    finalDirectSources.clear();
 
+    expandSources.clear();
     for(int i = 0; i < finalExpandSources.size(); i += 5) {
       int flag = static_cast<int>(finalExpandSources[i + 4]);
       if(flag > 0) {
@@ -164,21 +192,10 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
       expandSources.push_back(finalExpandSources[i + 2]);
       expandSources.push_back(finalExpandSources[i + 3]);
     }//end i
-
     finalExpandSources.clear();
-
-    PetscLogEventEnd(pfgtSetupEvent, 0, 0, 0, 0);
-
-    if(rank < npesExpand) {
-      pfgtExpand(expandSources, fgtList, FgtLev, P, L, K, avgExpand, extraExpand, subComm, comm);
-    } else {
-      pfgtDirect(finalDirectSources, FgtLev, P, L, K, epsilon, subComm, comm);
-    }
-
-    MPI_Comm_free(&subComm);
   }
 
-  PetscLogEventEnd(pfgtMainEvent, 0, 0, 0, 0);
+  PetscLogEventEnd(pfgtSetupEvent, 0, 0, 0, 0);
 }
 
 void pfgtExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> & fgtList,
@@ -1297,9 +1314,9 @@ void computeFgtMinsDirect(std::vector<ot::TreeNode> & fgtMins, MPI_Comm comm) {
   MPI_Bcast(&(fgtMins[0]), fgtMinSize, par::Mpi_datatype<ot::TreeNode>::value(), 0, comm);
 }
 
-void splitSources(std::vector<double>& sources, const unsigned int minPtsInFgt, 
-    const unsigned int FgtLev, std::vector<double>& expandSources, std::vector<double>& directSources, 
-    std::vector<ot::TreeNode>& fgtList, MPI_Comm comm) {
+void splitSources(std::vector<double>& expandSources, std::vector<double>& directSources, 
+    std::vector<ot::TreeNode>& fgtList, std::vector<double>& sources, const unsigned int minPtsInFgt, 
+    const unsigned int FgtLev, MPI_Comm comm) {
   PetscLogEventBegin(splitSourcesEvent, 0, 0, 0, 0);
 
   int numPts = ((sources.size())/4);
