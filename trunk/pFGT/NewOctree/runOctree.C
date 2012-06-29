@@ -16,6 +16,7 @@
 
 PetscCookie fgtCookie;
 PetscLogEvent pfgtMainEvent;
+PetscLogEvent pfgtSetupEvent;
 PetscLogEvent pfgtExpandEvent;
 PetscLogEvent pfgtDirectEvent;
 PetscLogEvent splitSourcesEvent;
@@ -42,6 +43,7 @@ int main(int argc, char** argv) {
 
   PetscCookieRegister("Fgt", &fgtCookie);
   PetscLogEventRegister("FgtMain", fgtCookie, &pfgtMainEvent);
+  PetscLogEventRegister("FgtSetup", fgtCookie, &pfgtSetupEvent);
   PetscLogEventRegister("FgtExpand", fgtCookie, &pfgtExpandEvent);
   PetscLogEventRegister("FgtDirect", fgtCookie, &pfgtDirectEvent);
   PetscLogEventRegister("SplitSrc", fgtCookie, &splitSourcesEvent);

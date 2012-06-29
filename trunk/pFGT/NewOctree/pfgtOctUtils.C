@@ -8,9 +8,10 @@
 #include "par/dtypes.h"
 
 extern PetscLogEvent pfgtMainEvent;
+extern PetscLogEvent pfgtSetupEvent;
+extern PetscLogEvent splitSourcesEvent;
 extern PetscLogEvent pfgtExpandEvent;
 extern PetscLogEvent pfgtDirectEvent;
-extern PetscLogEvent splitSourcesEvent;
 extern PetscLogEvent s2wEvent;
 extern PetscLogEvent l2tEvent;
 extern PetscLogEvent w2lEvent;
@@ -21,6 +22,8 @@ extern PetscLogEvent w2dD2lDirectEvent;
 void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev,
     const int P, const int L, const int K, const double epsilon, MPI_Comm comm) {
   PetscLogEventBegin(pfgtMainEvent, 0, 0, 0, 0);
+
+  PetscLogEventBegin(pfgtSetupEvent, 0, 0, 0, 0);
 
   int npes, rank;
   MPI_Comm_size(comm, &npes);
@@ -163,6 +166,8 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
     }//end i
 
     finalExpandSources.clear();
+
+    PetscLogEventEnd(pfgtSetupEvent, 0, 0, 0, 0);
 
     if(rank < npesExpand) {
       pfgtExpand(expandSources, fgtList, FgtLev, P, L, K, avgExpand, extraExpand, subComm, comm);
