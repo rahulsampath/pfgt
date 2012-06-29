@@ -23,6 +23,8 @@ PetscLogEvent s2wEvent;
 PetscLogEvent l2tEvent;
 PetscLogEvent w2lEvent;
 PetscLogEvent d2dEvent;
+PetscLogEvent w2dD2lExpandEvent;
+PetscLogEvent w2dD2lDirectEvent;
 
 bool softEquals(double a, double b) {
   return ((fabs(a - b)) < 1.0e-14);
@@ -47,6 +49,8 @@ int main(int argc, char** argv) {
   PetscLogEventRegister("L2T", fgtCookie, &l2tEvent);
   PetscLogEventRegister("W2L", fgtCookie, &w2lEvent);
   PetscLogEventRegister("D2D", fgtCookie, &d2dEvent);
+  PetscLogEventRegister("W2D2LE", fgtCookie, &w2dD2lExpandEvent);
+  PetscLogEventRegister("W2D2LD", fgtCookie, &w2dD2lDirectEvent);
 
   int npes, rank;
   MPI_Comm_size(MPI_COMM_WORLD, &npes);

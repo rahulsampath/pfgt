@@ -15,6 +15,8 @@ extern PetscLogEvent s2wEvent;
 extern PetscLogEvent l2tEvent;
 extern PetscLogEvent w2lEvent;
 extern PetscLogEvent d2dEvent;
+extern PetscLogEvent w2dD2lExpandEvent;
+extern PetscLogEvent w2dD2lDirectEvent;
 
 void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev,
     const int P, const int L, const int K, const double epsilon, MPI_Comm comm) {
@@ -835,6 +837,8 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
 
 void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & localWlist, 
     std::vector<ot::TreeNode> & fgtList, const int P, MPI_Comm comm) {
+  PetscLogEventBegin(w2dD2lExpandEvent, 0, 0, 0, 0);
+
   int npes;
   MPI_Comm_size(comm, &npes);
 
@@ -927,11 +931,15 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
 
   delete [] recvCnts;
   delete [] recvDisps;
+
+  PetscLogEventEnd(w2dD2lExpandEvent, 0, 0, 0, 0);
 }
 
 void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & sources,
     std::vector<ot::TreeNode> & fgtMins, const unsigned int FgtLev, 
     const int P, const int L, const int K, const double epsilon, MPI_Comm comm) {
+  PetscLogEventBegin(w2dD2lDirectEvent, 0, 0, 0, 0);
+
   int npes;
   MPI_Comm_size(comm, &npes);
 
@@ -1154,6 +1162,8 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
       }//end for k3
     }//end j
   }//end i
+
+  PetscLogEventEnd(w2dD2lDirectEvent, 0, 0, 0, 0);
 }
 
 void createS2WcommInfo(int*& sendCnts, int*& sendDisps, int*& recvCnts, int*& recvDisps, 
