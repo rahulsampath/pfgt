@@ -13,6 +13,7 @@ extern PetscLogEvent pfgtDirectEvent;
 extern PetscLogEvent splitSourcesEvent;
 extern PetscLogEvent s2wEvent;
 extern PetscLogEvent l2tEvent;
+extern PetscLogEvent w2lEvent;
 
 void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev,
     const int P, const int L, const int K, const double epsilon, MPI_Comm comm) {
@@ -469,6 +470,8 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
 void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist, 
     std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & fgtMins,
     const unsigned int FgtLev, const int P, const int L, const int K, MPI_Comm subComm) {
+  PetscLogEventBegin(w2lEvent, 0, 0, 0, 0);
+  
   int npes;
   MPI_Comm_size(subComm, &npes);
 
@@ -662,6 +665,8 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
       }//end d
     }
   }//end i
+  
+  PetscLogEventEnd(w2lEvent, 0, 0, 0, 0);
 }
 
 void d2d(std::vector<double> & results, std::vector<double> & sources,
