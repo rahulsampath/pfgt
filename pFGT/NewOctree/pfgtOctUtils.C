@@ -37,20 +37,20 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
   for(int i = 0; i < fgtList.size(); ++i) {
     assert(fgtList[i].getWeight() > 0);
     {
-      tmpExpandSources.push_back(expandSources[(4*srcCnt)]);
-      tmpExpandSources.push_back(expandSources[(4*srcCnt) + 1]);
-      tmpExpandSources.push_back(expandSources[(4*srcCnt) + 2]);
-      tmpExpandSources.push_back(expandSources[(4*srcCnt) + 3]);
+      tmpExpandSources.push_back(expandSources[srcCnt]);
+      tmpExpandSources.push_back(expandSources[srcCnt + 1]);
+      tmpExpandSources.push_back(expandSources[srcCnt + 2]);
+      tmpExpandSources.push_back(expandSources[srcCnt + 3]);
       tmpExpandSources.push_back(fgtList[i].getWeight());
-      srcCnt++;
+      srcCnt += 4;
     }
     for(int j = 1; j < fgtList[i].getWeight(); ++j) {
-      tmpExpandSources.push_back(expandSources[(4*srcCnt)]);
-      tmpExpandSources.push_back(expandSources[(4*srcCnt) + 1]);
-      tmpExpandSources.push_back(expandSources[(4*srcCnt) + 2]);
-      tmpExpandSources.push_back(expandSources[(4*srcCnt) + 3]);
+      tmpExpandSources.push_back(expandSources[srcCnt]);
+      tmpExpandSources.push_back(expandSources[srcCnt + 1]);
+      tmpExpandSources.push_back(expandSources[srcCnt + 2]);
+      tmpExpandSources.push_back(expandSources[srcCnt + 3]);
       tmpExpandSources.push_back(0);
-      srcCnt++;
+      srcCnt += 4;
     }//end j
   }//end i
   swap(expandSources, tmpExpandSources);
