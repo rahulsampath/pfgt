@@ -262,7 +262,7 @@ void pfgtExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> &
   std::vector<double> localLlist( (localWlist.size()), 0.0);
   w2l(localLlist, localWlist, fgtList, fgtMins, FgtLev, P, L, K, subComm);
 
-  //w2dAndD2lExpand(localLlist, localWlist, fgtList, P, comm);
+  w2dAndD2lExpand(localLlist, localWlist, fgtList, P, comm);
 
   std::vector<double> results(((expandSources.size())/4), 0.0);
   l2t(results, localLlist, expandSources, remoteFgt, remoteFgtOwner, numPtsInRemoteFgt, 
@@ -300,7 +300,7 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev,
   std::vector<double> results(directNodes.size(), 0.0);
   d2d(results, directSources, directNodes, directMins, FgtLev, epsilon, subComm);
 
-  //w2dAndD2lDirect(results, directSources, fgtMins, FgtLev, P, L, K, epsilon, comm);
+  w2dAndD2lDirect(results, directSources, fgtMins, FgtLev, P, L, K, epsilon, comm);
 
   PetscLogEventEnd(pfgtDirectEvent, 0, 0, 0, 0);
 }
