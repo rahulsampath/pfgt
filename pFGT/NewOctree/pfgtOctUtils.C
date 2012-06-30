@@ -900,9 +900,6 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
   MPI_Alltoallv(NULL, sendCnts, sendDisps, par::Mpi_datatype<ot::TreeNode>::value(),
       recvBoxListPtr, recvCnts, recvDisps, par::Mpi_datatype<ot::TreeNode>::value(), comm);
 
-  delete [] sendCnts;
-  delete [] sendDisps;
-
   //Performance Improvement: We can use the fact that each processor's chunk in
   //the recvBoxList is sorted and avoid the searches.
   std::vector<int> recvBoxIds(recvBoxList.size(), -1);
@@ -913,6 +910,9 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
       recvBoxIds[i] = retIdx;
     }
   }//end i
+
+  delete [] sendCnts;
+  delete [] sendDisps;
 
   //Performance Improvement (Probably necessary when sources != targets) Incur
   //a synchronization penalty and remove invalid boxes. This will reduce the
