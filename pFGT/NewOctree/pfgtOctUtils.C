@@ -885,6 +885,7 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
   MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, comm);
 
   int* recvDisps = new int[npes];
+
   recvDisps[0] = 0;
   for(int i = 1; i < npes; ++i) {
     recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
@@ -903,6 +904,7 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
   //Performance Improvement: We can use the fact that each processor's chunk in
   //the recvBoxList is sorted and avoid the searches.
   std::vector<int> recvBoxIds(recvBoxList.size(), -1);
+
   for(int i = 0; i < recvBoxList.size(); ++i) { 
     unsigned int retIdx;
     bool found = seq::BinarySearch(&(fgtList[0]), fgtList.size(), recvBoxList[i], &retIdx);
@@ -911,27 +913,53 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
     }
   }//end i
 
+  recvBoxList.clear();
+
+  int* recvBoxIdsPtr = NULL;
+  if(!(recvBoxIds.empty())) {
+    recvBoxIdsPtr = &(recvBoxIds[0]);
+  }
+
+  MPI_Alltoallv(recvBoxIdsPtr, recvCnts, recvDisps, MPI_INT,
+      NULL, sendCnts, sendDisps, MPI_INT, comm);
+
   delete [] sendCnts;
   delete [] sendDisps;
 
-  //Performance Improvement (Probably necessary when sources != targets) Incur
-  //a synchronization penalty and remove invalid boxes. This will reduce the
-  //message size for the subsequent communication. Also mark the boxes as d2l
-  //candidates, w2d candidates or both. This info could be used to further reduce the
-  //message size for the subsequent communication.   
+  for(int i = 0; i < npes; ++i) {
+    int numNotFound = 0;
+    for(int j = 0; j < recvCnts[i]; ++j) {
+      if(recvBoxIds[recvDisps[i] + j] < 0) {
+        ++numNotFound;
+      }
+    }//end j
+    recvCnts[i] = recvCnts[i] - numNotFound;
+  }//end i
 
   for(int i = 0; i < npes; ++i) {
     recvCnts[i] *= numWcoeffs;
-    recvDisps[i] *= numWcoeffs;
   }//end i
 
-  std::vector<double> sendWlist((recvDisps[npes - 1] + recvCnts[npes - 1]), 0.0);
+  recvDisps[0] = 0;
+  for(int i = 1; i < npes; ++i) {
+    recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
+  }//end i
+
+  std::vector<int> tmpBoxIds;
   for(int i = 0; i < recvBoxIds.size(); ++i) {
     if(recvBoxIds[i] >= 0) {
-      for(int d = 0; d < numWcoeffs; ++d) {
-        sendWlist[(numWcoeffs*i) + d] = localWlist[(numWcoeffs*recvBoxIds[i]) + d];
-      }//end d
+      tmpBoxIds.push_back(recvBoxIds[i]);
     }
+  }//end i
+  swap(recvBoxIds, tmpBoxIds);
+  tmpBoxIds.clear();
+
+  std::vector<double> sendWlist((recvDisps[npes - 1] + recvCnts[npes - 1]), 0.0);
+
+  for(int i = 0; i < recvBoxIds.size(); ++i) {
+    for(int d = 0; d < numWcoeffs; ++d) {
+      sendWlist[(numWcoeffs*i) + d] = localWlist[(numWcoeffs*(recvBoxIds[i])) + d];
+    }//end d
   }//end i
 
   std::vector<double> recvLlist(recvDisps[npes - 1] + recvCnts[npes - 1]);
@@ -949,16 +977,14 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
   MPI_Alltoallv(sendWlistPtr, recvCnts, recvDisps, par::Mpi_datatype<ot::TreeNode>::value(),
       recvLlistPtr, recvCnts, recvDisps, par::Mpi_datatype<ot::TreeNode>::value(), comm);
 
-  for(int i = 0; i < recvBoxIds.size(); ++i) {
-    if(recvBoxIds[i] >= 0) {
-      for(int d = 0; d < numWcoeffs; ++d) {
-        localLlist[(numWcoeffs*recvBoxIds[i]) + d] += recvLlist[(numWcoeffs*i) + d];
-      }//end d
-    }
-  }//end i
-
   delete [] recvCnts;
   delete [] recvDisps;
+
+  for(int i = 0; i < recvBoxIds.size(); ++i) {
+    for(int d = 0; d < numWcoeffs; ++d) {
+      localLlist[(numWcoeffs*recvBoxIds[i]) + d] += recvLlist[(numWcoeffs*i) + d];
+    }//end d
+  }//end i
 
   PetscLogEventEnd(w2dD2lExpandEvent, 0, 0, 0, 0);
 }
@@ -1048,29 +1074,9 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
     }//end j
   }//end i
 
-  std::vector<ot::TreeNode> sendBoxList;
-  std::vector<std::vector<unsigned int> > box2PtMap;
-
   if(!(tmpSendBoxList.empty())) {
     std::sort((&(tmpSendBoxList[0])), (&(tmpSendBoxList[0])) + tmpSendBoxList.size());
-    sendBoxList.push_back(tmpSendBoxList[0]);
-    unsigned int ptId = tmpSendBoxList[0].getWeight();
-    std::vector<unsigned int> tmpPtIdVec(1, ptId);
-    box2PtMap.push_back(tmpPtIdVec);
   }
-
-  for(int i = 1; i < tmpSendBoxList.size(); ++i) {
-    unsigned int ptId = tmpSendBoxList[i].getWeight();
-    if(tmpSendBoxList[i] == sendBoxList[sendBoxList.size() - 1]) {
-      box2PtMap[box2PtMap.size() - 1].push_back(ptId);
-    } else {
-      sendBoxList.push_back(tmpSendBoxList[i]);
-      std::vector<unsigned int> tmpPtIdVec(1, ptId);
-      box2PtMap.push_back(tmpPtIdVec);
-    }
-  }//end i
-
-  tmpSendBoxList.clear();
 
   int* sendCnts = new int[npes];
   int* recvDisps = new int[npes]; 
@@ -1079,21 +1085,41 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
     recvDisps[i] = 0;
   }//end i
 
-  //Performance Improvement: We could make use of the fact that sendBoxList is
+  //Performance Improvement: We could make use of the fact that tmpSendBoxList is
   //sorted and avoid the searches.
-  for(int i = 0; i < sendBoxList.size(); ++i) {
+
+  std::vector<ot::TreeNode> sendBoxList;
+  std::vector<std::vector<unsigned int> > box2PtMap;
+
+  for(int i = 0; i < tmpSendBoxList.size(); ++i) {
+    unsigned int ptId = tmpSendBoxList[i].getWeight();
     unsigned int idx;
-    bool found = seq::maxLowerBound<ot::TreeNode>(fgtMins, sendBoxList[i], idx, NULL, NULL);
-    if(found) {
+    bool foundNew = false;
+    if(sendBoxList.empty()) {
+      foundNew = seq::maxLowerBound<ot::TreeNode>(fgtMins, tmpSendBoxList[i], idx, NULL, NULL);
+    } else {
+      if(tmpSendBoxList[i] == sendBoxList[sendBoxList.size() - 1]) {
+        box2PtMap[box2PtMap.size() - 1].push_back(ptId);
+      } else {
+        foundNew = seq::maxLowerBound<ot::TreeNode>(fgtMins, tmpSendBoxList[i], idx, NULL, NULL);
+      }
+    }
+    if(foundNew) {
       ++(sendCnts[fgtMins[idx].getWeight()]);
+      sendBoxList.push_back(tmpSendBoxList[i]);
+      std::vector<unsigned int> tmpPtIdVec(1, ptId);
+      box2PtMap.push_back(tmpPtIdVec);
     }
   }//end i
+
+  tmpSendBoxList.clear();
 
   int* recvCnts = new int[npes];
 
   MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, comm);
 
   int* sendDisps = new int[npes];
+
   sendDisps[0] = 0;
   for(int i = 1; i < npes; ++i) {
     sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
@@ -1107,30 +1133,58 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
   MPI_Alltoallv(sendBoxListPtr, sendCnts, sendDisps, par::Mpi_datatype<ot::TreeNode>::value(),
       NULL, recvCnts, recvDisps, par::Mpi_datatype<ot::TreeNode>::value(), comm);
 
+  std::vector<int> foundFlags(sendBoxList.size());
+
+  int* foundFlagsBuf = NULL;
+  if(!(foundFlags.empty())) {
+    foundFlagsBuf = &(foundFlags[0]);
+  }
+
+  MPI_Alltoallv(NULL, recvCnts, recvDisps, MPI_INT,
+      foundFlagsBuf, sendCnts, sendDisps, MPI_INT, comm);
+
   delete [] recvCnts;
   delete [] recvDisps;
 
-  //Performance Improvement (Probably necessary when sources != targets) Incur
-  //a synchronization penalty and remove invalid boxes. This will reduce the
-  //message size for the subsequent communication. Also mark the boxes as d2l
-  //candidates, w2d candidates or both. This info could be used to further reduce the
-  //message size for the subsequent communication.   
+  for(int i = 0; i < npes; ++i) {
+    int numNotFound = 0;
+    for(int j = 0; j < sendCnts[i]; ++j) {
+      if(foundFlags[sendDisps[i] + j] < 0) {
+        ++numNotFound;
+      }
+    }//end j
+    sendCnts[i] = sendCnts[i] - numNotFound;
+  }//end i
 
   for(int i = 0; i < npes; ++i) {
     sendCnts[i] *= numWcoeffs;
-    sendDisps[i] *= numWcoeffs;
   }//end i
 
+  sendDisps[0] = 0;
+  for(int i = 1; i < npes; ++i) {
+    sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
+  }//end i
+
+  std::vector<int> foundIds;
+  for(int i = 0; i < foundFlags.size(); ++i) {
+    if(foundFlags[i] >= 0) {
+      foundIds.push_back(i);
+    }
+  }//end i
+  foundFlags.clear();
+
   std::vector<double> sendLlist((sendDisps[npes - 1] + sendCnts[npes - 1]), 0.0);
-  for(int i = 0; i < sendBoxList.size(); ++i) {
-    double cx = (0.5*hFgt) + ((static_cast<double>(sendBoxList[i].getX()))/(__DTPMD__));
-    double cy = (0.5*hFgt) + ((static_cast<double>(sendBoxList[i].getY()))/(__DTPMD__));
-    double cz = (0.5*hFgt) + ((static_cast<double>(sendBoxList[i].getZ()))/(__DTPMD__));
-    for(int j = 0; j < box2PtMap[i].size(); ++j) {
-      double px = sources[box2PtMap[i][j]];
-      double py = sources[box2PtMap[i][j] + 1];
-      double pz = sources[box2PtMap[i][j] + 2];
-      double pf = sources[box2PtMap[i][j] + 3];
+
+  for(int i = 0; i < foundIds.size(); ++i) {
+    int boxId = foundIds[i];
+    double cx = (0.5*hFgt) + ((static_cast<double>(sendBoxList[boxId].getX()))/(__DTPMD__));
+    double cy = (0.5*hFgt) + ((static_cast<double>(sendBoxList[boxId].getY()))/(__DTPMD__));
+    double cz = (0.5*hFgt) + ((static_cast<double>(sendBoxList[boxId].getZ()))/(__DTPMD__));
+    for(int j = 0; j < box2PtMap[boxId].size(); ++j) {
+      double px = sources[box2PtMap[boxId][j]];
+      double py = sources[box2PtMap[boxId][j] + 1];
+      double pz = sources[box2PtMap[boxId][j] + 2];
+      double pf = sources[box2PtMap[boxId][j] + 3];
       for(int k3 = -P, di = 0; k3 < P; k3++) {
         double thetaZ = (static_cast<double>(k3))*(cz - pz);
         for(int k2 = -P; k2 < P; k2++) {
@@ -1164,14 +1218,15 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
   delete [] sendCnts;
   delete [] sendDisps;
 
-  for(int i = 0; i < sendBoxList.size(); ++i) {
-    double cx = (0.5*hFgt) + ((static_cast<double>(sendBoxList[i].getX()))/(__DTPMD__));
-    double cy = (0.5*hFgt) + ((static_cast<double>(sendBoxList[i].getY()))/(__DTPMD__));
-    double cz = (0.5*hFgt) + ((static_cast<double>(sendBoxList[i].getZ()))/(__DTPMD__));
-    for(int j = 0; j < box2PtMap[i].size(); ++j) {
-      double px = sources[box2PtMap[i][j]];
-      double py = sources[box2PtMap[i][j] + 1];
-      double pz = sources[box2PtMap[i][j] + 2];
+  for(int i = 0; i < foundIds.size(); ++i) {
+    int boxId = foundIds[i];
+    double cx = (0.5*hFgt) + ((static_cast<double>(sendBoxList[boxId].getX()))/(__DTPMD__));
+    double cy = (0.5*hFgt) + ((static_cast<double>(sendBoxList[boxId].getY()))/(__DTPMD__));
+    double cz = (0.5*hFgt) + ((static_cast<double>(sendBoxList[boxId].getZ()))/(__DTPMD__));
+    for(int j = 0; j < box2PtMap[boxId].size(); ++j) {
+      double px = sources[box2PtMap[boxId][j]];
+      double py = sources[box2PtMap[boxId][j] + 1];
+      double pz = sources[box2PtMap[boxId][j] + 2];
       for(int k3 = -P, di = 0; k3 < P; k3++) {
         double thetaZ = (static_cast<double>(k3))*(pz - cz);
         for(int k2 = -P; k2 < P; k2++) {
@@ -1184,7 +1239,7 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
             double b = recvWlist[(numWcoeffs*i) + (2*di) + 1];
             double c = cos(theta);
             double d = sin(theta);
-            results[(box2PtMap[i][j])/4] += (factor*( (a*c) - (b*d) ));
+            results[(box2PtMap[boxId][j])/4] += (factor*( (a*c) - (b*d) ));
           }//end for k1
         }//end for k2
       }//end for k3
