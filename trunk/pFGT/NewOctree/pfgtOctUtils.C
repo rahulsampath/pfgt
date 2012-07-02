@@ -982,7 +982,7 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
 
   for(int i = 0; i < recvBoxIds.size(); ++i) {
     for(int d = 0; d < numWcoeffs; ++d) {
-      localLlist[(numWcoeffs*recvBoxIds[i]) + d] += recvLlist[(numWcoeffs*i) + d];
+      localLlist[(numWcoeffs*(recvBoxIds[i])) + d] += recvLlist[(numWcoeffs*i) + d];
     }//end d
   }//end i
 
