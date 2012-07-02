@@ -974,8 +974,10 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
     recvLlistPtr = &(recvLlist[0]);
   }
 
-  MPI_Alltoallv(sendWlistPtr, recvCnts, recvDisps, par::Mpi_datatype<ot::TreeNode>::value(),
-      recvLlistPtr, recvCnts, recvDisps, par::Mpi_datatype<ot::TreeNode>::value(), comm);
+  MPI_Alltoallv(sendWlistPtr, recvCnts, recvDisps, MPI_DOUBLE,
+      recvLlistPtr, recvCnts, recvDisps, MPI_DOUBLE, comm);
+
+  sendWlist.clear();
 
   delete [] recvCnts;
   delete [] recvDisps;
@@ -985,6 +987,9 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
       localLlist[(numWcoeffs*(recvBoxIds[i])) + d] += recvLlist[(numWcoeffs*i) + d];
     }//end d
   }//end i
+
+  recvBoxIds.clear();
+  recvLlist.clear(); 
 
   PetscLogEventEnd(w2dD2lExpandEvent, 0, 0, 0, 0);
 }
@@ -1212,8 +1217,10 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
     recvWlistPtr = &(recvWlist[0]);
   }
 
-  MPI_Alltoallv(sendLlistPtr, sendCnts, sendDisps, par::Mpi_datatype<ot::TreeNode>::value(),
-      recvWlistPtr, sendCnts, sendDisps, par::Mpi_datatype<ot::TreeNode>::value(), comm);
+  MPI_Alltoallv(sendLlistPtr, sendCnts, sendDisps, MPI_DOUBLE,
+      recvWlistPtr, sendCnts, sendDisps, MPI_DOUBLE, comm);
+
+  sendLlist.clear();
 
   delete [] sendCnts;
   delete [] sendDisps;
