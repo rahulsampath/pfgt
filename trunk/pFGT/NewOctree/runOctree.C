@@ -80,6 +80,7 @@ int main(int argc, char** argv) {
   assert(FgtLev <= __MAX_DEPTH__);
 
   if(!rank) {
+    std::cout<<"Total Num Procs = "<<npes<<std::endl;
     std::cout<<"numPtsPerProc = "<<numPtsPerProc<<std::endl;
     std::cout<<"fMag = "<<fMag<<std::endl;
     std::cout<<"epsilon = "<<epsilon<<std::endl;
@@ -158,6 +159,11 @@ int main(int argc, char** argv) {
 
   //Fgt
   pfgtMain(sources, minPtsInFgt, FgtLev, P, L, K, epsilon, MPI_COMM_WORLD);
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  if(!rank) {
+    std::cout<<"Done!"<<std::endl;
+  }
 
   PetscFinalize();
 }
