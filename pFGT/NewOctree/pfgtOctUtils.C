@@ -251,15 +251,19 @@ void pfgtExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> &
   int numExpandPts = (expandSources.size())/4;
 
   int numPtsInRemoteFgt = 0;
-  for( ; numPtsInRemoteFgt < numExpandPts; ++numPtsInRemoteFgt) {
-    unsigned int px = static_cast<unsigned int>(expandSources[4*numPtsInRemoteFgt]*(__DTPMD__));
-    unsigned int py = static_cast<unsigned int>(expandSources[(4*numPtsInRemoteFgt)+1]*(__DTPMD__));
-    unsigned int pz = static_cast<unsigned int>(expandSources[(4*numPtsInRemoteFgt)+2]*(__DTPMD__));
-    ot::TreeNode pt(px, py, pz, __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
-    if(pt >= fgtList[0]) {
-      break;
-    }
-  }//end for
+  if(fgtList.empty()) {
+    numPtsInRemoteFgt = numExpandPts;
+  } else {
+    for( ; numPtsInRemoteFgt < numExpandPts; ++numPtsInRemoteFgt) {
+      unsigned int px = static_cast<unsigned int>(expandSources[4*numPtsInRemoteFgt]*(__DTPMD__));
+      unsigned int py = static_cast<unsigned int>(expandSources[(4*numPtsInRemoteFgt)+1]*(__DTPMD__));
+      unsigned int pz = static_cast<unsigned int>(expandSources[(4*numPtsInRemoteFgt)+2]*(__DTPMD__));
+      ot::TreeNode pt(px, py, pz, __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
+      if(pt >= fgtList[0]) {
+        break;
+      }
+    }//end for
+  }
 
   int excessWt = sumFgtWts + numPtsInRemoteFgt - numExpandPts;
   assert(excessWt >= 0);
