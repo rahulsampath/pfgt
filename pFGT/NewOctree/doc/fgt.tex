@@ -1,0 +1,68 @@
+\input my_macros.tex
+%\documentclass[10pt]{article}
+\documentclass[final]{siamltex}
+\usepackage{amssymb,amsbsy,amsmath,amsfonts,amssymb,amscd,exscale,epic,epsfig,graphicx,algorithm,algorithmic, subfigure, fullpage}
+\usepackage{tabularx, pifont, subfig, booktabs}
+%\usepackage[pdftex,bookmarks=false]{hyperref}
+\renewcommand\tabularxcolumn[1]{>{\small}m{#1}}
+\newcolumntype{Y}{>{\small\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\small\arraybackslash}X}
+\makeatletter
+\newcommand{\rmnum}[1]{\romannumeral #1}
+\newcommand{\Rmnum}[1]{\small{\expandafter\@slowromancap\romannumeral #1@}}
+\makeatother
+%\renewcommand{\baselinestretch}{1.5}
+\newcommand{\nchoosek}[2]{\left(\begin{array}{c}#1\\#2\end{array}\right)}
+\newcommand{\mcaption}[2]{\caption{\small \em #1}\label{#2}}
+\newtheorem{remark}{{\it Remark}\rm }
+
+\usepackage{soul}
+\usepackage{lineno}
+\usepackage[rightbars,color]{changebar}
+\setlength\changebarwidth{6pt}
+
+
+\newcommand{\Lp}{\left(\frac{L}{p}\right)^3}
+
+\begin{document}
+\title{A massively parallel algorithm for computing generalized Gauss transforms \thanks{}}
+\author{}
+\maketitle
+
+\begin{abstract}
+
+\end{abstract}
+%
+\begin{keywords} 
+Gauss transform, fast algorithms, heat potentials, high-order
+accuracy, tensor-product grids
+\end{keywords}
+%
+\begin{AMS}
+35K05, 31A10, 65N38, 65Y20
+\end{AMS}
+%
+
+
+\section{Introduction} \label{sc:intro}
+\input intro.tex
+
+%\section{The Fast Algorithm} \label{sc:algo}
+%\input algo.tex
+
+%\section{Results} \label{sc:results}
+%\input results.tex
+
+%\section{Conclusions} \label{sc:conclusions}
+%\input conclusions.tex
+
+\newpage
+
+%\appendix
+%\input appendix.tex	
+
+\bibliography{fgt}
+\bibliographystyle{plain}
+\end{document}
+
+
