@@ -110,13 +110,7 @@ void pfgtSetup(std::vector<double>& expandSources, std::vector<double>& directSo
   int npes;
   MPI_Comm_size(comm, &npes);
 
-  if(npes == 1) {
-    //Serial
-    if(!rank) {
-      std::cout<<"THIS CASE (Serial) IS NOT SUPPORTED!"<<std::endl;
-    }
-    assert(false);
-  } else if(globalSizes[0] == 0) {
+  if(globalSizes[0] == 0) {
     //Only Direct
     singleType = true;
     npesExpand = 0;
@@ -130,8 +124,13 @@ void pfgtSetup(std::vector<double>& expandSources, std::vector<double>& directSo
     if(!rank) {
       std::cout<<"NOTE: ONLY EXPAND!"<<std::endl;
     }
+  } else if(npes == 1) {
+    //Serial
+    std::cout<<"THIS CASE (Serial + Hybrid) IS NOT SUPPORTED!"<<std::endl;
+    assert(false);
   } else {
     //Both Expand and Direct
+    //NOTE: The following heuristic may need to be modified!
     singleType = false;
     npesExpand = (globalSizes[0]*npes)/(globalSizes[0] + globalSizes[1]);
     assert(npesExpand < npes);
