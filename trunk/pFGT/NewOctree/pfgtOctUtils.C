@@ -1,11 +1,13 @@
-
 #include <iostream>
-#include <cmath>
+#include <fstream>
+#include <math.h>
 #include <algorithm>
 #include "mpi.h"
 #include "pfgtOctUtils.h"
 #include "par/parUtils.h"
 #include "par/dtypes.h"
+
+#include "colors.h"
 
 extern PetscLogEvent pfgtMainEvent;
 extern PetscLogEvent pfgtSetupEvent;
@@ -39,7 +41,7 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
   MPI_Comm_rank(comm, &rank);
 
   if(!rank) {
-    std::cout<<"Expand Num Procs = "<<npesExpand<<std::endl;
+    std::cout << GRN"Expand Num Procs = "NRM << npesExpand <<std::endl;
   }
 
   if(rank < npesExpand) {
@@ -234,11 +236,19 @@ void pfgtExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> &
     MPI_Comm subComm, MPI_Comm comm, bool singleType) {
   PetscLogEventBegin(pfgtExpandEvent, 0, 0, 0, 0);
 
+  int subNpes;
+  MPI_Comm_size(subComm, &subNpes);
+  int subRank;
+  MPI_Comm_rank(subComm, &subRank);
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  std::cout << rank << GRN" : Expand - start "NRM << subRank << "/" << subNpes << std::endl; 
+
   std::vector<ot::TreeNode> fgtMins;
   computeFgtMinsExpand(fgtMins, fgtList, subComm, comm);
 
-  int subRank;
-  MPI_Comm_rank(subComm, &subRank);
+  std::cout << rank << GRN" : Expand - fgtmins "NRM << subRank << "/" << subNpes << std::endl; 
 
   assert(!(expandSources.empty()));
 
@@ -290,22 +300,42 @@ void pfgtExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> &
   createS2WcommInfo(s2wSendCnts, s2wSendDisps, s2wRecvCnts, s2wRecvDisps, 
       remoteFgtOwner, numWcoeffs, excessWt, avgExpand, extraExpand, subComm);
 
+
+  std::cout << rank << GRN" : Expand - pre-s2w "NRM << subRank << "/" << subNpes << std::endl; 
+
   std::vector<double> localWlist( (numWcoeffs*(fgtList.size())), 0.0);
   s2w(localWlist, expandSources, remoteFgt, remoteFgtOwner, numPtsInRemoteFgt, fgtList,
       fgtMins, FgtLev, P, L, s2wSendCnts, s2wSendDisps, s2wRecvCnts, s2wRecvDisps, subComm);
+  std::cout << rank << GRN" : Expand - s2w "NRM << subRank << "/" << subNpes << std::endl; 
 
   std::vector<double> localLlist( (localWlist.size()), 0.0);
   w2l(localLlist, localWlist, fgtList, fgtMins, FgtLev, P, L, K, subComm);
+  
+  std::cout << rank << GRN" : Expand - w2l "NRM << subRank << "/" << subNpes << std::endl; 
 
   if(!singleType) {
     w2dAndD2lExpand(localLlist, localWlist, fgtList, P, comm);
   }
+  std::cout << rank << GRN" : Expand - w2d+d2l"NRM << subRank << "/" << subNpes << std::endl; 
 
   std::vector<double> results(((expandSources.size())/4), 0.0);
   l2t(results, localLlist, expandSources, remoteFgt, remoteFgtOwner, numPtsInRemoteFgt, 
       fgtList, fgtMins, FgtLev, P, L, s2wSendCnts, s2wSendDisps, s2wRecvCnts, s2wRecvDisps, subComm);
 
   destroyS2WcommInfo(s2wSendCnts, s2wSendDisps, s2wRecvCnts, s2wRecvDisps); 
+  std::cout << rank << GRN" : Expand - l2t "NRM << subRank << "/" << subNpes << std::endl; 
+
+  //! Hari
+#ifdef _WRITE_SOLN
+  std::cout << rank << GRN" : Expand - writing "NRM << subRank << "/" << subNpes << std::endl; 
+  char fname[256];
+  sprintf(fname, "expand.%d.res", rank);
+  std::ofstream out(fname, std::ios::binary);
+  out.write((const char*)&(*(results.begin())),results.size()*sizeof(double)); 
+  out.close();
+#endif
+
+  std::cout << rank << GRN" : Expand - all_done "NRM << subRank << "/" << subNpes << std::endl; 
 
   PetscLogEventEnd(pfgtExpandEvent, 0, 0, 0, 0);
 }
@@ -316,8 +346,14 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev, 
 
   int subNpes;
   MPI_Comm_size(subComm, &subNpes);
+  int subRank;
+  MPI_Comm_rank(subComm, &subRank);
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   assert(!(directSources.empty()));
+  
+  std::cout << rank << RED" : Direct - start "NRM << subRank << "/" << subNpes << std::endl; 
 
   std::vector<ot::TreeNode> directNodes( directSources.size()/4 );
   for(size_t i = 0; i < directNodes.size(); ++i) {
@@ -335,14 +371,33 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev, 
   if(!singleType) {
     computeFgtMinsDirect(fgtMins, comm);
   }
+  
+  std::cout << rank << RED" : Direct - fgtMins "NRM << subRank << "/" << subNpes << std::endl; 
 
   std::vector<double> results(directNodes.size(), 0.0);
   d2d(results, directSources, directNodes, directMins, FgtLev, epsilon, subComm);
+ 
+  // MPI_Barrier(comm);
+
+  std::cout << rank << RED" : Direct - d2d "NRM << subRank << "/" << subNpes << std::endl; 
 
   if(!singleType) {
     w2dAndD2lDirect(results, directSources, fgtMins, FgtLev, P, L, K, epsilon, comm);
   }
+  
+  std::cout << rank << RED" : Direct - w2d+d2l "NRM << subRank << "/" << subNpes << std::endl; 
 
+  //! Hari
+#ifdef _WRITE_SOLN
+  std::cout << rank << RED" : Direct - writing "NRM << subRank << "/" << subNpes << std::endl; 
+  char fname[256];
+  sprintf(fname, "direct.%d.res", rank);
+  std::ofstream out(fname, std::ios::binary);
+  out.write((const char*)&(*(results.begin())),results.size()*sizeof(double)); 
+  out.close();
+#endif
+
+  std::cout << rank << RED" : Direct - all_done "NRM << subRank << "/" << subNpes << std::endl; 
   PetscLogEventEnd(pfgtDirectEvent, 0, 0, 0, 0);
 }
 
@@ -450,6 +505,7 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
   //Fgt box size = sqrt(delta)
   const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
 
+  double *fac = new double [P*P*P]; // 7* (2P)^3 complex terms ...
   const double LbyP = static_cast<double>(L)/static_cast<double>(P);
   const double ImExpZfactor = LbyP/hFgt;
   const double ReExpZfactor = -0.25*LbyP*LbyP;
@@ -482,6 +538,18 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
   MPI_Alltoallv(sendBuf, recvCnts, recvDisps, MPI_DOUBLE,
       recvBuf, sendCnts, sendDisps, MPI_DOUBLE, subComm);
 
+  //! Hari
+
+  for(int k3 = -P, di = 0; k3 < P; k3++) {
+    for(int k2 = -P; k2 < P; k2++) {
+      for(int k1 = -P; k1 < P; k1++, di++) {
+        fac[di] = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
+      }
+    }
+  }
+
+  //- Hari
+
   if(remoteFgtOwner >= 0) {
     double cx = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getX()))/(__DTPMD__));
     double cy = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getY()))/(__DTPMD__));
@@ -497,12 +565,12 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
           for(int k1 = -P; k1 < P; k1++, di++) {
             double thetaX = (static_cast<double>(k1))*(px - cx);
             double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
-            double factor = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
+            // double factor = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
             double a = recvLlist[2*di];
             double b = recvLlist[(2*di) + 1];
             double c = cos(theta);
             double d = sin(theta);
-            results[i] += (factor*( (a*c) - (b*d) ));
+            results[i] += (fac[di]*( (a*c) - (b*d) ));
           }//end for k1
         }//end for k2
       }//end for k3
@@ -524,18 +592,19 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
           for(int k1 = -P; k1 < P; k1++, di++) {
             double thetaX = (static_cast<double>(k1))*(px - cx);
             double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
-            double factor = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
+            // double factor = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
             double a = localLlist[(numWcoeffs*i) + (2*di)];
             double b = localLlist[(numWcoeffs*i) + (2*di) + 1];
             double c = cos(theta);
             double d = sin(theta);
-            results[ptsIdx] += (factor*( (a*c) - (b*d) ));
+            results[ptsIdx] += (fac[di]*( (a*c) - (b*d) ));
           }//end for k1
         }//end for k2
       }//end for k3
     }//end j
   }//end i
 
+  delete [] fac;
   PetscLogEventEnd(l2tEvent, 0, 0, 0, 0);
 }
 
@@ -858,6 +927,11 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
   delete [] recvDisps;
 
   for(size_t i = 0; i < recvList.size(); i += 4) {
+    double x1,x2,x3;
+    double y1,y2,y3, fy;
+    x1 = sources[4*i];
+    x2 = sources[4*i +1];
+    x3 = sources[4*i +2];
     unsigned int uiMinPt[3];
     unsigned int uiMaxPt[3];
     for(int d = 0; d < 3; ++d) {
@@ -891,6 +965,12 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
     assert(foundMax);
 
     for(int j = minIdx; j <= maxIdx; ++j) {
+      y1 = sources[4*j];
+      y2 = sources[4*j +1];
+      y3 = sources[4*j +2];
+      fy = sources[4*j +3];
+      results[j] += fy * exp( -((x1-y1)*(x1-y1) + (x2-y2)*(x2-y2) + (x3-y3)*(x3-y3) ) / delta );
+      /*
       double distSqr = 0.0;
       for(int d = 0; d < 3; ++d) {
         distSqr += ((sources[(4*j) + d] - recvList[i + d])*(sources[(4*j) + d] - recvList[i + d]));
@@ -898,6 +978,8 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
       if(distSqr < IwidthSqr) {
         results[j] += (recvList[i + 3]*exp(-distSqr/delta));
       }
+      */
+
     }//end j
   }//end i
 
