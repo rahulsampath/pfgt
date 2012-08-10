@@ -9,8 +9,7 @@ PCC = mpicxx
 CEXT = C
 
 CFLAGS = -fast 
-# -D_COMPUTE_EXACT
-# -D_WRITE_SOLN
+# -D_WRITE_SOLN 
 # -D_COMPUTE_EXACT
 # -openmp
 # -DPETSC_USE_LOG 
