@@ -33,6 +33,8 @@ bool softEquals(double a, double b) {
   return ((fabs(a - b)) < 1.0e-14);
 }
 
+void doDirect(std::vector<double> sources, double delta);
+
 void genGaussPts(int rank, unsigned int numOctPtsPerProc, std::vector<double> & pts);
 
 void rescalePts(std::vector<double> & pts);
@@ -59,6 +61,8 @@ int main(int argc, char** argv) {
   int npes, rank;
   MPI_Comm_size(MPI_COMM_WORLD, &npes);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  // SinCos_Tables();
 
   if(argc < 6) {
     if(!rank) {
@@ -160,32 +164,9 @@ int main(int argc, char** argv) {
   pts.clear();
 
 #ifdef _COMPUTE_EXACT
-  std::cout << "computing exact" << std::endl;
   if (FgtLev == 0) {
-    double* results = new double[numPts];
-    // std::ofstream fexact("exact.res", std::ios::binary);
-    for(int i = 0; i < numPts; ++i) {
-      double gt=0;
-      double x1,x2,x3;
-      double y1,y2,y3, fy;
-      x1 = sources[4*i];
-      x2 = sources[4*i +1];
-      x3 = sources[4*i +2];
-      for(int j = 0; j < numPts; ++j) {
-        y1 = sources[4*j];
-        y2 = sources[4*j +1];
-        y3 = sources[4*j +2];
-        fy = sources[4*j +3];
-
-        gt += fy * exp( -((x1-y1)*(x1-y1) + (x2-y2)*(x2-y2) + (x3-y3)*(x3-y3) ) / delta );
-      }
-      // fexact.write((char *)&gt, sizeof(double));
-      results[i] = gt;
-    }
-    delete [] results;
-    // fexact.close();
+    doDirect(sources, delta);
   }
-  std::cout << "finished computing exact" << std::endl;
 #endif
 
   //Fgt
@@ -303,5 +284,32 @@ void rescalePts(std::vector<double> & pts)
   }//end for i
 }
 
+void doDirect(std::vector<double> sources, double delta) {
+  int numPts = sources.size()/4;
 
+  std::cout << "computing exact" << std::endl;
+  double* results = new double[numPts];
+  // std::ofstream fexact("exact.res", std::ios::binary);
+  for(int i = 0; i < numPts; ++i) {
+    double gt=0;
+    double x1,x2,x3;
+    double y1,y2,y3, fy;
+    x1 = sources[4*i];
+    x2 = sources[4*i +1];
+    x3 = sources[4*i +2];
+    for(int j = 0; j < numPts; ++j) {
+      y1 = sources[4*j];
+      y2 = sources[4*j +1];
+      y3 = sources[4*j +2];
+      fy = sources[4*j +3];
+
+      gt += fy * exp( -((x1-y1)*(x1-y1) + (x2-y2)*(x2-y2) + (x3-y3)*(x3-y3) ) / delta );
+    }
+    // fexact.write((char *)&gt, sizeof(double));
+    results[i] = gt;
+  }
+  delete [] results;
+  // fexact.close();
+  std::cout << "finished computing exact" << std::endl;
+}
 

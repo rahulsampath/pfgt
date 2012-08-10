@@ -21,6 +21,23 @@ extern PetscLogEvent d2dEvent;
 extern PetscLogEvent w2dD2lExpandEvent;
 extern PetscLogEvent w2dD2lDirectEvent;
 
+/*
+double SinLut[1024];
+double CosLut[1024];
+
+void SinCos_Tables(void)
+{
+  int a;
+  double delta = 1.0/1024;
+  double rad;
+  for (a=0; a<1024; a++) {
+    rad = 2*M_PI*a*delta;// Degrees to Radians
+    SinLut[a] = sin(rad);// Build Sin table
+    CosLut[a] = cos(rad);// Build Cos table
+  }
+}
+*/
+
 void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev,
     const int P, const int L, const int K, const double epsilon, MPI_Comm comm) {
   PetscLogEventBegin(pfgtMainEvent, 0, 0, 0, 0);
@@ -438,6 +455,8 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
           for(int k1 = -P; k1 < P; k1++, di++) {
             double thetaX = (static_cast<double>(k1))*(cx - px);
             double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
+            // int TT = theta*1024/(2*M_PI);
+            
             sendWlist[2*di] += (pf*cos(theta));
             sendWlist[(2*di) + 1] += (pf*sin(theta));
           }//end for k1
@@ -481,6 +500,8 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
           for(int k1 = -P; k1 < P; k1++, di++) {
             double thetaX = (static_cast<double>(k1))*(cx - px);
             double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
+            // int TT = theta*1024/(2*M_PI);
+            // std::cout << theta << std::endl;
             localWlist[(numWcoeffs*i) + (2*di)] += (pf*cos(theta));
             localWlist[(numWcoeffs*i) + (2*di) + 1] += (pf*sin(theta));
           }//end for k1
@@ -505,7 +526,8 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
   //Fgt box size = sqrt(delta)
   const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
 
-  double *fac = new double [P*P*P]; // 7* (2P)^3 complex terms ...
+  double *fac = new double [8*P*P*P]; // 7* (2P)^3 complex terms ...
+
   const double LbyP = static_cast<double>(L)/static_cast<double>(P);
   const double ImExpZfactor = LbyP/hFgt;
   const double ReExpZfactor = -0.25*LbyP*LbyP;
@@ -565,6 +587,7 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
           for(int k1 = -P; k1 < P; k1++, di++) {
             double thetaX = (static_cast<double>(k1))*(px - cx);
             double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
+            // int TT = theta*1024/(2*M_PI);
             // double factor = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
             double a = recvLlist[2*di];
             double b = recvLlist[(2*di) + 1];
@@ -592,6 +615,7 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
           for(int k1 = -P; k1 < P; k1++, di++) {
             double thetaX = (static_cast<double>(k1))*(px - cx);
             double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
+            // int TT = theta*1024/(2*M_PI);
             // double factor = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
             double a = localLlist[(numWcoeffs*i) + (2*di)];
             double b = localLlist[(numWcoeffs*i) + (2*di) + 1];
@@ -929,9 +953,9 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
   for(size_t i = 0; i < recvList.size(); i += 4) {
     double x1,x2,x3;
     double y1,y2,y3, fy;
-    x1 = sources[4*i];
-    x2 = sources[4*i +1];
-    x3 = sources[4*i +2];
+    x1 = recvList[i];
+    x2 = recvList[i+1];
+    x3 = recvList[i+2];
     unsigned int uiMinPt[3];
     unsigned int uiMaxPt[3];
     for(int d = 0; d < 3; ++d) {
