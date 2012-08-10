@@ -21,6 +21,13 @@
 #define __COMP_MUL_RE(a, ai, b, bi) ( ((a)*(b)) - ((ai)*(bi)) )
 #define __COMP_MUL_IM(a, ai, b, bi) ( ((a)*(bi)) + ((ai)*(b)) )
 
+/*
+extern double SinLut[1024];
+extern double CosLut[1024];
+
+void SinCos_Tables(void);
+*/
+
 void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev,
     const int P, const int L, const int K, const double epsilon, MPI_Comm comm);
 
