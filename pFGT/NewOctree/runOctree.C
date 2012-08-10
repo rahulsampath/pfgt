@@ -288,8 +288,8 @@ void doDirect(std::vector<double> sources, double delta) {
   int numPts = sources.size()/4;
 
   std::cout << "computing exact" << std::endl;
-  double* results = new double[numPts];
-  // std::ofstream fexact("exact.res", std::ios::binary);
+  // double* results = new double[numPts];
+  std::ofstream fexact("exact.res", std::ios::binary);
   for(int i = 0; i < numPts; ++i) {
     double gt=0;
     double x1,x2,x3;
@@ -305,11 +305,11 @@ void doDirect(std::vector<double> sources, double delta) {
 
       gt += fy * exp( -((x1-y1)*(x1-y1) + (x2-y2)*(x2-y2) + (x3-y3)*(x3-y3) ) / delta );
     }
-    // fexact.write((char *)&gt, sizeof(double));
-    results[i] = gt;
+    fexact.write((char *)&gt, sizeof(double));
+    // results[i] = gt;
   }
-  delete [] results;
-  // fexact.close();
+  // delete [] results;
+  fexact.close();
   std::cout << "finished computing exact" << std::endl;
 }
 
