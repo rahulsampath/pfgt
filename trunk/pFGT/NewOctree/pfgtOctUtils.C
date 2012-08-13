@@ -1,6 +1,7 @@
+
 #include <iostream>
 #include <fstream>
-#include <math.h>
+#include <cmath>
 #include <algorithm>
 #include "mpi.h"
 #include "pfgtOctUtils.h"
@@ -22,21 +23,21 @@ extern PetscLogEvent w2dD2lExpandEvent;
 extern PetscLogEvent w2dD2lDirectEvent;
 
 /*
-double SinLut[1024];
-double CosLut[1024];
+   double SinLut[1024];
+   double CosLut[1024];
 
-void SinCos_Tables(void)
-{
-  int a;
-  double delta = 1.0/1024;
-  double rad;
-  for (a=0; a<1024; a++) {
-    rad = 2*M_PI*a*delta;// Degrees to Radians
-    SinLut[a] = sin(rad);// Build Sin table
-    CosLut[a] = cos(rad);// Build Cos table
-  }
-}
-*/
+   void SinCos_Tables(void)
+   {
+   int a;
+   double delta = 1.0/1024;
+   double rad;
+   for (a=0; a<1024; a++) {
+   rad = 2*M_PI*a*delta;// Degrees to Radians
+   SinLut[a] = sin(rad);// Build Sin table
+   CosLut[a] = cos(rad);// Build Cos table
+   }
+   }
+   */
 
 void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev,
     const int P, const int L, const int K, const double epsilon, MPI_Comm comm) {
@@ -327,7 +328,7 @@ void pfgtExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> &
 
   std::vector<double> localLlist( (localWlist.size()), 0.0);
   w2l(localLlist, localWlist, fgtList, fgtMins, FgtLev, P, L, K, subComm);
-  
+
   std::cout << rank << GRN" : Expand - w2l "NRM << subRank << "/" << subNpes << std::endl; 
 
   if(!singleType) {
@@ -369,7 +370,7 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev, 
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   assert(!(directSources.empty()));
-  
+
   std::cout << rank << RED" : Direct - start "NRM << subRank << "/" << subNpes << std::endl; 
 
   std::vector<ot::TreeNode> directNodes( directSources.size()/4 );
@@ -388,12 +389,12 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev, 
   if(!singleType) {
     computeFgtMinsDirect(fgtMins, comm);
   }
-  
+
   std::cout << rank << RED" : Direct - fgtMins "NRM << subRank << "/" << subNpes << std::endl; 
 
   std::vector<double> results(directNodes.size(), 0.0);
   d2d(results, directSources, directNodes, directMins, FgtLev, epsilon, subComm);
- 
+
   // MPI_Barrier(comm);
 
   std::cout << rank << RED" : Direct - d2d "NRM << subRank << "/" << subNpes << std::endl; 
@@ -401,7 +402,7 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev, 
   if(!singleType) {
     w2dAndD2lDirect(results, directSources, fgtMins, FgtLev, P, L, K, epsilon, comm);
   }
-  
+
   std::cout << rank << RED" : Direct - w2d+d2l "NRM << subRank << "/" << subNpes << std::endl; 
 
   //! Hari
@@ -458,7 +459,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
       double py = cy - sources[(4*i)+1];
       double pz = cz - sources[(4*i)+2];
       double pf = sources[(4*i)+3];
-      
+
       for (int kk=-P,di=0; kk<P; ++kk,++di) {
         c1[di] = cos(ImExpZfactor*static_cast<double>(kk)*px);
         s1[di] = sin(ImExpZfactor*static_cast<double>(kk)*px);
@@ -477,11 +478,11 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
           for(int k1 = -P; k1 < P; k1++, di++) {
             d1 = k1+P;
             // double thetaX = (static_cast<double>(k1))*(cx - px);
-           
+
             // double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
             tmp1 =  c1[d1]*c2[d2] - s1[d1]*s2[d2];
             tmp2 =  s1[d1]*c2[d2] + s2[d2]*c1[d1];
-            
+
             sendWlist[ 2*di ]     += pf * ( c3[d3]*(tmp1) - s3[d3]*(tmp2)  );
             sendWlist[ 2*di+1 ]   += pf * ( s3[d3]*(tmp1) + c3[d3]*(tmp2)  );
             // sendWlist[2*di] += (pf*cos(theta));
@@ -583,7 +584,7 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
   double * s1 = new double[2*P];
   double * s2 = new double[2*P];
   double * s3 = new double[2*P];
-  double *fac = new double [8*P*P*P]; // 7* (2P)^3 complex terms ...
+  double *fac = new double [8*P*P*P]; // (2P)^3 complex terms ...
 
   const double LbyP = static_cast<double>(L)/static_cast<double>(P);
   const double ImExpZfactor = LbyP/hFgt;
@@ -662,7 +663,7 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
             double b = recvLlist[(2*di) + 1];
             double c = c3[d3]*tmp1 - s3[d3]*tmp2;
             double d = s3[d3]*tmp1 + c3[d3]*tmp2; 
-            
+
             results[i] += (fac[di]*( (a*c) - (b*d) ));
           }//end for k1
         }//end for k2
@@ -703,7 +704,7 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
             double b = localLlist[(numWcoeffs*i) + (2*di) + 1];
             double c = c3[d3]*tmp1 - s3[d3]*tmp2;
             double d = s3[d3]*tmp1 + c3[d3]*tmp2; 
-            
+
             results[ptsIdx] += (fac[di]*( (a*c) - (b*d) ));
           }//end for k1
         }//end for k2
@@ -751,32 +752,44 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
     double by = (0.5*hFgt) + ((static_cast<double>(bAy))/(__DTPMD__));
     double bz = (0.5*hFgt) + ((static_cast<double>(bAz))/(__DTPMD__));
     unsigned int dAxs, dAxe, dAys, dAye, dAzs, dAze;
-    if(bAx >= (K*cellsPerFgt)) {
+    if( static_cast<unsigned long long int>(bAx) >= static_cast<unsigned long long int>(
+          static_cast<unsigned long long int>(K)*static_cast<unsigned long long int>(cellsPerFgt)) ) {
       dAxs = bAx - (K*cellsPerFgt);
     } else {
       dAxs = 0; 
     }
-    if((bAx + ((K + 1)*cellsPerFgt)) <= (__ITPMD__)) {
+    if( static_cast<unsigned long long int>(static_cast<unsigned long long int>(bAx) + 
+          static_cast<unsigned long long int>(static_cast<unsigned long long int>(K + 1)*
+            static_cast<unsigned long long int>(cellsPerFgt)))
+        <= static_cast<unsigned long long int>(__ITPMD__) ) {
       dAxe = bAx + (K*cellsPerFgt);
     } else {
       dAxe = (__ITPMD__) - cellsPerFgt;
     }
-    if(bAy >= (K*cellsPerFgt)) {
+    if( static_cast<unsigned long long int>(bAy) >= static_cast<unsigned long long int>(
+          static_cast<unsigned long long int>(K)*static_cast<unsigned long long int>(cellsPerFgt)) ) {
       dAys = bAy - (K*cellsPerFgt);
     } else {
       dAys = 0; 
     }
-    if((bAy + ((K + 1)*cellsPerFgt)) <= (__ITPMD__)) {
+    if( static_cast<unsigned long long int>(static_cast<unsigned long long int>(bAy) + 
+          static_cast<unsigned long long int>(static_cast<unsigned long long int>(K + 1)*
+            static_cast<unsigned long long int>(cellsPerFgt)))
+        <= static_cast<unsigned long long int>(__ITPMD__) ) {
       dAye = bAy + (K*cellsPerFgt);
     } else {
       dAye = (__ITPMD__) - cellsPerFgt;
     }
-    if(bAz >= (K*cellsPerFgt)) {
+    if( static_cast<unsigned long long int>(bAz) >= static_cast<unsigned long long int>(
+          static_cast<unsigned long long int>(K)*static_cast<unsigned long long int>(cellsPerFgt)) ) {
       dAzs = bAz - (K*cellsPerFgt);
     } else {
       dAzs = 0; 
     }
-    if((bAz + ((K + 1)*cellsPerFgt)) <= (__ITPMD__)) {
+    if( static_cast<unsigned long long int>(static_cast<unsigned long long int>(bAz) +
+          static_cast<unsigned long long int>(static_cast<unsigned long long int>(K + 1)*
+            static_cast<unsigned long long int>(cellsPerFgt)))
+        <= static_cast<unsigned long long int>(__ITPMD__) ) {
       dAze = bAz + (K*cellsPerFgt);
     } else {
       dAze = (__ITPMD__) - cellsPerFgt;
@@ -1084,14 +1097,14 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
       fy = sources[4*j +3];
       results[j] += fy * exp( -((x1-y1)*(x1-y1) + (x2-y2)*(x2-y2) + (x3-y3)*(x3-y3) ) / delta );
       /*
-      double distSqr = 0.0;
-      for(int d = 0; d < 3; ++d) {
-        distSqr += ((sources[(4*j) + d] - recvList[i + d])*(sources[(4*j) + d] - recvList[i + d]));
-      }//end d
-      if(distSqr < IwidthSqr) {
-        results[j] += (recvList[i + 3]*exp(-distSqr/delta));
-      }
-      */
+         double distSqr = 0.0;
+         for(int d = 0; d < 3; ++d) {
+         distSqr += ((sources[(4*j) + d] - recvList[i + d])*(sources[(4*j) + d] - recvList[i + d]));
+         }//end d
+         if(distSqr < IwidthSqr) {
+         results[j] += (recvList[i + 3]*exp(-distSqr/delta));
+         }
+         */
 
     }//end j
   }//end i
