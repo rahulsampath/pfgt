@@ -2,7 +2,7 @@
 #include "mpi.h"
 #include "petsc.h"
 #include "sys/sys.h"
-#include <math.h>
+#include <cmath>
 #include <cassert>
 #include "par/parUtils.h"
 #include "oct/octUtils.h"
@@ -33,7 +33,7 @@ bool softEquals(double a, double b) {
   return ((fabs(a - b)) < 1.0e-14);
 }
 
-void doDirect(std::vector<double> sources, double delta);
+void doExact(std::vector<double> sources, double delta);
 
 void genGaussPts(int rank, unsigned int numOctPtsPerProc, std::vector<double> & pts);
 
@@ -61,8 +61,6 @@ int main(int argc, char** argv) {
   int npes, rank;
   MPI_Comm_size(MPI_COMM_WORLD, &npes);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  // SinCos_Tables();
 
   if(argc < 6) {
     if(!rank) {
@@ -164,9 +162,7 @@ int main(int argc, char** argv) {
   pts.clear();
 
 #ifdef _COMPUTE_EXACT
-  if (FgtLev == 0) {
-    doDirect(sources, delta);
-  }
+  doExact(sources, delta);
 #endif
 
   //Fgt
@@ -284,7 +280,7 @@ void rescalePts(std::vector<double> & pts)
   }//end for i
 }
 
-void doDirect(std::vector<double> sources, double delta) {
+void doExact(std::vector<double> sources, double delta) {
   int numPts = sources.size()/4;
 
   std::cout << "computing exact" << std::endl;

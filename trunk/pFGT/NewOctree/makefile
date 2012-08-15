@@ -8,7 +8,7 @@ PCC = mpicxx
 
 CEXT = C
 
-CFLAGS = -fast 
+#CFLAGS = -fast 
 # -D_WRITE_SOLN 
 # -D_COMPUTE_EXACT
 # -openmp

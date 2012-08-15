@@ -22,23 +22,6 @@ extern PetscLogEvent d2dEvent;
 extern PetscLogEvent w2dD2lExpandEvent;
 extern PetscLogEvent w2dD2lDirectEvent;
 
-/*
-   double SinLut[1024];
-   double CosLut[1024];
-
-   void SinCos_Tables(void)
-   {
-   int a;
-   double delta = 1.0/1024;
-   double rad;
-   for (a=0; a<1024; a++) {
-   rad = 2*M_PI*a*delta;// Degrees to Radians
-   SinLut[a] = sin(rad);// Build Sin table
-   CosLut[a] = cos(rad);// Build Cos table
-   }
-   }
-   */
-
 void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev,
     const int P, const int L, const int K, const double epsilon, MPI_Comm comm) {
   PetscLogEventBegin(pfgtMainEvent, 0, 0, 0, 0);
@@ -318,7 +301,6 @@ void pfgtExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> &
   createS2WcommInfo(s2wSendCnts, s2wSendDisps, s2wRecvCnts, s2wRecvDisps, 
       remoteFgtOwner, numWcoeffs, excessWt, avgExpand, extraExpand, subComm);
 
-
   std::cout << rank << GRN" : Expand - pre-s2w "NRM << subRank << "/" << subNpes << std::endl; 
 
   std::vector<double> localWlist( (numWcoeffs*(fgtList.size())), 0.0);
@@ -395,8 +377,6 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev, 
   std::vector<double> results(directNodes.size(), 0.0);
   d2d(results, directSources, directNodes, directMins, FgtLev, epsilon, subComm);
 
-  // MPI_Barrier(comm);
-
   std::cout << rank << RED" : Direct - d2d "NRM << subRank << "/" << subNpes << std::endl; 
 
   if(!singleType) {
@@ -454,7 +434,6 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
     double cy = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getY()))/(__DTPMD__));
     double cz = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getZ()))/(__DTPMD__));
     for(int i = 0; i < numPtsInRemoteFgt; ++i) {
-
       double px = cx - sources[4*i];
       double py = cy - sources[(4*i)+1];
       double pz = cz - sources[(4*i)+2];
@@ -530,7 +509,6 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
         c3[di] = cos(ImExpZfactor*static_cast<double>(kk)*pz);
         s3[di] = sin(ImExpZfactor*static_cast<double>(kk)*pz);
       }
-
 
       for(int k3 = -P, di = 0; k3 < P; k3++) {
         d3=k3+P;
@@ -1053,11 +1031,12 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
   delete [] recvDisps;
 
   for(size_t i = 0; i < recvList.size(); i += 4) {
-    double x1,x2,x3;
-    double y1,y2,y3, fy;
+    double x1,x2,x3,fx;
+    double y1,y2,y3;
     x1 = recvList[i];
     x2 = recvList[i+1];
     x3 = recvList[i+2];
+    fx = recvList[i+3];
     unsigned int uiMinPt[3];
     unsigned int uiMaxPt[3];
     for(int d = 0; d < 3; ++d) {
@@ -1094,18 +1073,10 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
       y1 = sources[4*j];
       y2 = sources[4*j +1];
       y3 = sources[4*j +2];
-      fy = sources[4*j +3];
-      results[j] += fy * exp( -((x1-y1)*(x1-y1) + (x2-y2)*(x2-y2) + (x3-y3)*(x3-y3) ) / delta );
-      /*
-         double distSqr = 0.0;
-         for(int d = 0; d < 3; ++d) {
-         distSqr += ((sources[(4*j) + d] - recvList[i + d])*(sources[(4*j) + d] - recvList[i + d]));
-         }//end d
-         if(distSqr < IwidthSqr) {
-         results[j] += (recvList[i + 3]*exp(-distSqr/delta));
-         }
-         */
-
+      double distSqr = ((x1-y1)*(x1-y1) + (x2-y2)*(x2-y2) + (x3-y3)*(x3-y3));
+      if(distSqr < IwidthSqr) {
+        results[j] += (fx*exp(-distSqr/delta));
+      }
     }//end j
   }//end i
 
