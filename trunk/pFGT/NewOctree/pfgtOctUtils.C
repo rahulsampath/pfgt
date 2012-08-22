@@ -450,8 +450,8 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
       for(int k3 = -P, d3 = 0, di = 0; k3 < P; ++d3, ++k3) {
         for(int k2 = -P, d2 = 0; k2 < P; ++d2, ++k2) {
           for(int k1 = -P, d1 = 0; k1 < P; ++d1, ++k1, ++di) {
-            double tmp1 =  c1[d1]*c2[d2] - s1[d1]*s2[d2];
-            double tmp2 =  s1[d1]*c2[d2] + s2[d2]*c1[d1];
+            double tmp1 =  ((c1[d1])*(c2[d2])) - ((s1[d1])*(s2[d2]));
+            double tmp2 =  ((s1[d1])*(c2[d2])) + ((s2[d2])*(c1[d1]));
             double cosTh = ( ((c3[d3])*tmp1) - ((s3[d3])*tmp2) );
             double sinTh = ( ((s3[d3])*tmp1) + ((c3[d3])*tmp2) ); 
             sendWlist[2*di] += (pf * cosTh);
@@ -491,20 +491,20 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
       double pz = cz - sources[(4*ptsIdx)+2];
       double pf = sources[(4*ptsIdx)+3];
 
-      for (int kk = -P, di = 0; kk < P; ++kk, ++di) {
+      for(int kk = -P, di = 0; kk < P; ++kk, ++di) {
         c1[di] = cos(ImExpZfactor*static_cast<double>(kk)*px);
         s1[di] = sin(ImExpZfactor*static_cast<double>(kk)*px);
         c2[di] = cos(ImExpZfactor*static_cast<double>(kk)*py);
         s2[di] = sin(ImExpZfactor*static_cast<double>(kk)*py);
         c3[di] = cos(ImExpZfactor*static_cast<double>(kk)*pz);
         s3[di] = sin(ImExpZfactor*static_cast<double>(kk)*pz);
-      }
+      }//end for kk
 
       for(int k3 = -P, d3 = 0, di = 0; k3 < P; ++d3, ++k3) {
         for(int k2 = -P, d2 = 0; k2 < P; ++d2, ++k2) {
           for(int k1 = -P, d1 = 0; k1 < P; ++d1, ++k1, ++di) {
-            double tmp1 =  c1[d1]*c2[d2] - s1[d1]*s2[d2];
-            double tmp2 =  s1[d1]*c2[d2] + s2[d2]*c1[d1];
+            double tmp1 =  ((c1[d1])*(c2[d2])) - ((s1[d1])*(s2[d2]));
+            double tmp2 =  ((s1[d1])*(c2[d2])) + ((s2[d2])*(c1[d1]));
             double cosTh = ( ((c3[d3])*tmp1) - ((s3[d3])*tmp2) );
             double sinTh = ( ((s3[d3])*tmp1) + ((c3[d3])*tmp2) ); 
             localWlist[(numWcoeffs*i) + (2*di)] += (pf * cosTh);
@@ -532,28 +532,9 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
     int* sendCnts, int* sendDisps, int* recvCnts, int* recvDisps, MPI_Comm subComm) {
   PetscLogEventBegin(l2tEvent, 0, 0, 0, 0);
 
-  double tmp1, tmp2;
-  int d1,d2,d3;
   int npes;
   MPI_Comm_size(subComm, &npes);
 
-  //Fgt box size = sqrt(delta)
-  const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
-
-  double * c1 = new double[2*P];
-  double * c2 = new double[2*P];
-  double * c3 = new double[2*P];
-  double * s1 = new double[2*P];
-  double * s2 = new double[2*P];
-  double * s3 = new double[2*P];
-  double *fac = new double [8*P*P*P]; // (2P)^3 complex terms ...
-
-  const double LbyP = static_cast<double>(L)/static_cast<double>(P);
-  const double ImExpZfactor = LbyP/hFgt;
-  const double ReExpZfactor = -0.25*LbyP*LbyP;
-  const double C0 = (0.125*LbyP*LbyP*LbyP/(__SQRT_PI__*__SQRT_PI__*__SQRT_PI__));
-
-  //2P complex coefficients for each dimension.  
   const unsigned int numWcoeffs = 16*P*P*P;
 
   std::vector<double> sendLlist(recvDisps[npes - 1] + recvCnts[npes - 1]);
@@ -580,17 +561,32 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
   MPI_Alltoallv(sendBuf, recvCnts, recvDisps, MPI_DOUBLE,
       recvBuf, sendCnts, sendDisps, MPI_DOUBLE, subComm);
 
-  //! Hari
+  //Fgt box size = sqrt(delta)
+  const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
 
-  for(int k3 = -P, di = 0; k3 < P; k3++) {
-    for(int k2 = -P; k2 < P; k2++) {
-      for(int k1 = -P; k1 < P; k1++, di++) {
+  const double LbyP = static_cast<double>(L)/static_cast<double>(P);
+  const double ImExpZfactor = LbyP/hFgt;
+  const double ReExpZfactor = -0.25*LbyP*LbyP;
+  const double C0 = (0.125*LbyP*LbyP*LbyP/(__SQRT_PI__*__SQRT_PI__*__SQRT_PI__));
+
+  //2P complex coefficients for each dimension.  
+  double *fac = new double [8*P*P*P]; // (2P)^3 complex terms ...
+
+  for(int k3 = -P, di = 0; k3 < P; ++k3) {
+    for(int k2 = -P; k2 < P; ++k2) {
+      for(int k1 = -P; k1 < P; ++k1, ++di) {
         fac[di] = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
-      }
-    }
-  }
+      }//end k1
+    }//end k2
+  }//end k3
 
-  //- Hari
+  const unsigned int TwoP = 2*P;
+  double * c1 = new double[TwoP];
+  double * c2 = new double[TwoP];
+  double * c3 = new double[TwoP];
+  double * s1 = new double[TwoP];
+  double * s2 = new double[TwoP];
+  double * s3 = new double[TwoP];
 
   if(remoteFgtOwner >= 0) {
     double cx = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getX()))/(__DTPMD__));
@@ -600,32 +596,27 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
       double px = sources[4*i] - cx;
       double py = sources[(4*i)+1] - cy;
       double pz = sources[(4*i)+2] - cz;
-      for (int kk=-P,di=0; kk<P; ++kk,++di) {
+
+      for (int kk = -P, di = 0; kk < P; ++kk, ++di) {
         c1[di] = cos(ImExpZfactor*static_cast<double>(kk)*px);
         s1[di] = sin(ImExpZfactor*static_cast<double>(kk)*px);
         c2[di] = cos(ImExpZfactor*static_cast<double>(kk)*py);
         s2[di] = sin(ImExpZfactor*static_cast<double>(kk)*py);
         c3[di] = cos(ImExpZfactor*static_cast<double>(kk)*pz);
         s3[di] = sin(ImExpZfactor*static_cast<double>(kk)*pz);
-      }
-      for(int k3 = -P, di = 0; k3 < P; k3++) {
-        d3 = k3+P;
-        // double thetaZ = (static_cast<double>(k3))*(pz - cz);
-        for(int k2 = -P; k2 < P; k2++) {
-          d2 = k2+P;
-          // double thetaY = (static_cast<double>(k2))*(py - cy);
-          for(int k1 = -P; k1 < P; k1++, di++) {
-            d1 = k1+P;
-            // double thetaX = (static_cast<double>(k1))*(px - cx);
-            // double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
-            // double factor = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
-            tmp1 =  c1[d1]*c2[d2] - s1[d1]*s2[d2];
-            tmp2 =  s1[d1]*c2[d2] + s2[d2]*c1[d1];
+      }//end kk
+
+      for(int k3 = -P, d3 = 0, di = 0; k3 < P; ++d3, ++k3) {
+        for(int k2 = -P, d2 = 0; k2 < P; ++d2, ++k2) {
+          for(int k1 = -P, d1 = 0; k1 < P; ++d1, ++k1, ++di) {
+            double tmp1 =  ((c1[d1])*(c2[d2])) - ((s1[d1])*(s2[d2]));
+            double tmp2 =  ((s1[d1])*(c2[d2])) + ((s2[d2])*(c1[d1]));
             double a = recvLlist[2*di];
             double b = recvLlist[(2*di) + 1];
-            double c = c3[d3]*tmp1 - s3[d3]*tmp2;
-            double d = s3[d3]*tmp1 + c3[d3]*tmp2; 
+            double c = ((c3[d3])*tmp1) - ((s3[d3])*tmp2);
+            double d = ((s3[d3])*tmp1) + ((c3[d3])*tmp2); 
 
+            // double factor = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
             results[i] += (fac[di]*( (a*c) - (b*d) ));
           }//end for k1
         }//end for k2
@@ -641,32 +632,27 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
       double px = sources[4*ptsIdx] - cx;
       double py = sources[(4*ptsIdx)+1] - cy;
       double pz = sources[(4*ptsIdx)+2] - cx;
-      for (int kk=-P,di=0; kk<P; ++kk,++di) {
+
+      for (int kk = -P, di = 0; kk < P; ++kk, ++di) {
         c1[di] = cos(ImExpZfactor*static_cast<double>(kk)*px);
         s1[di] = sin(ImExpZfactor*static_cast<double>(kk)*px);
         c2[di] = cos(ImExpZfactor*static_cast<double>(kk)*py);
         s2[di] = sin(ImExpZfactor*static_cast<double>(kk)*py);
         c3[di] = cos(ImExpZfactor*static_cast<double>(kk)*pz);
         s3[di] = sin(ImExpZfactor*static_cast<double>(kk)*pz);
-      }
-      for(int k3 = -P, di = 0; k3 < P; k3++) {
-        d3 = k3+P;
-        // double thetaZ = (static_cast<double>(k3))*(pz - cz);
-        for(int k2 = -P; k2 < P; k2++) {
-          d2 = k2+P;
-          // double thetaY = (static_cast<double>(k2))*(py - cy);
-          for(int k1 = -P; k1 < P; k1++, di++) {
-            d1 = k1+P;
-            // double thetaX = (static_cast<double>(k1))*(px - cx);
-            // double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
-            // double factor = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
-            tmp1 =  c1[d1]*c2[d2] - s1[d1]*s2[d2];
-            tmp2 =  s1[d1]*c2[d2] + s2[d2]*c1[d1];
+      }//end kk
+
+      for(int k3 = -P, d3 = 0, di = 0; k3 < P; ++d3, ++k3) {
+        for(int k2 = -P, d2 = 0; k2 < P; ++d2, ++k2) {
+          for(int k1 = -P, d1 = 0; k1 < P; ++d1, ++k1, ++di) {
+            double tmp1 =  ((c1[d1])*(c2[d2])) - ((s1[d1])*(s2[d2]));
+            double tmp2 =  ((s1[d1])*(c2[d2])) + ((s2[d2])*(c1[d1]));
             double a = localLlist[(numWcoeffs*i) + (2*di)];
             double b = localLlist[(numWcoeffs*i) + (2*di) + 1];
-            double c = c3[d3]*tmp1 - s3[d3]*tmp2;
-            double d = s3[d3]*tmp1 + c3[d3]*tmp2; 
+            double c = ((c3[d3])*tmp1) - ((s3[d3])*tmp2);
+            double d = ((s3[d3])*tmp1) + ((c3[d3])*tmp2); 
 
+            // double factor = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
             results[ptsIdx] += (fac[di]*( (a*c) - (b*d) ));
           }//end for k1
         }//end for k2
