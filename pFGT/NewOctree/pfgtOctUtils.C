@@ -406,8 +406,6 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
     int* sendCnts, int* sendDisps, int* recvCnts, int* recvDisps, MPI_Comm subComm) {
   PetscLogEventBegin(s2wEvent, 0, 0, 0, 0);
 
-  double tmp1, tmp2;
-  int d1,d2,d3;
   int npes;
   MPI_Comm_size(subComm, &npes);
 
@@ -417,15 +415,16 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
   const double LbyP = static_cast<double>(L)/static_cast<double>(P);
   const double ImExpZfactor = LbyP/hFgt;
 
-  //2P complex coefficients for each dimension.  
+  //2P complex coefficients for each dimension. 
   const unsigned int numWcoeffs = 16*P*P*P;
 
-  double * c1 = new double[2*P];
-  double * c2 = new double[2*P];
-  double * c3 = new double[2*P];
-  double * s1 = new double[2*P];
-  double * s2 = new double[2*P];
-  double * s3 = new double[2*P];
+  const unsigned int TwoP = 2*P;
+  double * c1 = new double[TwoP];
+  double * c2 = new double[TwoP];
+  double * c3 = new double[TwoP];
+  double * s1 = new double[TwoP];
+  double * s2 = new double[TwoP];
+  double * s3 = new double[TwoP];
 
   std::vector<double> sendWlist;
   if(remoteFgtOwner >= 0) {
@@ -439,33 +438,24 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
       double pz = cz - sources[(4*i)+2];
       double pf = sources[(4*i)+3];
 
-      for (int kk=-P,di=0; kk<P; ++kk,++di) {
+      for(int kk = -P, di = 0; kk < P; ++kk, ++di) {
         c1[di] = cos(ImExpZfactor*static_cast<double>(kk)*px);
         s1[di] = sin(ImExpZfactor*static_cast<double>(kk)*px);
         c2[di] = cos(ImExpZfactor*static_cast<double>(kk)*py);
         s2[di] = sin(ImExpZfactor*static_cast<double>(kk)*py);
         c3[di] = cos(ImExpZfactor*static_cast<double>(kk)*pz);
         s3[di] = sin(ImExpZfactor*static_cast<double>(kk)*pz);
-      }
+      }//end kk
 
-      for(int k3 = -P, di = 0; k3 < P; k3++) {
-        d3 = k3+P;
-        // double thetaZ = (static_cast<double>(k3))*(cz - pz);
-        for(int k2 = -P; k2 < P; k2++) {
-          d2 = k2+P;
-          // double thetaY = (static_cast<double>(k2))*(cy - py);
-          for(int k1 = -P; k1 < P; k1++, di++) {
-            d1 = k1+P;
-            // double thetaX = (static_cast<double>(k1))*(cx - px);
-
-            // double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
-            tmp1 =  c1[d1]*c2[d2] - s1[d1]*s2[d2];
-            tmp2 =  s1[d1]*c2[d2] + s2[d2]*c1[d1];
-
-            sendWlist[ 2*di ]     += pf * ( c3[d3]*(tmp1) - s3[d3]*(tmp2)  );
-            sendWlist[ 2*di+1 ]   += pf * ( s3[d3]*(tmp1) + c3[d3]*(tmp2)  );
-            // sendWlist[2*di] += (pf*cos(theta));
-            // sendWlist[(2*di) + 1] += (pf*sin(theta));
+      for(int k3 = -P, d3 = 0, di = 0; k3 < P; ++d3, ++k3) {
+        for(int k2 = -P, d2 = 0; k2 < P; ++d2, ++k2) {
+          for(int k1 = -P, d1 = 0; k1 < P; ++d1, ++k1, ++di) {
+            double tmp1 =  c1[d1]*c2[d2] - s1[d1]*s2[d2];
+            double tmp2 =  s1[d1]*c2[d2] + s2[d2]*c1[d1];
+            double cosTh = ( ((c3[d3])*tmp1) - ((s3[d3])*tmp2) );
+            double sinTh = ( ((s3[d3])*tmp1) + ((c3[d3])*tmp2) ); 
+            sendWlist[2*di] += (pf * cosTh);
+            sendWlist[(2*di) + 1 ] += (pf * sinTh);
           }//end for k1
         }//end for k2
       }//end for k3
@@ -501,7 +491,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
       double pz = cz - sources[(4*ptsIdx)+2];
       double pf = sources[(4*ptsIdx)+3];
 
-      for (int kk=-P,di=0; kk<P; ++kk,++di) {
+      for (int kk = -P, di = 0; kk < P; ++kk, ++di) {
         c1[di] = cos(ImExpZfactor*static_cast<double>(kk)*px);
         s1[di] = sin(ImExpZfactor*static_cast<double>(kk)*px);
         c2[di] = cos(ImExpZfactor*static_cast<double>(kk)*py);
@@ -510,22 +500,15 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
         s3[di] = sin(ImExpZfactor*static_cast<double>(kk)*pz);
       }
 
-      for(int k3 = -P, di = 0; k3 < P; k3++) {
-        d3=k3+P;
-        // double thetaZ = (static_cast<double>(k3))*(cz - pz);
-        for(int k2 = -P; k2 < P; k2++) {
-          d2=k2+P;
-          // double thetaY = (static_cast<double>(k2))*(cy - py);
-          for(int k1 = -P; k1 < P; k1++, di++) {
-            d1=k1+P;
-            // double thetaX = (static_cast<double>(k1))*(cx - px);
-            // double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
-            //! localWlist[(numWcoeffs*i) + (2*di)] += (pf*cos(theta));
-            //! localWlist[(numWcoeffs*i) + (2*di) + 1] += (pf*sin(theta));
-            tmp1 =  c1[d1]*c2[d2] - s1[d1]*s2[d2];
-            tmp2 =  s1[d1]*c2[d2] + s2[d2]*c1[d1];
-            localWlist[ numWcoeffs*i + 2*di]     += pf * ( c3[d3]*(tmp1) - s3[d3]*(tmp2)  );
-            localWlist[ numWcoeffs*i + 2*di+1]   += pf * ( s3[d3]*(tmp1) + c3[d3]*(tmp2)  );
+      for(int k3 = -P, d3 = 0, di = 0; k3 < P; ++d3, ++k3) {
+        for(int k2 = -P, d2 = 0; k2 < P; ++d2, ++k2) {
+          for(int k1 = -P, d1 = 0; k1 < P; ++d1, ++k1, ++di) {
+            double tmp1 =  c1[d1]*c2[d2] - s1[d1]*s2[d2];
+            double tmp2 =  s1[d1]*c2[d2] + s2[d2]*c1[d1];
+            double cosTh = ( ((c3[d3])*tmp1) - ((s3[d3])*tmp2) );
+            double sinTh = ( ((s3[d3])*tmp1) + ((c3[d3])*tmp2) ); 
+            localWlist[(numWcoeffs*i) + (2*di)] += (pf * cosTh);
+            localWlist[(numWcoeffs*i) + (2*di) + 1] += (pf * sinTh);
           }//end for k1
         }//end for k2
       }//end for k3
@@ -538,6 +521,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
   delete [] c1;
   delete [] c2;
   delete [] c3;
+
   PetscLogEventEnd(s2wEvent, 0, 0, 0, 0);
 }
 
@@ -696,7 +680,9 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
   delete [] c1;
   delete [] c2;
   delete [] c3;
+
   delete [] fac;
+
   PetscLogEventEnd(l2tEvent, 0, 0, 0, 0);
 }
 
