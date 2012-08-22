@@ -716,6 +716,15 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
   //2P complex coefficients for each dimension.  
   const unsigned int numWcoeffs = 16*P*P*P;
 
+  double tmp1, tmp2;
+  int d1,d2,d3;
+  double * c1 = new double[2*P];
+  double * c2 = new double[2*P];
+  double * c3 = new double[2*P];
+  double * s1 = new double[2*P];
+  double * s2 = new double[2*P];
+  double * s3 = new double[2*P];
+
   const double LbyP = static_cast<double>(L)/static_cast<double>(P);
   const double ImExpZfactor = LbyP/hFgt;
 
@@ -781,17 +790,35 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
           double dx = (0.5*hFgt) + ((static_cast<double>(dAx))/(__DTPMD__));
           double dy = (0.5*hFgt) + ((static_cast<double>(dAy))/(__DTPMD__));
           double dz = (0.5*hFgt) + ((static_cast<double>(dAz))/(__DTPMD__));
+          double px = dx - bx;
+          double py = dy - by;
+          double pz = dz - bz;
+          for (int kk=-P,di=0; kk<P; ++kk,++di) {
+            c1[di] = cos(ImExpZfactor*static_cast<double>(kk)*px);
+            s1[di] = sin(ImExpZfactor*static_cast<double>(kk)*px);
+            c2[di] = cos(ImExpZfactor*static_cast<double>(kk)*py);
+            s2[di] = sin(ImExpZfactor*static_cast<double>(kk)*py);
+            c3[di] = cos(ImExpZfactor*static_cast<double>(kk)*pz);
+            s3[di] = sin(ImExpZfactor*static_cast<double>(kk)*pz);
+          }
           for(int k3 = -P, di = 0; k3 < P; ++k3) {
-            double thetaZ = (static_cast<double>(k3))*(dz - bz);
+            d3 = k3+P;
+            // double thetaZ = (static_cast<double>(k3))*(dz - bz);
             for(int k2 = -P; k2 < P; ++k2) {
-              double thetaY = (static_cast<double>(k2))*(dy - by);
+              d2 = k2+P;
+              // double thetaY = (static_cast<double>(k2))*(dy - by);
               for(int k1 = -P; k1 < P; ++k1, ++di) {
-                double thetaX = (static_cast<double>(k1))*(dx - bx);
-                double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
+                d1 = k1+P;
+                // double thetaX = (static_cast<double>(k1))*(dx - bx);
+                // double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
+                tmp1 =  c1[d1]*c2[d2] - s1[d1]*s2[d2];
+                tmp2 =  s1[d1]*c2[d2] + s2[d2]*c1[d1];
                 double a = localWlist[(numWcoeffs*i) + (2*di)];
                 double b = localWlist[(numWcoeffs*i) + (2*di) + 1];
-                double c = cos(theta);
-                double d = sin(theta);
+                double c = c3[d3]*tmp1 - s3[d3]*tmp2;
+                double d = s3[d3]*tmp1 + c3[d3]*tmp2; 
+                //double c = cos(theta);
+                //double d = sin(theta);
                 double reVal = ((a*c) - (b*d));
                 double imVal = ((a*d) + (b*c));
                 tmpVals.push_back(reVal);
@@ -910,6 +937,13 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
       }//end d
     }
   }//end i
+
+  delete [] s1;
+  delete [] s2;
+  delete [] s3;
+  delete [] c1;
+  delete [] c2;
+  delete [] c3;
 
   PetscLogEventEnd(w2lEvent, 0, 0, 0, 0);
 }
