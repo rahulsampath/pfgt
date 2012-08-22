@@ -678,17 +678,16 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
   //2P complex coefficients for each dimension.  
   const unsigned int numWcoeffs = 16*P*P*P;
 
-  double tmp1, tmp2;
-  int d1,d2,d3;
-  double * c1 = new double[2*P];
-  double * c2 = new double[2*P];
-  double * c3 = new double[2*P];
-  double * s1 = new double[2*P];
-  double * s2 = new double[2*P];
-  double * s3 = new double[2*P];
-
   const double LbyP = static_cast<double>(L)/static_cast<double>(P);
   const double ImExpZfactor = LbyP/hFgt;
+
+  const unsigned int TwoP = 2*P;
+  double * c1 = new double[TwoP];
+  double * c2 = new double[TwoP];
+  double * c3 = new double[TwoP];
+  double * s1 = new double[TwoP];
+  double * s2 = new double[TwoP];
+  double * s3 = new double[TwoP];
 
   std::vector<ot::TreeNode> tmpBoxes;
   std::vector<double> tmpVals;
@@ -755,32 +754,25 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
           double px = dx - bx;
           double py = dy - by;
           double pz = dz - bz;
-          for (int kk=-P,di=0; kk<P; ++kk,++di) {
+  
+          for(int kk = -P, di = 0; kk < P; ++kk, ++di) {
             c1[di] = cos(ImExpZfactor*static_cast<double>(kk)*px);
             s1[di] = sin(ImExpZfactor*static_cast<double>(kk)*px);
             c2[di] = cos(ImExpZfactor*static_cast<double>(kk)*py);
             s2[di] = sin(ImExpZfactor*static_cast<double>(kk)*py);
             c3[di] = cos(ImExpZfactor*static_cast<double>(kk)*pz);
             s3[di] = sin(ImExpZfactor*static_cast<double>(kk)*pz);
-          }
-          for(int k3 = -P, di = 0; k3 < P; ++k3) {
-            d3 = k3+P;
-            // double thetaZ = (static_cast<double>(k3))*(dz - bz);
-            for(int k2 = -P; k2 < P; ++k2) {
-              d2 = k2+P;
-              // double thetaY = (static_cast<double>(k2))*(dy - by);
-              for(int k1 = -P; k1 < P; ++k1, ++di) {
-                d1 = k1+P;
-                // double thetaX = (static_cast<double>(k1))*(dx - bx);
-                // double theta = ImExpZfactor*(thetaX + thetaY + thetaZ);
-                tmp1 =  c1[d1]*c2[d2] - s1[d1]*s2[d2];
-                tmp2 =  s1[d1]*c2[d2] + s2[d2]*c1[d1];
+          }//end kk
+
+          for(int k3 = -P, d3 = 0, di = 0; k3 < P; ++d3, ++k3) {
+            for(int k2 = -P, d2 = 0; k2 < P; ++d2, ++k2) {
+              for(int k1 = -P, d1 = 0; k1 < P; ++d1, ++k1, ++di) {
+                double tmp1 =  c1[d1]*c2[d2] - s1[d1]*s2[d2];
+                double tmp2 =  s1[d1]*c2[d2] + s2[d2]*c1[d1];
                 double a = localWlist[(numWcoeffs*i) + (2*di)];
                 double b = localWlist[(numWcoeffs*i) + (2*di) + 1];
                 double c = c3[d3]*tmp1 - s3[d3]*tmp2;
                 double d = s3[d3]*tmp1 + c3[d3]*tmp2; 
-                //double c = cos(theta);
-                //double d = sin(theta);
                 double reVal = ((a*c) - (b*d));
                 double imVal = ((a*d) + (b*c));
                 tmpVals.push_back(reVal);
