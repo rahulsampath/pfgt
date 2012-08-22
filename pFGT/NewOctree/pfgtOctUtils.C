@@ -325,7 +325,6 @@ void pfgtExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> &
   destroyS2WcommInfo(s2wSendCnts, s2wSendDisps, s2wRecvCnts, s2wRecvDisps); 
   std::cout << rank << GRN" : Expand - l2t "NRM << subRank << "/" << subNpes << std::endl; 
 
-  //! Hari
 #ifdef _WRITE_SOLN
   std::cout << rank << GRN" : Expand - writing "NRM << subRank << "/" << subNpes << std::endl; 
   char fname[256];
@@ -385,7 +384,6 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev, 
 
   std::cout << rank << RED" : Direct - w2d+d2l "NRM << subRank << "/" << subNpes << std::endl; 
 
-  //! Hari
 #ifdef _WRITE_SOLN
   std::cout << rank << RED" : Direct - writing "NRM << subRank << "/" << subNpes << std::endl; 
   char fname[256];
@@ -535,6 +533,7 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
   int npes;
   MPI_Comm_size(subComm, &npes);
 
+  //2P complex coefficients for each dimension.  
   const unsigned int numWcoeffs = 16*P*P*P;
 
   std::vector<double> sendLlist(recvDisps[npes - 1] + recvCnts[npes - 1]);
@@ -569,18 +568,13 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
   const double ReExpZfactor = -0.25*LbyP*LbyP;
   const double C0 = (0.125*LbyP*LbyP*LbyP/(__SQRT_PI__*__SQRT_PI__*__SQRT_PI__));
 
-  //2P complex coefficients for each dimension.  
-  double *fac = new double [8*P*P*P]; // (2P)^3 complex terms ...
-
-  for(int k3 = -P, di = 0; k3 < P; ++k3) {
-    for(int k2 = -P; k2 < P; ++k2) {
-      for(int k1 = -P; k1 < P; ++k1, ++di) {
-        fac[di] = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
-      }//end k1
-    }//end k2
-  }//end k3
-
   const unsigned int TwoP = 2*P;
+  double *fac = new double [TwoP];
+
+  for(int kk = -P, di = 0; kk < P; ++di, ++kk) {
+    fac[di] = exp(ReExpZfactor*(static_cast<double>(kk*kk)));
+  }//end kk
+
   double * c1 = new double[TwoP];
   double * c2 = new double[TwoP];
   double * c3 = new double[TwoP];
@@ -615,9 +609,7 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
             double b = recvLlist[(2*di) + 1];
             double c = ((c3[d3])*tmp1) - ((s3[d3])*tmp2);
             double d = ((s3[d3])*tmp1) + ((c3[d3])*tmp2); 
-
-            // double factor = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
-            results[i] += (fac[di]*( (a*c) - (b*d) ));
+            results[i] += (C0*(fac[d3])*(fac[d2])*(fac[d1])*( (a*c) - (b*d) ));
           }//end for k1
         }//end for k2
       }//end for k3
@@ -651,9 +643,7 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
             double b = localLlist[(numWcoeffs*i) + (2*di) + 1];
             double c = ((c3[d3])*tmp1) - ((s3[d3])*tmp2);
             double d = ((s3[d3])*tmp1) + ((c3[d3])*tmp2); 
-
-            // double factor = C0*exp(ReExpZfactor*(static_cast<double>((k1*k1) + (k2*k2) + (k3*k3))));
-            results[ptsIdx] += (fac[di]*( (a*c) - (b*d) ));
+            results[ptsIdx] += (C0*(fac[d3])*(fac[d2])*(fac[d1])*( (a*c) - (b*d) ));
           }//end for k1
         }//end for k2
       }//end for k3
