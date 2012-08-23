@@ -566,13 +566,13 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
   const double LbyP = static_cast<double>(L)/static_cast<double>(P);
   const double ImExpZfactor = LbyP/hFgt;
   const double ReExpZfactor = -0.25*LbyP*LbyP;
-  const double C0 = (0.125*LbyP*LbyP*LbyP/(__SQRT_PI__*__SQRT_PI__*__SQRT_PI__));
+  const double C0 = (0.5*LbyP/(__SQRT_PI__));
 
   const unsigned int TwoP = 2*P;
   double *fac = new double [TwoP];
 
   for(int kk = -P, di = 0; kk < P; ++di, ++kk) {
-    fac[di] = exp(ReExpZfactor*(static_cast<double>(kk*kk)));
+    fac[di] = C0*exp(ReExpZfactor*(static_cast<double>(kk*kk)));
   }//end kk
 
   double * c1 = new double[TwoP];
@@ -609,7 +609,7 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
             double b = recvLlist[(2*di) + 1];
             double c = ((c3[d3])*tmp1) - ((s3[d3])*tmp2);
             double d = ((s3[d3])*tmp1) + ((c3[d3])*tmp2); 
-            results[i] += (C0*(fac[d3])*(fac[d2])*(fac[d1])*( (a*c) - (b*d) ));
+            results[i] += ((fac[d3])*(fac[d2])*(fac[d1])*( (a*c) - (b*d) ));
           }//end for k1
         }//end for k2
       }//end for k3
@@ -643,7 +643,7 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
             double b = localLlist[(numWcoeffs*i) + (2*di) + 1];
             double c = ((c3[d3])*tmp1) - ((s3[d3])*tmp2);
             double d = ((s3[d3])*tmp1) + ((c3[d3])*tmp2); 
-            results[ptsIdx] += (C0*(fac[d3])*(fac[d2])*(fac[d1])*( (a*c) - (b*d) ));
+            results[ptsIdx] += ((fac[d3])*(fac[d2])*(fac[d1])*( (a*c) - (b*d) ));
           }//end for k1
         }//end for k2
       }//end for k3
@@ -748,13 +748,10 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
           ot::TreeNode boxD(dAx, dAy, dAz, FgtLev, __DIM__, __MAX_DEPTH__);
           boxD.setWeight(tmpBoxes.size());
           tmpBoxes.push_back(boxD);
-          double dx = (0.5*hFgt) + ((static_cast<double>(dAx))/(__DTPMD__));
-          double dy = (0.5*hFgt) + ((static_cast<double>(dAy))/(__DTPMD__));
-          double dz = (0.5*hFgt) + ((static_cast<double>(dAz))/(__DTPMD__));
-          double px = dx - bx;
-          double py = dy - by;
-          double pz = dz - bz;
-  
+          double px = (0.5*hFgt) + ((static_cast<double>(dAx))/(__DTPMD__)) - bx;
+          double py = (0.5*hFgt) + ((static_cast<double>(dAy))/(__DTPMD__)) - by;
+          double pz = (0.5*hFgt) + ((static_cast<double>(dAz))/(__DTPMD__)) - bz;
+
           for(int kk = -P, di = 0; kk < P; ++kk, ++di) {
             c1[di] = cos(ImExpZfactor*static_cast<double>(kk)*px);
             s1[di] = sin(ImExpZfactor*static_cast<double>(kk)*px);
@@ -767,12 +764,12 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
           for(int k3 = -P, d3 = 0, di = 0; k3 < P; ++d3, ++k3) {
             for(int k2 = -P, d2 = 0; k2 < P; ++d2, ++k2) {
               for(int k1 = -P, d1 = 0; k1 < P; ++d1, ++k1, ++di) {
-                double tmp1 =  c1[d1]*c2[d2] - s1[d1]*s2[d2];
-                double tmp2 =  s1[d1]*c2[d2] + s2[d2]*c1[d1];
+                double tmp1 =  ((c1[d1])*(c2[d2])) - ((s1[d1])*(s2[d2]));
+                double tmp2 =  ((s1[d1])*(c2[d2])) + ((s2[d2])*(c1[d1]));
                 double a = localWlist[(numWcoeffs*i) + (2*di)];
                 double b = localWlist[(numWcoeffs*i) + (2*di) + 1];
-                double c = c3[d3]*tmp1 - s3[d3]*tmp2;
-                double d = s3[d3]*tmp1 + c3[d3]*tmp2; 
+                double c = ((c3[d3])*tmp1) - ((s3[d3])*tmp2);
+                double d = ((s3[d3])*tmp1) + ((c3[d3])*tmp2); 
                 double reVal = ((a*c) - (b*d));
                 double imVal = ((a*d) + (b*c));
                 tmpVals.push_back(reVal);
@@ -784,6 +781,13 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
       }//end dAy
     }//end dAz
   }//end i
+
+  delete [] s1;
+  delete [] s2;
+  delete [] s3;
+  delete [] c1;
+  delete [] c2;
+  delete [] c3;
 
   std::vector<ot::TreeNode> sendBoxList;
   std::vector<double> sendLlist;
@@ -891,13 +895,6 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
       }//end d
     }
   }//end i
-
-  delete [] s1;
-  delete [] s2;
-  delete [] s3;
-  delete [] c1;
-  delete [] c2;
-  delete [] c3;
 
   PetscLogEventEnd(w2lEvent, 0, 0, 0, 0);
 }
