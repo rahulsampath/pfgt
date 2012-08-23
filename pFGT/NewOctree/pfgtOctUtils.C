@@ -741,9 +741,9 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
     } else {
       dAze = (__ITPMD__) - cellsPerFgt;
     }
-    for(int dAz = dAzs; dAz <= dAze; dAz += cellsPerFgt) {
-      for(int dAy = dAys; dAy <= dAye; dAy += cellsPerFgt) {
-        for(int dAx = dAxs; dAx <= dAxe; dAx += cellsPerFgt) {
+    for(unsigned int dAz = dAzs; dAz <= dAze; dAz += cellsPerFgt) {
+      for(unsigned int dAy = dAys; dAy <= dAye; dAy += cellsPerFgt) {
+        for(unsigned int dAx = dAxs; dAx <= dAxe; dAx += cellsPerFgt) {
           ot::TreeNode boxD(dAx, dAy, dAz, FgtLev, __DIM__, __MAX_DEPTH__);
           boxD.setWeight(tmpBoxes.size());
           tmpBoxes.push_back(boxD);
@@ -1230,8 +1230,8 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
     for(int d = 0; d < 3; ++d) {
       double minPt1 = sources[i + d] - ptIwidth;
       double maxPt1 = sources[i + d] + ptIwidth;
-      double minVal2 = ((__DTPMD__)*sources[i + d]) - static_cast<double>((K + 1)*cellsPerFgt);
-      double maxVal2 = ((__DTPMD__)*sources[i + d]) + static_cast<double>(K*cellsPerFgt);
+      double minVal2 = ((__DTPMD__)*sources[i + d]) - (static_cast<double>(K + 1)*static_cast<double>(cellsPerFgt));
+      double maxVal2 = ((__DTPMD__)*sources[i + d]) + (static_cast<double>(K)*static_cast<double>(cellsPerFgt));
       if(minPt1 < 0.0) {
         minPt1 = 0.0;
       }
@@ -1251,9 +1251,9 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
     }//end d
     std::vector<ot::TreeNode> selectedBoxes;
     //Target box is in interaction list of source point.
-    for(int zi = uiMinPt1[2]; zi < uiMaxPt1[2]; ++zi) {
-      for(int yi = uiMinPt1[1]; yi < uiMaxPt1[1]; ++yi) {
-        for(int xi = uiMinPt1[0]; xi < uiMaxPt1[0]; ++xi) {
+    for(unsigned int zi = uiMinPt1[2]; zi < uiMaxPt1[2]; ++zi) {
+      for(unsigned int yi = uiMinPt1[1]; yi < uiMaxPt1[1]; ++yi) {
+        for(unsigned int xi = uiMinPt1[0]; xi < uiMaxPt1[0]; ++xi) {
           ot::TreeNode tmpBox((xi*cellsPerFgt), (yi*cellsPerFgt), (zi*cellsPerFgt),
               FgtLev, __DIM__, __MAX_DEPTH__);
           selectedBoxes.push_back(tmpBox);
@@ -1261,9 +1261,9 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
       }//end yi
     }//end zi
     //Target point is in interaction list of source box.
-    for(int zi = uiMinPt2[2]; zi < uiMaxPt2[2]; zi += cellsPerFgt) {
-      for(int yi = uiMinPt2[1]; yi < uiMaxPt2[1]; yi += cellsPerFgt) {
-        for(int xi = uiMinPt2[0]; xi < uiMaxPt2[0]; xi += cellsPerFgt) {
+    for(unsigned int zi = uiMinPt2[2]; zi < uiMaxPt2[2]; zi += cellsPerFgt) {
+      for(unsigned int yi = uiMinPt2[1]; yi < uiMaxPt2[1]; yi += cellsPerFgt) {
+        for(unsigned int xi = uiMinPt2[0]; xi < uiMaxPt2[0]; xi += cellsPerFgt) {
           ot::TreeNode tmpBox(xi, yi, zi, FgtLev, __DIM__, __MAX_DEPTH__);
           selectedBoxes.push_back(tmpBox);
         }//end xi
