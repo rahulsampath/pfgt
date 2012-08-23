@@ -8,11 +8,14 @@ PCC = mpicxx
 
 CEXT = C
 
-#CFLAGS = -fast 
+CFLAGS = -DPETSC_USE_LOG 
+
+# -fast 
 # -D_WRITE_SOLN 
 # -D_COMPUTE_EXACT
 # -openmp
-# -DPETSC_USE_LOG 
+
+
 include ./makefileCore
 
 

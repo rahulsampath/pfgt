@@ -1016,12 +1016,10 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
   delete [] recvDisps;
 
   for(size_t i = 0; i < recvList.size(); i += 4) {
-    double x1,x2,x3,fx;
-    double y1,y2,y3;
-    x1 = recvList[i];
-    x2 = recvList[i+1];
-    x3 = recvList[i+2];
-    fx = recvList[i+3];
+    double x1 = recvList[i];
+    double x2 = recvList[i + 1];
+    double x3 = recvList[i + 2];
+    double fx = recvList[i + 3];
     unsigned int uiMinPt[3];
     unsigned int uiMaxPt[3];
     for(int d = 0; d < 3; ++d) {
@@ -1055,10 +1053,10 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
     assert(foundMax);
 
     for(int j = minIdx; j <= maxIdx; ++j) {
-      y1 = sources[4*j];
-      y2 = sources[4*j +1];
-      y3 = sources[4*j +2];
-      double distSqr = ((x1-y1)*(x1-y1) + (x2-y2)*(x2-y2) + (x3-y3)*(x3-y3));
+      double y1 = sources[4*j];
+      double y2 = sources[4*j +1];
+      double y3 = sources[4*j +2];
+      double distSqr = ( ((x1-y1)*(x1-y1)) + ((x2-y2)*(x2-y2)) + ((x3-y3)*(x3-y3)) );
       if(distSqr < IwidthSqr) {
         results[j] += (fx*exp(-distSqr/delta));
       }
