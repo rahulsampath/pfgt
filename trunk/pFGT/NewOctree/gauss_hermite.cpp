@@ -2,19 +2,19 @@
 #include <vector>
 
 /*
- computes the far field hermite expansion
- about the center cent due to the sources.
+   computes the far field hermite expansion
+   about the center cent due to the sources.
 
- cent(1),cent(2),cent(3) = center of the expansion
- sources - x,y,z, strength
- 
- ninbox = number of sources
- delta  = gaussian width
- H = number of terms in expansion
+   cent(1),cent(2),cent(3) = center of the expansion
+   sources - x,y,z, strength
 
- output:
- hexp[ (k*(H+1) + j)*(H+1) + i] = (i,j,k)th coefficient of far field expansion
-                  due to sources
+   ninbox = number of sources
+   delta  = gaussian width
+   H = number of terms in expansion
+
+output:
+hexp[ (k*(H+1) + j)*(H+1) + i] = (i,j,k)th coefficient of far field expansion
+due to sources
 */
 void hermite_exp (double* cent, std::vector<double> &sources, unsigned int ninbox,
     double delta, unsigned int H, std::vector<double> &hexp) {
@@ -62,7 +62,7 @@ void hermite_exp (double* cent, std::vector<double> &sources, unsigned int ninbo
 /****************************************************************c
   converts hermite expansion into plane wave expansion. 
   zmul are pre-computed convertion factors ... can be generated using compute_conv_coeff()
-*/
+  */
 void hermite_to_pwave ( std::vector<double> &herm_exp, std::vector<double> &pw_exp, const int H,
     const int P, const double delta, std::vector<double> &zmul) {
 
@@ -71,15 +71,14 @@ void hermite_to_pwave ( std::vector<double> &herm_exp, std::vector<double> &pw_e
   // pw_exp = (P+1 * 2P+1 * 2P+1)*2 - symmetric in z  
 
   // temporary work vectors 
-  //might want to pre-allocate and pass as input
-  std::vector<double> ftemp;  // (P+1)*(H+1)*(H+1)*2 
-  std::vector<double> fftemp; // (P+1)*(2P+1)*(H+1)*2
-  
+  std::vector<double> ftemp(2*(P + 1)*(H + 1)*(H + 1));  
+  std::vector<double> fftemp(2*(P + 1)*((2*P) + 1)*(H + 1)); 
+
   double zfac_re, zfac_im, mul;
 
-  for (int k3 = 0, di=0; k3 <= P; ++k3) {
-    for (int j2 = 0; j2<=H; ++j2) {
-      for (int j1 = 0; j1<=H; ++j1, di+=2) {
+  for (int k3 = 0, di = 0; k3 <= P; ++k3) {
+    for (int j2 = 0; j2i <= H; ++j2) {
+      for (int j1 = 0; j1 <= H; ++j1, di += 2) {
 
         ftemp[di] = 0.0;
         ftemp[di+1] = 0.0;
@@ -89,7 +88,7 @@ void hermite_to_pwave ( std::vector<double> &herm_exp, std::vector<double> &pw_e
           int dh = 2*((j3*(H+1) + j2)*(H+1)+j1);
           zfac_re = mul * zmul [(j3 + k3*(H+1))*2];
           zfac_im = mul * zmul [(j3 + k3*(H+1))*2 + 1];
-          
+
           ftemp[di]   += zfac_re * herm_exp[dh];
           ftemp[di+1] += zfac_im * herm_exp[dh];
 
@@ -99,9 +98,9 @@ void hermite_to_pwave ( std::vector<double> &herm_exp, std::vector<double> &pw_e
     } // j2
   } // k3
 
-  for (int k3 = 0, di=0; k3<=P; ++k3) {
-    for (int k2 = 0; k2<=2*P; ++k2) {
-      for (int j1 = 0; j1<=H; ++j1, di+=2) {
+  for (int k3 = 0, di = 0; k3 <= P; ++k3) {
+    for (int k2 = 0; k2 <= (2*P); ++k2) {
+      for (int j1 = 0; j1 <= H; ++j1, di += 2) {
         fftemp[di] = 0.0;
         fftemp[di+1] = 0.0;
         // loop over j2 index               
@@ -110,10 +109,10 @@ void hermite_to_pwave ( std::vector<double> &herm_exp, std::vector<double> &pw_e
           int dh = 2*((k3*(H+1) + j2)*(H+1)+j1);
           zfac_re = mul * zmul [(j2 + k2*(H+1))*2];
           zfac_im = mul * zmul [(j2 + k2*(H+1))*2 + 1];
-          
+
           fftemp[di]   += __COMP_MUL_RE(zfac_re, zfac_im, ftemp[dh], ftemp[dh+1]);
           fftemp[di+1] += __COMP_MUL_IM(zfac_re, zfac_im, ftemp[dh], ftemp[dh+1]);
-          
+
           mul = mul * (-1) ;
         } // j2
 
@@ -121,9 +120,9 @@ void hermite_to_pwave ( std::vector<double> &herm_exp, std::vector<double> &pw_e
     } // k2
   } // k3
 
-  for (int k3=0, di=0; k3<=P; ++k3) {
-    for (int k2=0; k2<=2*P; ++k2) {
-      for (int k1=0; k1<=2*P; ++k1, di+=2) {
+  for (int k3 = 0, di = 0; k3 <= P; ++k3) {
+    for (int k2 = 0; k2 <= (2*P); ++k2) {
+      for (int k1 = 0; k1 <= (2*P); ++k1, di += 2) {
         pw_exp[di] = 0.0;
         pw_exp[di+1] = 0.0;
         // loop over j1 index               
@@ -161,7 +160,6 @@ void compute_conv_coeff(const int P, const double L, const int H, std::vector<do
   for (int k=-P, di=0; k<=P; ++k) {  
     rk = L * k; 
     rk /= P; 
-
     zfac_re = 1.0;
     zfac_im = 0.0;
     for (int j=0; j<=H; ++j, di+=2) {
