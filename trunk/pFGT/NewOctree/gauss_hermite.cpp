@@ -1,5 +1,7 @@
+
 #include <cmath>
 #include <vector>
+#include <cassert>
 
 /*
    computes the far field hermite expansion
@@ -69,6 +71,8 @@ void hermite_to_pwave ( std::vector<double> &herm_exp, std::vector<double> &pw_e
   // note on sizes ... consider in relation to temporary work vectors 
   // herm_exp = (H+1)*(H+1)*(H+1)
   // pw_exp = (P+1 * 2P+1 * 2P+1)*2 - symmetric in z  
+  assert((pw_exp.size()) == (2*(P + 1)*((2*P) + 1)*((2*P) + 1)));
+  assert((herm_exp.size()) == ((H + 1)*(H + 1)*(H + 1)));
 
   // temporary work vectors 
   std::vector<double> ftemp(2*(P + 1)*(H + 1)*(H + 1));  
