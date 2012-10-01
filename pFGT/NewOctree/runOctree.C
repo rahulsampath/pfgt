@@ -93,20 +93,24 @@ int main(int argc, char** argv) {
     std::cout<<"delta = "<<delta<<std::endl;
   }
 
-  int P, L;
+  int P, L, H;
 
   if(softEquals(epsilon, 1.0e-3)) {
     P = 6;
     L = 5;
+    H = 4;
   } else if(softEquals(epsilon, 1.0e-6)) {
     P = 10;
     L = 7;
+    H = 8;
   } else if(softEquals(epsilon, 1.0e-9)) {
     P = 16;
     L = 10;
+    H = 12;
   } else if(softEquals(epsilon, 1.0e-12)) {
     P = 20;
     L = 11;
+    H = 14;
   } else {
     if(!rank) {
       std::cout<<"Wrong epsilon!"<<std::endl;
@@ -121,6 +125,7 @@ int main(int argc, char** argv) {
     std::cout<<"P = "<<P<<std::endl;
     std::cout<<"L = "<<L<<std::endl;
     std::cout<<"K = "<<K<<std::endl;
+    std::cout<<"H = "<<H<<std::endl;
   }
 
   //Generate gaussian distribution of points in (0, 1)
