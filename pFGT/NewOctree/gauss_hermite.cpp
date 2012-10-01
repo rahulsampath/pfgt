@@ -18,7 +18,7 @@ output:
 hexp[ (k*(H+1) + j)*(H+1) + i] = (i,j,k)th coefficient of far field expansion
 due to sources
 */
-void hermite_exp (double* cent, std::vector<double> &sources, unsigned int ninbox,
+void hermite_exp (double* cent, std::vector<double> &sources, unsigned int offset, unsigned int ninbox,
     unsigned int FgtLev, unsigned int H, std::vector<double> &hexp) {
   //Fgt box size = sqrt(delta)
   double dsq = (static_cast<double>(1u << FgtLev));
@@ -33,7 +33,7 @@ void hermite_exp (double* cent, std::vector<double> &sources, unsigned int ninbo
   }//end i
 
   //! accumulate expansion due to each source.
-  for(int i = 0; i < ninbox; ++i) {
+  for(int i = offset; i < (offset + ninbox); ++i) {
     double x = (sources[4*i]   - cent[0])*dsq;
     double y = (sources[(4*i) + 1] - cent[1])*dsq;
     double z = (sources[(4*i) + 2] - cent[2])*dsq;
