@@ -290,8 +290,10 @@ void pfgtExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> &
   }
   assert(remoteFgtOwner < subRank);
 
-  //2P complex coefficients for each dimension.  
-  const unsigned int numWcoeffs = 16*P*P*P;
+  //Complex coefficients: [-P, P]x[-P, P]x[0, P] 
+  //Coeff[-K1, -K2, -K3] = ComplexConjugate(Coeff[K1, K2, K3])
+  const unsigned int TwoPplus1 = (2*P) + 1;
+  const unsigned int numWcoeffs = 2*TwoPplus1*TwoPplus1*(P + 1);
 
   int* s2wSendCnts = NULL;
   int* s2wSendDisps = NULL;
@@ -413,16 +415,20 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
   const double LbyP = static_cast<double>(L)/static_cast<double>(P);
   const double ImExpZfactor = LbyP/hFgt;
 
-  //2P complex coefficients for each dimension. 
-  const unsigned int numWcoeffs = 16*P*P*P;
+  //Complex coefficients: [-P, P]x[-P, P]x[0, P] 
+  //Coeff[-K1, -K2, -K3] = ComplexConjugate(Coeff[K1, K2, K3])
+  const unsigned int TwoPplus1 = (2*P) + 1;
+  const unsigned int numWcoeffs = 2*TwoPplus1*TwoPplus1*(P + 1);
 
-  const unsigned int TwoP = 2*P;
-  double * c1 = new double[TwoP];
-  double * c2 = new double[TwoP];
-  double * c3 = new double[TwoP];
-  double * s1 = new double[TwoP];
-  double * s2 = new double[TwoP];
-  double * s3 = new double[TwoP];
+#ifdef DEBUG
+  assert(P >= 1);
+#endif
+  std::vector<double> c1(P);
+  std::vector<double> c2(P);
+  std::vector<double> c3(P);
+  std::vector<double> s1(P);
+  std::vector<double> s2(P);
+  std::vector<double> s3(P);
 
   std::vector<double> sendWlist;
   if(remoteFgtOwner >= 0) {
@@ -431,34 +437,353 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
     double cy = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getY()))/(__DTPMD__));
     double cz = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getZ()))/(__DTPMD__));
     for(int i = 0; i < numPtsInRemoteFgt; ++i) {
-      double px = cx - sources[4*i];
-      double py = cy - sources[(4*i)+1];
-      double pz = cz - sources[(4*i)+2];
-      double pf = sources[(4*i)+3];
+      int sOff = 4*i;
+      double px = cx - sources[sOff];
+      double py = cy - sources[sOff + 1];
+      double pz = cz - sources[sOff + 2];
+      double pf = sources[sOff + 3];
 
-      for(int kk = -P, di = 0; kk < P; ++kk, ++di) {
-        c1[di] = cos(ImExpZfactor*static_cast<double>(kk)*px);
-        s1[di] = sin(ImExpZfactor*static_cast<double>(kk)*px);
-        c2[di] = cos(ImExpZfactor*static_cast<double>(kk)*py);
-        s2[di] = sin(ImExpZfactor*static_cast<double>(kk)*py);
-        c3[di] = cos(ImExpZfactor*static_cast<double>(kk)*pz);
-        s3[di] = sin(ImExpZfactor*static_cast<double>(kk)*pz);
-      }//end kk
+      //BEGIN S2W BLOCK
+      double argX = ImExpZfactor*px; 
+      double argY = ImExpZfactor*py; 
+      double argZ = ImExpZfactor*pz; 
+      c1[0] = cos(argX);
+      s1[0] = sin(argX);
+      c2[0] = cos(argY);
+      s2[0] = sin(argY);
+      c3[0] = cos(argZ);
+      s3[0] = sin(argZ);
+      for(int d = 1; d < P; ++d) {
+        int prev = d - 1;
+        c1[d] = (c1[prev]*c1[0]) - (s1[prev]*s1[0]);
+        s1[d] = (s1[prev]*c1[0]) + (c1[prev]*s1[0]);
+        c2[d] = (c2[prev]*c2[0]) - (s2[prev]*s2[0]);
+        s2[d] = (s2[prev]*c2[0]) + (c2[prev]*s2[0]);
+        c3[d] = (c3[prev]*c3[0]) - (s3[prev]*s3[0]);
+        s3[d] = (s3[prev]*c3[0]) + (c3[prev]*s3[0]);
+      }//end d
 
-      for(int k3 = -P, d3 = 0, di = 0; k3 < P; ++d3, ++k3) {
-        for(int k2 = -P, d2 = 0; k2 < P; ++d2, ++k2) {
-          for(int k1 = -P, d1 = 0; k1 < P; ++d1, ++k1, ++di) {
-            double tmp1 =  ((c1[d1])*(c2[d2])) - ((s1[d1])*(s2[d2]));
-            double tmp2 =  ((s1[d1])*(c2[d2])) + ((s2[d2])*(c1[d1]));
-            double cosTh = ( ((c3[d3])*tmp1) - ((s3[d3])*tmp2) );
-            double sinTh = ( ((s3[d3])*tmp1) + ((c3[d3])*tmp2) ); 
-            sendWlist[2*di] += (pf * cosTh);
-            sendWlist[(2*di) + 1 ] += (pf * sinTh);
-          }//end for k1
-        }//end for k2
-      }//end for k3
+      {
+        //k3 = 0
+        //cosZ = 1
+        //sinZ = 0
+        //zId = k3 = 0
+        //yOff = zId*TwoPplus1 = 0
+        {
+          //k2 = 0
+          //cosY = 1
+          //sinY = 0
+          //yId = P + k2 = P
+          //xOff = (yOff + yId)*TwoPplus1  
+          int xOff = P*TwoPplus1;
+          //cosYplusZ = (cosY*cosZ) - (sinY*sinZ) = 1
+          //sinYplusZ = (sinY*cosZ) + (cosY*sinZ) = 0
+          {
+            //k1 = 0
+            //cosX = 1
+            //sinX = 0
+            //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = 1
+            //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = 0
+            //xId = P + k1 = P
+            //d = xOff + xId
+            int d = xOff + P;
+            //sendWlist[2*d] += (pf * cosTh)
+            //sendWlist[(2*d) + 1 ] += (pf * sinTh)
+            sendWlist[2*d] += pf;
+          }//k1 = 0
+          for(int k1 = 1; k1 <= P; ++k1) {
+            double cosX = c1[k1 - 1];
+            double sinX = s1[k1 - 1];
+            //cXcYZ = cosX*cosYplusZ = cosX
+            //sXcYZ = sinX*cosYplusZ = sinX
+            //sXsYZ = sinX*sinYplusZ = 0
+            //cXsYZ = cosX*sinYplusZ = 0
+
+            //+ve k1
+            int xId = P + k1;
+            int d = xOff + xId;
+            //cosTh = cXcYZ - sXsYZ = cosX
+            //sinTh = sXcYZ + cXsYZ = sinX
+            //sendWlist[2*d] += (pf * cosTh)
+            sendWlist[2*d] += (pf * cosX);
+            //sendWlist[(2*d) + 1 ] += (pf * sinTh)
+            sendWlist[(2*d) + 1 ] += (pf * sinX);
+
+            //-ve k1
+            xId = P - k1;
+            d = xOff + xId;
+            //cosTh = cXcYZ + sXsYZ = cosX
+            //sinTh = cXsYZ - sXcYZ = -sinX
+            //sendWlist[2*d] += (pf * cosTh)
+            sendWlist[2*d] += (pf * cosX);
+            //sendWlist[(2*d) + 1 ] += (pf * sinTh)
+            sendWlist[(2*d) + 1 ] -= (pf * sinX);
+          }//end k1
+        }//k2 = 0 
+        for(int k2 = 1; k2 <= P; ++k2) {
+          double cosY = c2[k2 - 1];
+          double sinY = s2[k2 - 1];
+          //cYcZ = cosY*cosZ = cosY
+          //sYcZ = sinY*cosZ = sinY
+          //cYsZ = cosY*sinZ = 0
+          //sYsZ = sinY*sinZ = 0
+
+          //+ve k2
+          int yId = P + k2;
+          //xOff = (yOff + yId)*TwoPplus1
+          int xOff = yId*TwoPplus1;
+          //cosYplusZ = cYcZ - sYsZ = cosY
+          //sinYplusZ = sYcZ + cYsZ = sinY
+          {
+            //k1 = 0
+            //cosX = 1
+            //sinX = 0
+            //xId = P + k1 = P
+            //d = xOff + xId
+            int d = xOff + P;
+            //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosY
+            //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinY
+            //sendWlist[2*d] += (pf * cosTh)
+            sendWlist[2*d] += (pf * cosY);
+            //sendWlist[(2*d) + 1 ] += (pf * sinTh)
+            sendWlist[(2*d) + 1 ] += (pf * sinY);
+          }//k1 = 0
+          for(int k1 = 1; k1 <= P; ++k1) {
+            double cosX = c1[k1 - 1];
+            double sinX = s1[k1 - 1];
+            //cXcYZ = cosX*cosYplusZ
+            double cXcYZ = cosX*cosY;
+            //sXsYZ = sinX*sinYplusZ
+            double sXsYZ = sinX*sinY;
+            //sXcYZ = sinX*cosYplusZ
+            double sXcYZ = sinX*cosY;
+            //cXsYZ = cosX*sinYplusZ
+            double cXsYZ = cosX*sinY;
+
+            //+ve k1
+            int xId = P + k1;
+            int d = xOff + xId;
+            double cosTh = cXcYZ - sXsYZ;
+            double sinTh = sXcYZ + cXsYZ;
+            sendWlist[2*d] += (pf * cosTh);
+            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+
+            //-ve k1
+            xId = P - k1;
+            d = xOff + xId;
+            cosTh = cXcYZ + sXsYZ;
+            sinTh = cXsYZ - sXcYZ;
+            sendWlist[2*d] += (pf * cosTh);
+            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+          }//end k1
+
+          //-ve k2
+          yId = P - k2;
+          //xOff = (yOff + yId)*TwoPplus1
+          xOff = yId*TwoPplus1;
+          //cosYplusZ = cYcZ + sYsZ = cosY
+          //sinYplusZ = cYsZ - sYcZ = -sinY
+          {
+            //k1 = 0
+            //cosX = 1
+            //sinX = 0
+            //xId = P + k1 = P
+            //d = xOff + xId
+            int d = xOff + P;
+            //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosY
+            //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = -sinY
+            //sendWlist[2*d] += (pf * cosTh)
+            sendWlist[2*d] += (pf * cosY);
+            //sendWlist[(2*d) + 1 ] += (pf * sinTh)
+            sendWlist[(2*d) + 1 ] -= (pf * sinY);
+          }//k1 = 0
+          for(int k1 = 1; k1 <= P; ++k1) {
+            double cosX = c1[k1 - 1];
+            double sinX = s1[k1 - 1];
+            //cXcYZ = cosX*cosYplusZ
+            double cXcYZ = cosX*cosY;
+            //sXsYZ = sinX*sinYplusZ
+            double sXsYZ = -(sinX*sinY);
+            //sXcYZ = sinX*cosYplusZ
+            double sXcYZ = sinX*cosY;
+            //cXsYZ = cosX*sinYplusZ
+            double cXsYZ = -(cosX*sinY);
+
+            //+ve k1
+            int xId = P + k1;
+            int d = xOff + xId;
+            double cosTh = cXcYZ - sXsYZ;
+            double sinTh = sXcYZ + cXsYZ;
+            sendWlist[2*d] += (pf * cosTh);
+            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+
+            //-ve k1
+            xId = P - k1;
+            d = xOff + xId;
+            cosTh = cXcYZ + sXsYZ;
+            sinTh = cXsYZ - sXcYZ;
+            sendWlist[2*d] += (pf * cosTh);
+            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+          }//end k1
+        }//end k2
+      }//k3 = 0
+      for(int k3 = 1; k3 <= P; ++k3) {
+        double cosZ = c3[k3 - 1];
+        double sinZ = s3[k3 - 1];
+        int zId = k3;
+        int yOff = zId*TwoPplus1;
+        {
+          //k2 = 0
+          //cosY = 1
+          //sinY = 0
+          //yId = P + k2 = P
+          //xOff = (yOff + yId)*TwoPplus1
+          int xOff = (yOff + P)*TwoPplus1;
+          //cosYplusZ = (cosY*cosZ) - (sinY*sinZ) = cosZ
+          //sinYplusZ = (sinY*cosZ) + (cosY*sinZ) = sinZ
+          {
+            //k1 = 0
+            //cosX = 1
+            //sinX = 0
+            //xId = P + k1 = P
+            //d = xOff + xId
+            int d = xOff + P;
+            //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosZ
+            //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinZ
+            //sendWlist[2*d] += (pf * cosTh)
+            sendWlist[2*d] += (pf * cosZ);
+            //sendWlist[(2*d) + 1 ] += (pf * sinTh)
+            sendWlist[(2*d) + 1 ] += (pf * sinZ);
+          }//k1 = 0
+          for(int k1 = 1; k1 <= P; ++k1) {
+            double cosX = c1[k1 - 1];
+            double sinX = s1[k1 - 1];
+            //cXcYZ = cosX*cosYplusZ
+            double cXcYZ = cosX*cosZ;
+            //sXsYZ = sinX*sinYplusZ
+            double sXsYZ = sinX*sinZ;
+            //sXcYZ = sinX*cosYplusZ
+            double sXcYZ = sinX*cosZ;
+            //cXsYZ = cosX*sinYplusZ
+            double cXsYZ = cosX*sinZ;
+
+            //+ve k1
+            int xId = P + k1;
+            int d = xOff + xId;
+            double cosTh = cXcYZ - sXsYZ;
+            double sinTh = sXcYZ + cXsYZ;
+            sendWlist[2*d] += (pf * cosTh);
+            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+
+            //-ve k1
+            xId = P - k1;
+            d = xOff + xId;
+            cosTh = cXcYZ + sXsYZ;
+            sinTh = cXsYZ - sXcYZ;
+            sendWlist[2*d] += (pf * cosTh);
+            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+          }//end k1
+        }//k2 = 0 
+        for(int k2 = 1; k2 <= P; ++k2) {
+          double cosY = c2[k2 - 1];
+          double sinY = s2[k2 - 1];
+          double cYcZ = cosY*cosZ;
+          double cYsZ = cosY*sinZ;
+          double sYsZ = sinY*sinZ;
+          double sYcZ = sinY*cosZ;
+
+          //+ve k2
+          int yId = P + k2;
+          int xOff = (yOff + yId)*TwoPplus1;
+          double cosYplusZ = cYcZ - sYsZ;
+          double sinYplusZ = sYcZ + cYsZ;
+          {
+            //k1 = 0
+            //cosX = 1
+            //sinX = 0
+            //xId = P + k1 = P
+            //d = xOff + xId
+            int d = xOff + P;
+            //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosYplusZ
+            //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinYplusZ
+            //sendWlist[2*d] += (pf * cosTh)
+            sendWlist[2*d] += (pf * cosYplusZ);
+            //sendWlist[(2*d) + 1 ] += (pf * sinTh)
+            sendWlist[(2*d) + 1 ] += (pf * sinYplusZ);
+          }//k1 = 0
+          for(int k1 = 1; k1 <= P; ++k1) {
+            double cosX = c1[k1 - 1];
+            double sinX = s1[k1 - 1];
+            double cXcYZ = cosX*cosYplusZ;
+            double sXsYZ = sinX*sinYplusZ;
+            double sXcYZ = sinX*cosYplusZ;
+            double cXsYZ = cosX*sinYplusZ;
+
+            //+ve k1
+            int xId = P + k1;
+            int d = xOff + xId;
+            double cosTh = cXcYZ - sXsYZ;
+            double sinTh = sXcYZ + cXsYZ;
+            sendWlist[2*d] += (pf * cosTh);
+            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+
+            //-ve k1
+            xId = P - k1;
+            d = xOff + xId;
+            cosTh = cXcYZ + sXsYZ;
+            sinTh = cXsYZ - sXcYZ;
+            sendWlist[2*d] += (pf * cosTh);
+            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+          }//end k1
+
+          //-ve k2
+          yId = P - k2;
+          xOff = (yOff + yId)*TwoPplus1;
+          cosYplusZ = cYcZ + sYsZ;
+          sinYplusZ = cYsZ - sYcZ;
+          {
+            //k1 = 0
+            //cosX = 1
+            //sinX = 0
+            //xId = P + k1 = P
+            //d = xOff + xId
+            int d = xOff + P;
+            //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosYplusZ
+            //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinYplusZ
+            //sendWlist[2*d] += (pf * cosTh)
+            sendWlist[2*d] += (pf * cosYplusZ);
+            //sendWlist[(2*d) + 1 ] += (pf * sinTh)
+            sendWlist[(2*d) + 1 ] += (pf * sinYplusZ);
+          }//k1 = 0
+          for(int k1 = 1; k1 <= P; ++k1) {
+            double cosX = c1[k1 - 1];
+            double sinX = s1[k1 - 1];
+            double cXcYZ = cosX*cosYplusZ;
+            double sXsYZ = sinX*sinYplusZ;
+            double sXcYZ = sinX*cosYplusZ;
+            double cXsYZ = cosX*sinYplusZ;
+
+            //+ve k1
+            int xId = P + k1;
+            int d = xOff + xId;
+            double cosTh = cXcYZ - sXsYZ;
+            double sinTh = sXcYZ + cXsYZ;
+            sendWlist[2*d] += (pf * cosTh);
+            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+
+            //-ve k1
+            xId = P - k1;
+            d = xOff + xId;
+            cosTh = cXcYZ + sXsYZ;
+            sinTh = cXsYZ - sXcYZ;
+            sendWlist[2*d] += (pf * cosTh);
+            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+          }//end k1
+        }//end k2
+      }//end k3
+      //END S2W BLOCK
     }//end i
-  }
+  }//remoteFgt
 
   std::vector<double> recvWlist(recvDisps[npes - 1] + recvCnts[npes - 1]);
 
@@ -513,13 +838,6 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
     }//end j
   }//end i
 
-  delete [] s1;
-  delete [] s2;
-  delete [] s3;
-  delete [] c1;
-  delete [] c2;
-  delete [] c3;
-
   PetscLogEventEnd(s2wEvent, 0, 0, 0, 0);
 }
 
@@ -533,8 +851,10 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
   int npes;
   MPI_Comm_size(subComm, &npes);
 
-  //2P complex coefficients for each dimension.  
-  const unsigned int numWcoeffs = 16*P*P*P;
+  //Complex coefficients: [-P, P]x[-P, P]x[0, P] 
+  //Coeff[-K1, -K2, -K3] = ComplexConjugate(Coeff[K1, K2, K3])
+  const unsigned int TwoPplus1 = (2*P) + 1;
+  const unsigned int numWcoeffs = 2*TwoPplus1*TwoPplus1*(P + 1);
 
   std::vector<double> sendLlist(recvDisps[npes - 1] + recvCnts[npes - 1]);
 
@@ -569,17 +889,17 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
   const double C0 = (0.5*LbyP/(__SQRT_PI__));
 
   const unsigned int TwoP = 2*P;
-  double *fac = new double [TwoP];
+  std::vector<double> fac(TwoP);
   for(int kk = -P, di = 0; kk < P; ++di, ++kk) {
     fac[di] = C0*exp(ReExpZfactor*(static_cast<double>(kk*kk)));
   }//end kk
 
-  double * c1 = new double[TwoP];
-  double * c2 = new double[TwoP];
-  double * c3 = new double[TwoP];
-  double * s1 = new double[TwoP];
-  double * s2 = new double[TwoP];
-  double * s3 = new double[TwoP];
+  std::vector<double> c1(TwoP);
+  std::vector<double> c2(TwoP);
+  std::vector<double> c3(TwoP);
+  std::vector<double> s1(TwoP);
+  std::vector<double> s2(TwoP);
+  std::vector<double> s3(TwoP);
 
   if(remoteFgtOwner >= 0) {
     double cx = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getX()))/(__DTPMD__));
@@ -649,15 +969,6 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
     }//end j
   }//end i
 
-  delete [] s1;
-  delete [] s2;
-  delete [] s3;
-  delete [] c1;
-  delete [] c2;
-  delete [] c3;
-
-  delete [] fac;
-
   PetscLogEventEnd(l2tEvent, 0, 0, 0, 0);
 }
 
@@ -674,19 +985,21 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
 
   const unsigned int cellsPerFgt = (1u << (__MAX_DEPTH__ - FgtLev));
 
-  //2P complex coefficients for each dimension.  
-  const unsigned int numWcoeffs = 16*P*P*P;
+  //Complex coefficients: [-P, P]x[-P, P]x[0, P] 
+  //Coeff[-K1, -K2, -K3] = ComplexConjugate(Coeff[K1, K2, K3])
+  const unsigned int TwoPplus1 = (2*P) + 1;
+  const unsigned int numWcoeffs = 2*TwoPplus1*TwoPplus1*(P + 1);
 
   const double LbyP = static_cast<double>(L)/static_cast<double>(P);
   const double ImExpZfactor = LbyP/hFgt;
 
   const unsigned int TwoP = 2*P;
-  double * c1 = new double[TwoP];
-  double * c2 = new double[TwoP];
-  double * c3 = new double[TwoP];
-  double * s1 = new double[TwoP];
-  double * s2 = new double[TwoP];
-  double * s3 = new double[TwoP];
+  std::vector<double> c1(TwoP);
+  std::vector<double> c2(TwoP);
+  std::vector<double> c3(TwoP);
+  std::vector<double> s1(TwoP);
+  std::vector<double> s2(TwoP);
+  std::vector<double> s3(TwoP);
 
   std::vector<ot::TreeNode> tmpBoxes;
   std::vector<double> tmpVals;
@@ -780,13 +1093,6 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
       }//end dAy
     }//end dAz
   }//end i
-
-  delete [] s1;
-  delete [] s2;
-  delete [] s3;
-  delete [] c1;
-  delete [] c2;
-  delete [] c3;
 
   std::vector<ot::TreeNode> sendBoxList;
   std::vector<double> sendLlist;
@@ -1072,8 +1378,10 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
   int npes;
   MPI_Comm_size(comm, &npes);
 
-  //2P complex coefficients for each dimension.  
-  const unsigned int numWcoeffs = 16*P*P*P;
+  //Complex coefficients: [-P, P]x[-P, P]x[0, P] 
+  //Coeff[-K1, -K2, -K3] = ComplexConjugate(Coeff[K1, K2, K3])
+  const unsigned int TwoPplus1 = (2*P) + 1;
+  const unsigned int numWcoeffs = 2*TwoPplus1*TwoPplus1*(P + 1);
 
   int* sendCnts = new int[npes];
   int* sendDisps = new int[npes];
@@ -1204,8 +1512,10 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
   int npes;
   MPI_Comm_size(comm, &npes);
 
-  //2P complex coefficients for each dimension.  
-  const unsigned int numWcoeffs = 16*P*P*P;
+  //Complex coefficients: [-P, P]x[-P, P]x[0, P] 
+  //Coeff[-K1, -K2, -K3] = ComplexConjugate(Coeff[K1, K2, K3])
+  const unsigned int TwoPplus1 = (2*P) + 1;
+  const unsigned int numWcoeffs = 2*TwoPplus1*TwoPplus1*(P + 1);
 
   const unsigned int cellsPerFgt = (1u << (__MAX_DEPTH__ - FgtLev));
 
@@ -1379,12 +1689,12 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
   const double ImExpZfactor = LbyP/hFgt;
 
   const unsigned int TwoP = 2*P;
-  double * c1 = new double[TwoP];
-  double * c2 = new double[TwoP];
-  double * c3 = new double[TwoP];
-  double * s1 = new double[TwoP];
-  double * s2 = new double[TwoP];
-  double * s3 = new double[TwoP];
+  std::vector<double> c1(TwoP);
+  std::vector<double> c2(TwoP);
+  std::vector<double> c3(TwoP);
+  std::vector<double> s1(TwoP);
+  std::vector<double> s2(TwoP);
+  std::vector<double> s3(TwoP);
 
   std::vector<double> sendLlist((sendDisps[npes - 1] + sendCnts[npes - 1]), 0.0);
 
@@ -1445,7 +1755,7 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
 
   const double ReExpZfactor = -0.25*LbyP*LbyP;
   const double C0 = (0.5*LbyP/(__SQRT_PI__));
-  double *fac = new double [TwoP];
+  std::vector<double> fac(TwoP);
   for(int kk = -P, di = 0; kk < P; ++di, ++kk) {
     fac[di] = C0*exp(ReExpZfactor*(static_cast<double>(kk*kk)));
   }//end kk
@@ -1484,15 +1794,6 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
       }//end for k3
     }//end j
   }//end i
-
-  delete [] s1;
-  delete [] s2;
-  delete [] s3;
-  delete [] c1;
-  delete [] c2;
-  delete [] c3;
-
-  delete [] fac;
 
   PetscLogEventEnd(w2dD2lDirectEvent, 0, 0, 0, 0);
 }
