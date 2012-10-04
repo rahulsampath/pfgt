@@ -13,6 +13,7 @@ CFLAGS = -DPETSC_USE_LOG
 # -fast 
 # -D_WRITE_SOLN 
 # -D_COMPUTE_EXACT
+# -DDEBUG
 # -openmp
 
 
