@@ -462,12 +462,12 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
       s3[0] = sin(argZ);
       for(int d = 1; d < P; ++d) {
         int prev = d - 1;
-        c1[d] = (c1[prev]*c1[0]) - (s1[prev]*s1[0]);
-        s1[d] = (s1[prev]*c1[0]) + (c1[prev]*s1[0]);
-        c2[d] = (c2[prev]*c2[0]) - (s2[prev]*s2[0]);
-        s2[d] = (s2[prev]*c2[0]) + (c2[prev]*s2[0]);
-        c3[d] = (c3[prev]*c3[0]) - (s3[prev]*s3[0]);
-        s3[d] = (s3[prev]*c3[0]) + (c3[prev]*s3[0]);
+        c1[d] = (c1[prev] * c1[0]) - (s1[prev] * s1[0]);
+        s1[d] = (s1[prev] * c1[0]) + (c1[prev] * s1[0]);
+        c2[d] = (c2[prev] * c2[0]) - (s2[prev] * s2[0]);
+        s2[d] = (s2[prev] * c2[0]) + (c2[prev] * s2[0]);
+        c3[d] = (c3[prev] * c3[0]) - (s3[prev] * s3[0]);
+        s3[d] = (s3[prev] * c3[0]) + (c3[prev] * s3[0]);
       }//end d
 
       {
@@ -494,9 +494,10 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //xId = P + k1 = P
             //d = xOff + xId
             int d = xOff + P;
-            //sendWlist[2*d] += (pf * cosTh)
-            //sendWlist[(2*d) + 1 ] += (pf * sinTh)
-            sendWlist[2*d] += pf;
+            int cOff = 2*d;
+            //sendWlist[cOff] += (pf * cosTh)
+            //sendWlist[cOff + 1] += (pf * sinTh)
+            sendWlist[cOff] += pf;
           }//k1 = 0
           for(int k1 = 1; k1 <= P; ++k1) {
             double cosX = c1Arr[k1];
@@ -513,8 +514,8 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //sinTh = sXcYZ + cXsYZ = sinX
             //sendWlist[2*d] += (pf * cosTh)
             sendWlist[2*d] += (pf * cosX);
-            //sendWlist[(2*d) + 1 ] += (pf * sinTh)
-            sendWlist[(2*d) + 1 ] += (pf * sinX);
+            //sendWlist[(2*d) + 1] += (pf * sinTh)
+            sendWlist[(2*d) + 1] += (pf * sinX);
 
             //-ve k1
             xId = P - k1;
@@ -523,8 +524,8 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //sinTh = cXsYZ - sXcYZ = -sinX
             //sendWlist[2*d] += (pf * cosTh)
             sendWlist[2*d] += (pf * cosX);
-            //sendWlist[(2*d) + 1 ] += (pf * sinTh)
-            sendWlist[(2*d) + 1 ] -= (pf * sinX);
+            //sendWlist[(2*d) + 1] += (pf * sinTh)
+            sendWlist[(2*d) + 1] -= (pf * sinX);
           }//end k1
         }//k2 = 0 
         for(int k2 = 1; k2 <= P; ++k2) {
@@ -552,8 +553,8 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinY
             //sendWlist[2*d] += (pf * cosTh)
             sendWlist[2*d] += (pf * cosY);
-            //sendWlist[(2*d) + 1 ] += (pf * sinTh)
-            sendWlist[(2*d) + 1 ] += (pf * sinY);
+            //sendWlist[(2*d) + 1] += (pf * sinTh)
+            sendWlist[(2*d) + 1] += (pf * sinY);
           }//k1 = 0
           for(int k1 = 1; k1 <= P; ++k1) {
             double cosX = c1Arr[k1];
@@ -573,7 +574,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             double cosTh = cXcYZ - sXsYZ;
             double sinTh = sXcYZ + cXsYZ;
             sendWlist[2*d] += (pf * cosTh);
-            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+            sendWlist[(2*d) + 1] += (pf * sinTh);
 
             //-ve k1
             xId = P - k1;
@@ -581,7 +582,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             cosTh = cXcYZ + sXsYZ;
             sinTh = cXsYZ - sXcYZ;
             sendWlist[2*d] += (pf * cosTh);
-            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+            sendWlist[(2*d) + 1] += (pf * sinTh);
           }//end k1
 
           //-ve k2
@@ -601,8 +602,8 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = -sinY
             //sendWlist[2*d] += (pf * cosTh)
             sendWlist[2*d] += (pf * cosY);
-            //sendWlist[(2*d) + 1 ] += (pf * sinTh)
-            sendWlist[(2*d) + 1 ] -= (pf * sinY);
+            //sendWlist[(2*d) + 1] += (pf * sinTh)
+            sendWlist[(2*d) + 1] -= (pf * sinY);
           }//k1 = 0
           for(int k1 = 1; k1 <= P; ++k1) {
             double cosX = c1Arr[k1];
@@ -622,7 +623,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             double cosTh = cXcYZ - sXsYZ;
             double sinTh = sXcYZ + cXsYZ;
             sendWlist[2*d] += (pf * cosTh);
-            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+            sendWlist[(2*d) + 1] += (pf * sinTh);
 
             //-ve k1
             xId = P - k1;
@@ -630,7 +631,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             cosTh = cXcYZ + sXsYZ;
             sinTh = cXsYZ - sXcYZ;
             sendWlist[2*d] += (pf * cosTh);
-            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+            sendWlist[(2*d) + 1] += (pf * sinTh);
           }//end k1
         }//end k2
       }//k3 = 0
@@ -659,8 +660,8 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinZ
             //sendWlist[2*d] += (pf * cosTh)
             sendWlist[2*d] += (pf * cosZ);
-            //sendWlist[(2*d) + 1 ] += (pf * sinTh)
-            sendWlist[(2*d) + 1 ] += (pf * sinZ);
+            //sendWlist[(2*d) + 1] += (pf * sinTh)
+            sendWlist[(2*d) + 1] += (pf * sinZ);
           }//k1 = 0
           for(int k1 = 1; k1 <= P; ++k1) {
             double cosX = c1Arr[k1];
@@ -680,7 +681,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             double cosTh = cXcYZ - sXsYZ;
             double sinTh = sXcYZ + cXsYZ;
             sendWlist[2*d] += (pf * cosTh);
-            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+            sendWlist[(2*d) + 1] += (pf * sinTh);
 
             //-ve k1
             xId = P - k1;
@@ -688,7 +689,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             cosTh = cXcYZ + sXsYZ;
             sinTh = cXsYZ - sXcYZ;
             sendWlist[2*d] += (pf * cosTh);
-            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+            sendWlist[(2*d) + 1] += (pf * sinTh);
           }//end k1
         }//k2 = 0 
         for(int k2 = 1; k2 <= P; ++k2) {
@@ -715,8 +716,8 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinYplusZ
             //sendWlist[2*d] += (pf * cosTh)
             sendWlist[2*d] += (pf * cosYplusZ);
-            //sendWlist[(2*d) + 1 ] += (pf * sinTh)
-            sendWlist[(2*d) + 1 ] += (pf * sinYplusZ);
+            //sendWlist[(2*d) + 1] += (pf * sinTh)
+            sendWlist[(2*d) + 1] += (pf * sinYplusZ);
           }//k1 = 0
           for(int k1 = 1; k1 <= P; ++k1) {
             double cosX = c1Arr[k1];
@@ -732,7 +733,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             double cosTh = cXcYZ - sXsYZ;
             double sinTh = sXcYZ + cXsYZ;
             sendWlist[2*d] += (pf * cosTh);
-            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+            sendWlist[(2*d) + 1] += (pf * sinTh);
 
             //-ve k1
             xId = P - k1;
@@ -740,7 +741,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             cosTh = cXcYZ + sXsYZ;
             sinTh = cXsYZ - sXcYZ;
             sendWlist[2*d] += (pf * cosTh);
-            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+            sendWlist[(2*d) + 1] += (pf * sinTh);
           }//end k1
 
           //-ve k2
@@ -759,8 +760,8 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinYplusZ
             //sendWlist[2*d] += (pf * cosTh)
             sendWlist[2*d] += (pf * cosYplusZ);
-            //sendWlist[(2*d) + 1 ] += (pf * sinTh)
-            sendWlist[(2*d) + 1 ] += (pf * sinYplusZ);
+            //sendWlist[(2*d) + 1] += (pf * sinTh)
+            sendWlist[(2*d) + 1] += (pf * sinYplusZ);
           }//k1 = 0
           for(int k1 = 1; k1 <= P; ++k1) {
             double cosX = c1Arr[k1];
@@ -776,7 +777,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             double cosTh = cXcYZ - sXsYZ;
             double sinTh = sXcYZ + cXsYZ;
             sendWlist[2*d] += (pf * cosTh);
-            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+            sendWlist[(2*d) + 1] += (pf * sinTh);
 
             //-ve k1
             xId = P - k1;
@@ -784,7 +785,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             cosTh = cXcYZ + sXsYZ;
             sinTh = cXsYZ - sXcYZ;
             sendWlist[2*d] += (pf * cosTh);
-            sendWlist[(2*d) + 1 ] += (pf * sinTh);
+            sendWlist[(2*d) + 1] += (pf * sinTh);
           }//end k1
         }//end k2
       }//end k3
