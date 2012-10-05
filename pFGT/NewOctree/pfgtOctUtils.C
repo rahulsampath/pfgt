@@ -454,6 +454,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
   std::vector<double> sendWlist;
   if(remoteFgtOwner >= 0) {
     sendWlist.resize(numWcoeffs, 0.0);
+    double* wArr = &(sendWlist[0]);
     double cx = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getX()))/(__DTPMD__));
     double cy = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getY()))/(__DTPMD__));
     double cz = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getZ()))/(__DTPMD__));
@@ -482,8 +483,6 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
         c3[curr] = (c3[prev] * c3[0]) - (s3[prev] * s3[0]);
         s3[curr] = (s3[prev] * c3[0]) + (c3[prev] * s3[0]);
       }//end curr
-
-      double* wArr = &(sendWlist[0]);
 
       {
         //k3 = 0
@@ -820,6 +819,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
   }//end i
 
   for(int i = 0, ptsIdx = numPtsInRemoteFgt; i < fgtList.size(); ++i) {
+    double* wArr = &(localWlist[numWcoeffs*i]); 
     double cx = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getX()))/(__DTPMD__));
     double cy = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getY()))/(__DTPMD__));
     double cz = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getZ()))/(__DTPMD__));
@@ -856,8 +856,8 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             double tmp2 =  ((s1[d1])*(c2[d2])) + ((s2[d2])*(c1[d1]));
             double cosTh = ( ((c3[d3])*tmp1) - ((s3[d3])*tmp2) );
             double sinTh = ( ((s3[d3])*tmp1) + ((c3[d3])*tmp2) ); 
-            localWlist[(numWcoeffs*i) + (2*di)] += (pf * cosTh);
-            localWlist[(numWcoeffs*i) + (2*di) + 1] += (pf * sinTh);
+            wArr[(2*di)] += (pf * cosTh);
+            wArr[(2*di) + 1] += (pf * sinTh);
           }//end for k1
         }//end for k2
       }//end for k3
