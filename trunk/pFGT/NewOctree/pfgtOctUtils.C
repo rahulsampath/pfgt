@@ -88,7 +88,9 @@ void pfgtSetup(std::vector<double>& expandSources, std::vector<double>& directSo
   std::vector<double> tmpExpandSources;
   int srcCnt = 0;
   for(int i = 0; i < fgtList.size(); ++i) {
+#ifdef DEBUG
     assert(fgtList[i].getWeight() > 0);
+#endif
     {
       tmpExpandSources.push_back(expandSources[srcCnt]);
       tmpExpandSources.push_back(expandSources[srcCnt + 1]);
@@ -136,7 +138,9 @@ void pfgtSetup(std::vector<double>& expandSources, std::vector<double>& directSo
     //NOTE: The following heuristic may need to be modified!
     singleType = false;
     npesExpand = (globalSizes[0]*npes)/(globalSizes[0] + globalSizes[1]);
+#ifdef DEBUG
     assert(npesExpand < npes);
+#endif
     if(npesExpand < 1) {
       npesExpand = 1;
     }
@@ -251,7 +255,9 @@ void pfgtExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> &
 
   std::cout << rank << GRN" : Expand - fgtmins "NRM << subRank << "/" << subNpes << std::endl; 
 
+#ifdef DEBUG
   assert(!(expandSources.empty()));
+#endif
 
   int sumFgtWts = 0;
   for(int i = 0; i < fgtList.size(); ++i) {
@@ -276,10 +282,14 @@ void pfgtExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> &
   }
 
   int excessWt = sumFgtWts + numPtsInRemoteFgt - numExpandPts;
+#ifdef DEBUG
   assert(excessWt >= 0);
+#endif
   if(!(fgtList.empty())) {
     int lastWt = fgtList[fgtList.size() - 1].getWeight();
+#ifdef DEBUG
     assert(lastWt > excessWt);
+#endif
     fgtList[fgtList.size() - 1].setWeight(lastWt - excessWt);
   }
 
@@ -288,7 +298,9 @@ void pfgtExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> &
   if(numPtsInRemoteFgt > 0) {
     computeRemoteFgt(remoteFgt, remoteFgtOwner, FgtLev, expandSources, fgtMins);
   }
+#ifdef DEBUG
   assert(remoteFgtOwner < subRank);
+#endif
 
   //Complex coefficients: [-P, P]x[-P, P]x[0, P] 
   //Coeff[-K1, -K2, -K3] = ComplexConjugate(Coeff[K1, K2, K3])
@@ -352,7 +364,9 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev, 
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+#ifdef DEBUG
   assert(!(directSources.empty()));
+#endif
 
   std::cout << rank << RED" : Direct - start "NRM << subRank << "/" << subNpes << std::endl; 
 
@@ -450,7 +464,6 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
       double pz = cz - sources[sOff + 2];
       double pf = sources[sOff + 3];
 
-      //BEGIN S2W BLOCK
       double argX = ImExpZfactor*px; 
       double argY = ImExpZfactor*py; 
       double argZ = ImExpZfactor*pz; 
@@ -492,7 +505,6 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = 1
             //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = 0
             //xId = P + k1 = P
-            //d = xOff + xId
             int cOff = 2*(xOff + P);
             //sendWlist[cOff] += (pf * cosTh)
             //sendWlist[cOff + 1] += (pf * sinTh)
@@ -546,7 +558,6 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //cosX = 1
             //sinX = 0
             //xId = P + k1 = P
-            //d = xOff + xId
             int cOff = 2*(xOff + P);
             //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosY
             //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinY
@@ -595,7 +606,6 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //cosX = 1
             //sinX = 0
             //xId = P + k1 = P
-            //d = xOff + xId
             int cOff = 2*(xOff + P);
             //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosY
             //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = -sinY
@@ -653,7 +663,6 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //cosX = 1
             //sinX = 0
             //xId = P + k1 = P
-            //d = xOff + xId
             int cOff = 2*(xOff + P);
             //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosZ
             //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinZ
@@ -709,7 +718,6 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //cosX = 1
             //sinX = 0
             //xId = P + k1 = P
-            //d = xOff + xId
             int cOff = 2*(xOff + P);
             //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosYplusZ
             //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinYplusZ
@@ -753,7 +761,6 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //cosX = 1
             //sinX = 0
             //xId = P + k1 = P
-            //d = xOff + xId
             int cOff = 2*(xOff + P);
             //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosYplusZ
             //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinYplusZ
@@ -788,7 +795,6 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
           }//end k1
         }//end k2
       }//end k3
-      //END S2W BLOCK
     }//end i
   }//remoteFgt
 
@@ -1276,7 +1282,9 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
     bool foundMax = seq::maxLowerBound<ot::TreeNode>(directMins, maxNode, maxIdx, NULL, NULL);
 
     //maxPt >= currPt and currPt is a direct point
+#ifdef DEBUG
     assert(foundMax);
+#endif
 
     for(int j = minIdx; j <= maxIdx; ++j) {
       for(int d = 0; d < 4; ++d) {
@@ -1362,7 +1370,9 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
     bool foundMax = seq::maxLowerBound<ot::TreeNode>(nodes, maxNode, maxIdx, NULL, NULL);
 
     //This source point was sent only to those procs whose directMin <= maxPt
+#ifdef DEBUG
     assert(foundMax);
+#endif
 
     for(int j = minIdx; j <= maxIdx; ++j) {
       double y1 = sources[4*j];
@@ -1879,7 +1889,9 @@ void computeFgtMinsExpand(std::vector<ot::TreeNode> & fgtMins, std::vector<ot::T
   int rank;
   MPI_Comm_rank(comm, &rank);
 
+#ifdef DEBUG
   assert(rank == subRank);
+#endif
 
   ot::TreeNode firstFgt;
   if(!(fgtList.empty())) {
@@ -1932,8 +1944,10 @@ void splitSources(std::vector<double>& expandSources, std::vector<double>& direc
 
   int numPts = ((sources.size())/4);
 
+#ifdef DEBUG
   assert(!(sources.empty()));
   assert(fgtList.empty());
+#endif
   {
     unsigned int px = static_cast<unsigned int>(sources[0]*(__DTPMD__));
     unsigned int py = static_cast<unsigned int>(sources[1]*(__DTPMD__));
@@ -1956,7 +1970,9 @@ void splitSources(std::vector<double>& expandSources, std::vector<double>& direc
     }
   }//end for i
 
+#ifdef DEBUG
   assert(!(fgtList.empty()));
+#endif
 
   int rank;
   int npes;
@@ -2156,8 +2172,10 @@ void splitSources(std::vector<double>& expandSources, std::vector<double>& direc
     }
   } 
 
+#ifdef DEBUG
   assert(expandSources.empty());
   assert(directSources.empty());
+#endif
   std::vector<ot::TreeNode> dummyList;
   int sourceIdx = 0;
   for(size_t i = 0; i < fgtList.size(); ++i) {
@@ -2172,7 +2190,9 @@ void splitSources(std::vector<double>& expandSources, std::vector<double>& direc
     sourceIdx += (4*(fgtList[i].getWeight()));
   }//end i
   swap(dummyList, fgtList);
+#ifdef DEBUG
   assert((sources.size()) == ((directSources.size()) + (expandSources.size())));
+#endif
 
   PetscLogEventEnd(splitSourcesEvent, 0, 0, 0, 0);
 }
