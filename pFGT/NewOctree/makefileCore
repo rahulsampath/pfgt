@@ -8,7 +8,7 @@ all : runOctree
 %.o: %.$(CEXT)
 	$(PCC) -c $(CFLAGS) $(INCLUDE) $< -o $@
 
-runOctree : ./runOctree.o ./pfgtOctUtils.o ./s2w.o ./l2t.o ./d2d.o
+runOctree : ./runOctree.o ./splitSources.o ./pfgtOctUtils.o ./s2w.o ./l2t.o ./d2d.o
 	$(PCC) $(CFLAGS) $^ -o $@ $(LIBS) 
 
 clean :
