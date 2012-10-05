@@ -460,15 +460,15 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
       s2[0] = sin(argY);
       c3[0] = cos(argZ);
       s3[0] = sin(argZ);
-      for(int d = 1; d < P; ++d) {
-        int prev = d - 1;
-        c1[d] = (c1[prev] * c1[0]) - (s1[prev] * s1[0]);
-        s1[d] = (s1[prev] * c1[0]) + (c1[prev] * s1[0]);
-        c2[d] = (c2[prev] * c2[0]) - (s2[prev] * s2[0]);
-        s2[d] = (s2[prev] * c2[0]) + (c2[prev] * s2[0]);
-        c3[d] = (c3[prev] * c3[0]) - (s3[prev] * s3[0]);
-        s3[d] = (s3[prev] * c3[0]) + (c3[prev] * s3[0]);
-      }//end d
+      for(int curr = 1; curr < P; ++curr) {
+        int prev = curr - 1;
+        c1[curr] = (c1[prev] * c1[0]) - (s1[prev] * s1[0]);
+        s1[curr] = (s1[prev] * c1[0]) + (c1[prev] * s1[0]);
+        c2[curr] = (c2[prev] * c2[0]) - (s2[prev] * s2[0]);
+        s2[curr] = (s2[prev] * c2[0]) + (c2[prev] * s2[0]);
+        c3[curr] = (c3[prev] * c3[0]) - (s3[prev] * s3[0]);
+        s3[curr] = (s3[prev] * c3[0]) + (c3[prev] * s3[0]);
+      }//end curr
 
       {
         //k3 = 0
