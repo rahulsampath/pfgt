@@ -493,8 +493,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = 0
             //xId = P + k1 = P
             //d = xOff + xId
-            int d = xOff + P;
-            int cOff = 2*d;
+            int cOff = 2*(xOff + P);
             //sendWlist[cOff] += (pf * cosTh)
             //sendWlist[cOff + 1] += (pf * sinTh)
             sendWlist[cOff] += pf;
@@ -509,8 +508,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
 
             //+ve k1
             int xId = P + k1;
-            int d = xOff + xId;
-            int cOff = 2*d;
+            int cOff = 2*(xOff + xId);
             //cosTh = cXcYZ - sXsYZ = cosX
             //sinTh = sXcYZ + cXsYZ = sinX
             //sendWlist[cOff] += (pf * cosTh)
@@ -520,8 +518,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
 
             //-ve k1
             xId = P - k1;
-            d = xOff + xId;
-            cOff = 2*d;
+            cOff = 2*(xOff + xId);
             //cosTh = cXcYZ + sXsYZ = cosX
             //sinTh = cXsYZ - sXcYZ = -sinX
             //sendWlist[cOff] += (pf * cosTh)
@@ -550,8 +547,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //sinX = 0
             //xId = P + k1 = P
             //d = xOff + xId
-            int d = xOff + P;
-            int cOff = 2*d;
+            int cOff = 2*(xOff + P);
             //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosY
             //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinY
             //sendWlist[cOff] += (pf * cosTh)
@@ -573,8 +569,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
 
             //+ve k1
             int xId = P + k1;
-            int d = xOff + xId;
-            int cOff = 2*d;
+            int cOff = 2*(xOff + xId);
             double cosTh = cXcYZ - sXsYZ;
             double sinTh = sXcYZ + cXsYZ;
             sendWlist[cOff] += (pf * cosTh);
@@ -582,8 +577,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
 
             //-ve k1
             xId = P - k1;
-            d = xOff + xId;
-            cOff = 2*d;
+            cOff = 2*(xOff + xId);
             cosTh = cXcYZ + sXsYZ;
             sinTh = cXsYZ - sXcYZ;
             sendWlist[cOff] += (pf * cosTh);
@@ -602,8 +596,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //sinX = 0
             //xId = P + k1 = P
             //d = xOff + xId
-            int d = xOff + P;
-            int cOff = 2*d;
+            int cOff = 2*(xOff + P);
             //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosY
             //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = -sinY
             //sendWlist[cOff] += (pf * cosTh)
@@ -625,8 +618,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
 
             //+ve k1
             int xId = P + k1;
-            int d = xOff + xId;
-            int cOff = 2*d;
+            int cOff = 2*(xOff + xId);
             double cosTh = cXcYZ - sXsYZ;
             double sinTh = sXcYZ + cXsYZ;
             sendWlist[cOff] += (pf * cosTh);
@@ -634,8 +626,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
 
             //-ve k1
             xId = P - k1;
-            d = xOff + xId;
-            cOff = 2*d;
+            cOff = 2*(xOff + xId);
             cosTh = cXcYZ + sXsYZ;
             sinTh = cXsYZ - sXcYZ;
             sendWlist[cOff] += (pf * cosTh);
@@ -663,8 +654,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //sinX = 0
             //xId = P + k1 = P
             //d = xOff + xId
-            int d = xOff + P;
-            int cOff = 2*d;
+            int cOff = 2*(xOff + P);
             //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosZ
             //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinZ
             //sendWlist[cOff] += (pf * cosTh)
@@ -686,8 +676,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
 
             //+ve k1
             int xId = P + k1;
-            int d = xOff + xId;
-            int cOff = 2*d;
+            int cOff = 2*(xOff + xId);
             double cosTh = cXcYZ - sXsYZ;
             double sinTh = sXcYZ + cXsYZ;
             sendWlist[cOff] += (pf * cosTh);
@@ -695,8 +684,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
 
             //-ve k1
             xId = P - k1;
-            d = xOff + xId;
-            cOff = 2*d;
+            cOff = 2*(xOff + xId);
             cosTh = cXcYZ + sXsYZ;
             sinTh = cXsYZ - sXcYZ;
             sendWlist[cOff] += (pf * cosTh);
@@ -722,8 +710,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //sinX = 0
             //xId = P + k1 = P
             //d = xOff + xId
-            int d = xOff + P;
-            int cOff = 2*d;
+            int cOff = 2*(xOff + P);
             //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosYplusZ
             //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinYplusZ
             //sendWlist[cOff] += (pf * cosTh)
@@ -741,8 +728,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
 
             //+ve k1
             int xId = P + k1;
-            int d = xOff + xId;
-            int cOff = 2*d;
+            int cOff = 2*(xOff + xId);
             double cosTh = cXcYZ - sXsYZ;
             double sinTh = sXcYZ + cXsYZ;
             sendWlist[cOff] += (pf * cosTh);
@@ -750,8 +736,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
 
             //-ve k1
             xId = P - k1;
-            d = xOff + xId;
-            cOff = 2*d;
+            cOff = 2*(xOff + xId);
             cosTh = cXcYZ + sXsYZ;
             sinTh = cXsYZ - sXcYZ;
             sendWlist[cOff] += (pf * cosTh);
@@ -769,8 +754,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
             //sinX = 0
             //xId = P + k1 = P
             //d = xOff + xId
-            int d = xOff + P;
-            int cOff = 2*d;
+            int cOff = 2*(xOff + P);
             //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosYplusZ
             //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinYplusZ
             //sendWlist[cOff] += (pf * cosTh)
@@ -788,8 +772,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
 
             //+ve k1
             int xId = P + k1;
-            int d = xOff + xId;
-            int cOff = 2*d;
+            int cOff = 2*(xOff + xId);
             double cosTh = cXcYZ - sXsYZ;
             double sinTh = sXcYZ + cXsYZ;
             sendWlist[cOff] += (pf * cosTh);
@@ -797,8 +780,7 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
 
             //-ve k1
             xId = P - k1;
-            d = xOff + xId;
-            cOff = 2*d;
+            cOff = 2*(xOff + xId);
             cosTh = cXcYZ + sXsYZ;
             sinTh = cXsYZ - sXcYZ;
             sendWlist[cOff] += (pf * cosTh);
