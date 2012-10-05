@@ -822,19 +822,30 @@ void s2w(std::vector<double> & localWlist, std::vector<double> & sources,
     double cy = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getY()))/(__DTPMD__));
     double cz = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getZ()))/(__DTPMD__));
     for(int j = 0; j < fgtList[i].getWeight(); ++j, ++ptsIdx) {
-      double px = cx - sources[4*ptsIdx];
-      double py = cy - sources[(4*ptsIdx)+1];
-      double pz = cz - sources[(4*ptsIdx)+2];
-      double pf = sources[(4*ptsIdx)+3];
+      int sOff = 4*ptsIdx;
+      double px = cx - sources[sOff];
+      double py = cy - sources[sOff + 1];
+      double pz = cz - sources[sOff + 2];
+      double pf = sources[sOff + 3];
 
-      for(int kk = -P, di = 0; kk < P; ++kk, ++di) {
-        c1[di] = cos(ImExpZfactor*static_cast<double>(kk)*px);
-        s1[di] = sin(ImExpZfactor*static_cast<double>(kk)*px);
-        c2[di] = cos(ImExpZfactor*static_cast<double>(kk)*py);
-        s2[di] = sin(ImExpZfactor*static_cast<double>(kk)*py);
-        c3[di] = cos(ImExpZfactor*static_cast<double>(kk)*pz);
-        s3[di] = sin(ImExpZfactor*static_cast<double>(kk)*pz);
-      }//end for kk
+      double argX = ImExpZfactor*px; 
+      double argY = ImExpZfactor*py; 
+      double argZ = ImExpZfactor*pz; 
+      c1[0] = cos(argX);
+      s1[0] = sin(argX);
+      c2[0] = cos(argY);
+      s2[0] = sin(argY);
+      c3[0] = cos(argZ);
+      s3[0] = sin(argZ);
+      for(int curr = 1; curr < P; ++curr) {
+        int prev = curr - 1;
+        c1[curr] = (c1[prev] * c1[0]) - (s1[prev] * s1[0]);
+        s1[curr] = (s1[prev] * c1[0]) + (c1[prev] * s1[0]);
+        c2[curr] = (c2[prev] * c2[0]) - (s2[prev] * s2[0]);
+        s2[curr] = (s2[prev] * c2[0]) + (c2[prev] * s2[0]);
+        c3[curr] = (c3[prev] * c3[0]) - (s3[prev] * s3[0]);
+        s3[curr] = (s3[prev] * c3[0]) + (c3[prev] * s3[0]);
+      }//end curr
 
       for(int k3 = -P, d3 = 0, di = 0; k3 < P; ++d3, ++k3) {
         for(int k2 = -P, d2 = 0; k2 < P; ++d2, ++k2) {
