@@ -10,7 +10,7 @@ extern PetscLogEvent w2lEvent;
 
 void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist, 
     std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & fgtMins,
-    const unsigned int FgtLev, const int P, const int L, const int K, MPI_Comm subComm) {
+    const unsigned int FgtLev, const int P, const int L, const unsigned long long int K, MPI_Comm subComm) {
   PetscLogEventBegin(w2lEvent, 0, 0, 0, 0);
 
   int npes;
@@ -19,7 +19,7 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
   //Fgt box size = sqrt(delta)
   const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
 
-  const unsigned int cellsPerFgt = (1u << (__MAX_DEPTH__ - FgtLev));
+  const unsigned long long int cellsPerFgt = (1ull << (__MAX_DEPTH__ - FgtLev));
 
   //Complex coefficients: [-P, P]x[-P, P]x[0, P] 
   //Coeff[-K1, -K2, -K3] = ComplexConjugate(Coeff[K1, K2, K3])
@@ -41,51 +41,39 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
   std::vector<double> tmpVals;
 
   for(size_t i = 0; i < fgtList.size(); ++i) {
-    unsigned int bAx = fgtList[i].getX();
-    unsigned int bAy = fgtList[i].getY();
-    unsigned int bAz = fgtList[i].getZ();
+    unsigned long long int bAx = fgtList[i].getX();
+    unsigned long long int bAy = fgtList[i].getY();
+    unsigned long long int bAz = fgtList[i].getZ();
     double bx = (0.5*hFgt) + ((static_cast<double>(bAx))/(__DTPMD__));
     double by = (0.5*hFgt) + ((static_cast<double>(bAy))/(__DTPMD__));
     double bz = (0.5*hFgt) + ((static_cast<double>(bAz))/(__DTPMD__));
-    unsigned int dAxs, dAxe, dAys, dAye, dAzs, dAze;
-    if( static_cast<unsigned long long int>(bAx) >= static_cast<unsigned long long int>(
-          static_cast<unsigned long long int>(K)*static_cast<unsigned long long int>(cellsPerFgt)) ) {
+    unsigned long long int dAxs, dAxe, dAys, dAye, dAzs, dAze;
+    if( bAx >= (K*cellsPerFgt) ) {
       dAxs = bAx - (K*cellsPerFgt);
     } else {
       dAxs = 0; 
     }
-    if( static_cast<unsigned long long int>(static_cast<unsigned long long int>(bAx) + 
-          static_cast<unsigned long long int>(static_cast<unsigned long long int>(K + 1)*
-            static_cast<unsigned long long int>(cellsPerFgt)))
-        <= static_cast<unsigned long long int>(__ITPMD__) ) {
+    if( (bAx + ((K + 1ull)*cellsPerFgt)) <= (__ITPMD__) ) {
       dAxe = bAx + (K*cellsPerFgt);
     } else {
       dAxe = (__ITPMD__) - cellsPerFgt;
     }
-    if( static_cast<unsigned long long int>(bAy) >= static_cast<unsigned long long int>(
-          static_cast<unsigned long long int>(K)*static_cast<unsigned long long int>(cellsPerFgt)) ) {
+    if( bAy >= (K*cellsPerFgt) ) {
       dAys = bAy - (K*cellsPerFgt);
     } else {
       dAys = 0; 
     }
-    if( static_cast<unsigned long long int>(static_cast<unsigned long long int>(bAy) + 
-          static_cast<unsigned long long int>(static_cast<unsigned long long int>(K + 1)*
-            static_cast<unsigned long long int>(cellsPerFgt)))
-        <= static_cast<unsigned long long int>(__ITPMD__) ) {
+    if( (bAy + ((K + 1ull)*cellsPerFgt)) <= (__ITPMD__) ) {
       dAye = bAy + (K*cellsPerFgt);
     } else {
       dAye = (__ITPMD__) - cellsPerFgt;
     }
-    if( static_cast<unsigned long long int>(bAz) >= static_cast<unsigned long long int>(
-          static_cast<unsigned long long int>(K)*static_cast<unsigned long long int>(cellsPerFgt)) ) {
+    if( bAz >= (K*cellsPerFgt) ) {
       dAzs = bAz - (K*cellsPerFgt);
     } else {
       dAzs = 0; 
     }
-    if( static_cast<unsigned long long int>(static_cast<unsigned long long int>(bAz) +
-          static_cast<unsigned long long int>(static_cast<unsigned long long int>(K + 1)*
-            static_cast<unsigned long long int>(cellsPerFgt)))
-        <= static_cast<unsigned long long int>(__ITPMD__) ) {
+    if( (bAz + ((K + 1ull)*cellsPerFgt)) <= (__ITPMD__) ) {
       dAze = bAz + (K*cellsPerFgt);
     } else {
       dAze = (__ITPMD__) - cellsPerFgt;

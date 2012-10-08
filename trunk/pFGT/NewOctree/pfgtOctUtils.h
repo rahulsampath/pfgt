@@ -14,7 +14,7 @@
 
 #define __MAX_DEPTH__ 30
 
-#define __ITPMD__  (1u << __MAX_DEPTH__)
+#define __ITPMD__  (1ull << __MAX_DEPTH__)
 
 #define __DTPMD__  (static_cast<double>(__ITPMD__))
 
@@ -68,7 +68,7 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
 
 void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist, 
     std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & fgtMins,
-    const unsigned int FgtLev, const int P, const int L, const int K, MPI_Comm subComm);
+    const unsigned int FgtLev, const int P, const int L, const unsigned long long int K, MPI_Comm subComm);
 
 void d2d(std::vector<double> & results, std::vector<double> & sources,
     std::vector<ot::TreeNode> & nodes, std::vector<ot::TreeNode> & directMins,
