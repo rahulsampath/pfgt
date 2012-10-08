@@ -337,15 +337,17 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
   std::vector<double> sendLlist((sendDisps[npes - 1] + sendCnts[npes - 1]), 0.0);
 
   for(int i = 0; i < foundIds.size(); ++i) {
+    double* arr = &(sendLlist[numWcoeffs*i]); 
     int boxId = foundIds[i];
     double cx = (0.5*hFgt) + ((static_cast<double>(sendBoxList[boxId].getX()))/(__DTPMD__));
     double cy = (0.5*hFgt) + ((static_cast<double>(sendBoxList[boxId].getY()))/(__DTPMD__));
     double cz = (0.5*hFgt) + ((static_cast<double>(sendBoxList[boxId].getZ()))/(__DTPMD__));
     for(int j = 0; j < box2PtMap[boxId].size(); ++j) {
-      double px = cx - sources[box2PtMap[boxId][j]];
-      double py = cy - sources[box2PtMap[boxId][j] + 1];
-      double pz = cz - sources[box2PtMap[boxId][j] + 2];
-      double pf = sources[box2PtMap[boxId][j] + 3];
+      unsigned int sOff = box2PtMap[boxId][j];
+      double px = cx - sources[sOff];
+      double py = cy - sources[sOff + 1];
+      double pz = cz - sources[sOff + 2];
+      double pf = sources[sOff + 3];
 
       for(int kk = -P, di = 0; kk < P; ++kk, ++di) {
         c1[di] = cos(ImExpZfactor*static_cast<double>(kk)*px);
@@ -363,8 +365,9 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
             double tmp2 =  ((s1[d1])*(c2[d2])) + ((s2[d2])*(c1[d1]));
             double cosTh = ( ((c3[d3])*tmp1) - ((s3[d3])*tmp2) );
             double sinTh = ( ((s3[d3])*tmp1) + ((c3[d3])*tmp2) ); 
-            sendLlist[(numWcoeffs*i) + (2*di)] += (pf * cosTh);
-            sendLlist[(numWcoeffs*i) + (2*di) + 1] += (pf * sinTh);
+            int cOff = 2*di;
+            arr[cOff] += (pf * cosTh);
+            arr[cOff + 1] += (pf * sinTh);
           }//end for k1
         }//end for k2
       }//end for k3
@@ -399,14 +402,16 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
   }//end kk
 
   for(int i = 0; i < foundIds.size(); ++i) {
+    double* recvWarr = &(recvWlist[numWcoeffs*i]);
     int boxId = foundIds[i];
     double cx = (0.5*hFgt) + ((static_cast<double>(sendBoxList[boxId].getX()))/(__DTPMD__));
     double cy = (0.5*hFgt) + ((static_cast<double>(sendBoxList[boxId].getY()))/(__DTPMD__));
     double cz = (0.5*hFgt) + ((static_cast<double>(sendBoxList[boxId].getZ()))/(__DTPMD__));
     for(int j = 0; j < box2PtMap[boxId].size(); ++j) {
-      double px = sources[box2PtMap[boxId][j]] - cx;
-      double py = sources[box2PtMap[boxId][j] + 1] - cy;
-      double pz = sources[box2PtMap[boxId][j] + 2] - cz;
+      unsigned int sOff = box2PtMap[boxId][j];
+      double px = sources[sOff] - cx;
+      double py = sources[sOff + 1] - cy;
+      double pz = sources[sOff + 2] - cz;
 
       for(int kk = -P, di = 0; kk < P; ++kk, ++di) {
         c1[di] = cos(ImExpZfactor*static_cast<double>(kk)*px);
@@ -422,10 +427,11 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
           for(int k1 = -P, d1 = 0; k1 < P; ++d1, ++k1, ++di) {
             double tmp1 =  ((c1[d1])*(c2[d2])) - ((s1[d1])*(s2[d2]));
             double tmp2 =  ((s1[d1])*(c2[d2])) + ((s2[d2])*(c1[d1]));
-            double a = recvWlist[(numWcoeffs*i) + (2*di)];
-            double b = recvWlist[(numWcoeffs*i) + (2*di) + 1];
             double c = ((c3[d3])*tmp1) - ((s3[d3])*tmp2);
             double d = ((s3[d3])*tmp1) + ((c3[d3])*tmp2); 
+            int cOff = 2*di;
+            double a = recvWarr[cOff];
+            double b = recvWarr[cOff + 1];
             results[(box2PtMap[boxId][j])/4] += ((fac[d3])*(fac[d2])*(fac[d1])*( (a*c) - (b*d) ));
           }//end for k1
         }//end for k2
