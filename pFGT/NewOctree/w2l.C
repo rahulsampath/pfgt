@@ -41,6 +41,7 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
   std::vector<double> tmpVals;
 
   for(size_t i = 0; i < fgtList.size(); ++i) {
+    double* localWarr = &(localWlist[numWcoeffs*i]);
     unsigned long long int bAx = fgtList[i].getX();
     unsigned long long int bAy = fgtList[i].getY();
     unsigned long long int bAz = fgtList[i].getZ();
@@ -82,8 +83,12 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
       for(unsigned int dAy = dAys; dAy <= dAye; dAy += cellsPerFgt) {
         for(unsigned int dAx = dAxs; dAx <= dAxe; dAx += cellsPerFgt) {
           ot::TreeNode boxD(dAx, dAy, dAz, FgtLev, __DIM__, __MAX_DEPTH__);
-          boxD.setWeight(tmpBoxes.size());
+          unsigned int tmpSz = tmpBoxes.size();
+          boxD.setWeight(tmpSz);
           tmpBoxes.push_back(boxD);
+          tmpVals.resize((tmpSz + 1)*numWcoeffs);
+          double* tmpArr = &(tmpVals[tmpSz*numWcoeffs]);
+
           double px = (0.5*hFgt) + ((static_cast<double>(dAx))/(__DTPMD__)) - bx;
           double py = (0.5*hFgt) + ((static_cast<double>(dAy))/(__DTPMD__)) - by;
           double pz = (0.5*hFgt) + ((static_cast<double>(dAz))/(__DTPMD__)) - bz;
@@ -102,14 +107,15 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
               for(int k1 = -P, d1 = 0; k1 < P; ++d1, ++k1, ++di) {
                 double tmp1 =  ((c1[d1])*(c2[d2])) - ((s1[d1])*(s2[d2]));
                 double tmp2 =  ((s1[d1])*(c2[d2])) + ((s2[d2])*(c1[d1]));
-                double a = localWlist[(numWcoeffs*i) + (2*di)];
-                double b = localWlist[(numWcoeffs*i) + (2*di) + 1];
                 double c = ((c3[d3])*tmp1) - ((s3[d3])*tmp2);
                 double d = ((s3[d3])*tmp1) + ((c3[d3])*tmp2); 
+                int cOff = 2*di;
+                double a = localWarr[cOff];
+                double b = localWarr[cOff + 1];
                 double reVal = ((a*c) - (b*d));
                 double imVal = ((a*d) + (b*c));
-                tmpVals.push_back(reVal);
-                tmpVals.push_back(imVal);
+                tmpArr[cOff] = reVal;
+                tmpArr[cOff + 1] = imVal;
               }//end for k1
             }//end for k2
           }//end for k3
