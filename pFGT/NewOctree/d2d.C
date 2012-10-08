@@ -133,12 +133,11 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
     unsigned int uiMinPt[3];
     unsigned int uiMaxPt[3];
     for(int d = 0; d < 3; ++d) {
-      double minPt, maxPt;
-      minPt = recvList[i + d] - Iwidth;
+      double minPt = recvList[i + d] - Iwidth;
       if(minPt < 0.0) {
         minPt = 0.0;
       }
-      maxPt = recvList[i + d] + Iwidth;
+      double maxPt = recvList[i + d] + Iwidth;
       if(maxPt > 1.0) {
         maxPt = 1.0;
       }
@@ -169,7 +168,10 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
       double y1 = sources[sOff];
       double y2 = sources[sOff + 1];
       double y3 = sources[sOff + 2];
-      double distSqr = ( ((x1-y1)*(x1-y1)) + ((x2-y2)*(x2-y2)) + ((x3-y3)*(x3-y3)) );
+      double diff1 = (x1-y1);
+      double diff2 = (x2-y2);
+      double diff3 = (x3-y3);
+      double distSqr = (diff1*diff1) + (diff2*diff2) + (diff3*diff3);
       if(distSqr < IwidthSqr) {
         results[j] += (fx*exp(-distSqr/delta));
       }
