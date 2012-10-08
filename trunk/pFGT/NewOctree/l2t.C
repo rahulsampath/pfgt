@@ -71,9 +71,10 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
     double cy = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getY()))/(__DTPMD__));
     double cz = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getZ()))/(__DTPMD__));
     for(int i = 0; i < numPtsInRemoteFgt; ++i) {
-      double px = sources[4*i] - cx;
-      double py = sources[(4*i)+1] - cy;
-      double pz = sources[(4*i)+2] - cz;
+      unsigned int sOff = 4*i;
+      double px = sources[sOff] - cx;
+      double py = sources[sOff + 1] - cy;
+      double pz = sources[sOff + 2] - cz;
 
       for (int kk = -P, di = 0; kk < P; ++kk, ++di) {
         c1[di] = cos(ImExpZfactor*static_cast<double>(kk)*px);
@@ -89,10 +90,11 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
           for(int k1 = -P, d1 = 0; k1 < P; ++d1, ++k1, ++di) {
             double tmp1 =  ((c1[d1])*(c2[d2])) - ((s1[d1])*(s2[d2]));
             double tmp2 =  ((s1[d1])*(c2[d2])) + ((s2[d2])*(c1[d1]));
-            double a = recvLlist[2*di];
-            double b = recvLlist[(2*di) + 1];
             double c = ((c3[d3])*tmp1) - ((s3[d3])*tmp2);
             double d = ((s3[d3])*tmp1) + ((c3[d3])*tmp2); 
+            int cOff = 2*di;
+            double a = recvLlist[cOff];
+            double b = recvLlist[cOff + 1];
             results[i] += ((fac[d3])*(fac[d2])*(fac[d1])*( (a*c) - (b*d) ));
           }//end for k1
         }//end for k2
@@ -101,13 +103,15 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
   }
 
   for(int i = 0, ptsIdx = numPtsInRemoteFgt; i < fgtList.size(); ++i) {
+    double* localLarr = &(localLlist[numWcoeffs*i]);
     double cx = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getX()))/(__DTPMD__));
     double cy = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getY()))/(__DTPMD__));
     double cz = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getZ()))/(__DTPMD__));
     for(int j = 0; j < fgtList[i].getWeight(); ++j, ++ptsIdx) {
-      double px = sources[4*ptsIdx] - cx;
-      double py = sources[(4*ptsIdx)+1] - cy;
-      double pz = sources[(4*ptsIdx)+2] - cx;
+      unsigned int sOff = 4*ptsIdx;
+      double px = sources[sOff] - cx;
+      double py = sources[sOff + 1] - cy;
+      double pz = sources[sOff + 2] - cx;
 
       for (int kk = -P, di = 0; kk < P; ++kk, ++di) {
         c1[di] = cos(ImExpZfactor*static_cast<double>(kk)*px);
@@ -123,10 +127,11 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
           for(int k1 = -P, d1 = 0; k1 < P; ++d1, ++k1, ++di) {
             double tmp1 =  ((c1[d1])*(c2[d2])) - ((s1[d1])*(s2[d2]));
             double tmp2 =  ((s1[d1])*(c2[d2])) + ((s2[d2])*(c1[d1]));
-            double a = localLlist[(numWcoeffs*i) + (2*di)];
-            double b = localLlist[(numWcoeffs*i) + (2*di) + 1];
             double c = ((c3[d3])*tmp1) - ((s3[d3])*tmp2);
             double d = ((s3[d3])*tmp1) + ((c3[d3])*tmp2); 
+            int cOff = 2*di;
+            double a = localLarr[cOff];
+            double b = localLarr[cOff + 1];
             results[ptsIdx] += ((fac[d3])*(fac[d2])*(fac[d1])*( (a*c) - (b*d) ));
           }//end for k1
         }//end for k2
