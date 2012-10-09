@@ -53,18 +53,28 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
   const double ReExpZfactor = -0.25*LbyP*LbyP;
   const double C0 = (0.5*LbyP/(__SQRT_PI__));
 
-  const unsigned int TwoP = 2*P;
-  std::vector<double> fac(TwoP);
-  for(int kk = -P, di = 0; kk < P; ++di, ++kk) {
-    fac[di] = C0*exp(ReExpZfactor*(static_cast<double>(kk*kk)));
-  }//end kk
+#ifdef DEBUG
+  assert(P >= 1);
+#endif
+  std::vector<double> fac(P);
+  double* facArr = (&(fac[0])) - 1;
+  for(int k = 1; k <= P; ++k) {
+    facArr[k] = C0*exp(ReExpZfactor*(static_cast<double>(k*k)));
+  }//end k
 
-  std::vector<double> c1(TwoP);
-  std::vector<double> c2(TwoP);
-  std::vector<double> c3(TwoP);
-  std::vector<double> s1(TwoP);
-  std::vector<double> s2(TwoP);
-  std::vector<double> s3(TwoP);
+  std::vector<double> c1(P);
+  std::vector<double> c2(P);
+  std::vector<double> c3(P);
+  std::vector<double> s1(P);
+  std::vector<double> s2(P);
+  std::vector<double> s3(P);
+
+  double* c1Arr = (&(c1[0])) - 1;
+  double* c2Arr = (&(c2[0])) - 1;
+  double* c3Arr = (&(c3[0])) - 1;
+  double* s1Arr = (&(s1[0])) - 1;
+  double* s2Arr = (&(s2[0])) - 1;
+  double* s3Arr = (&(s3[0])) - 1;
 
   if(remoteFgtOwner >= 0) {
     double cx = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getX()))/(__DTPMD__));
@@ -76,29 +86,39 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
       double py = sources[sOff + 1] - cy;
       double pz = sources[sOff + 2] - cz;
 
-      for (int kk = -P, di = 0; kk < P; ++kk, ++di) {
-        c1[di] = cos(ImExpZfactor*static_cast<double>(kk)*px);
-        s1[di] = sin(ImExpZfactor*static_cast<double>(kk)*px);
-        c2[di] = cos(ImExpZfactor*static_cast<double>(kk)*py);
-        s2[di] = sin(ImExpZfactor*static_cast<double>(kk)*py);
-        c3[di] = cos(ImExpZfactor*static_cast<double>(kk)*pz);
-        s3[di] = sin(ImExpZfactor*static_cast<double>(kk)*pz);
-      }//end kk
+      double argX = ImExpZfactor*px; 
+      double argY = ImExpZfactor*py; 
+      double argZ = ImExpZfactor*pz; 
+      c1[0] = cos(argX);
+      s1[0] = sin(argX);
+      c2[0] = cos(argY);
+      s2[0] = sin(argY);
+      c3[0] = cos(argZ);
+      s3[0] = sin(argZ);
+      for(int curr = 1; curr < P; ++curr) {
+        int prev = curr - 1;
+        c1[curr] = (c1[prev] * c1[0]) - (s1[prev] * s1[0]);
+        s1[curr] = (s1[prev] * c1[0]) + (c1[prev] * s1[0]);
+        c2[curr] = (c2[prev] * c2[0]) - (s2[prev] * s2[0]);
+        s2[curr] = (s2[prev] * c2[0]) + (c2[prev] * s2[0]);
+        c3[curr] = (c3[prev] * c3[0]) - (s3[prev] * s3[0]);
+        s3[curr] = (s3[prev] * c3[0]) + (c3[prev] * s3[0]);
+      }//end curr
 
-      for(int k3 = -P, d3 = 0, di = 0; k3 < P; ++d3, ++k3) {
-        for(int k2 = -P, d2 = 0; k2 < P; ++d2, ++k2) {
-          for(int k1 = -P, d1 = 0; k1 < P; ++d1, ++k1, ++di) {
-            double tmp1 =  ((c1[d1])*(c2[d2])) - ((s1[d1])*(s2[d2]));
-            double tmp2 =  ((s1[d1])*(c2[d2])) + ((s2[d2])*(c1[d1]));
-            double c = ((c3[d3])*tmp1) - ((s3[d3])*tmp2);
-            double d = ((s3[d3])*tmp1) + ((c3[d3])*tmp2); 
-            int cOff = 2*di;
-            double a = recvLlist[cOff];
-            double b = recvLlist[cOff + 1];
-            results[i] += ((fac[d3])*(fac[d2])*(fac[d1])*( (a*c) - (b*d) ));
-          }//end for k1
-        }//end for k2
-      }//end for k3
+      /*
+         for(int k3 = -P, d3 = 0, di = 0; k3 < P; ++d3, ++k3) {
+         for(int k2 = -P, d2 = 0; k2 < P; ++d2, ++k2) {
+         for(int k1 = -P, d1 = 0; k1 < P; ++d1, ++k1, ++di) {
+         double tmp1 =  ((c1[d1])*(c2[d2])) - ((s1[d1])*(s2[d2]));
+         double tmp2 =  ((s1[d1])*(c2[d2])) + ((s2[d2])*(c1[d1]));
+         double cosTh = ((c3[d3])*tmp1) - ((s3[d3])*tmp2);
+         double sinTh = ((s3[d3])*tmp1) + ((c3[d3])*tmp2); 
+         int cOff = 2*di;
+         results[i] += (facArr[k3] * facArr[k2] * facArr[k1] * ( (recvLlist[cOff] * cosTh) - (recvLlist[cOff + 1] * sinTh) ));
+         }//end for k1
+         }//end for k2
+         }//end for k3
+         */
     }//end i
   }
 
@@ -113,29 +133,39 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
       double py = sources[sOff + 1] - cy;
       double pz = sources[sOff + 2] - cx;
 
-      for (int kk = -P, di = 0; kk < P; ++kk, ++di) {
-        c1[di] = cos(ImExpZfactor*static_cast<double>(kk)*px);
-        s1[di] = sin(ImExpZfactor*static_cast<double>(kk)*px);
-        c2[di] = cos(ImExpZfactor*static_cast<double>(kk)*py);
-        s2[di] = sin(ImExpZfactor*static_cast<double>(kk)*py);
-        c3[di] = cos(ImExpZfactor*static_cast<double>(kk)*pz);
-        s3[di] = sin(ImExpZfactor*static_cast<double>(kk)*pz);
-      }//end kk
+      double argX = ImExpZfactor*px; 
+      double argY = ImExpZfactor*py; 
+      double argZ = ImExpZfactor*pz; 
+      c1[0] = cos(argX);
+      s1[0] = sin(argX);
+      c2[0] = cos(argY);
+      s2[0] = sin(argY);
+      c3[0] = cos(argZ);
+      s3[0] = sin(argZ);
+      for(int curr = 1; curr < P; ++curr) {
+        int prev = curr - 1;
+        c1[curr] = (c1[prev] * c1[0]) - (s1[prev] * s1[0]);
+        s1[curr] = (s1[prev] * c1[0]) + (c1[prev] * s1[0]);
+        c2[curr] = (c2[prev] * c2[0]) - (s2[prev] * s2[0]);
+        s2[curr] = (s2[prev] * c2[0]) + (c2[prev] * s2[0]);
+        c3[curr] = (c3[prev] * c3[0]) - (s3[prev] * s3[0]);
+        s3[curr] = (s3[prev] * c3[0]) + (c3[prev] * s3[0]);
+      }//end curr
 
-      for(int k3 = -P, d3 = 0, di = 0; k3 < P; ++d3, ++k3) {
-        for(int k2 = -P, d2 = 0; k2 < P; ++d2, ++k2) {
-          for(int k1 = -P, d1 = 0; k1 < P; ++d1, ++k1, ++di) {
-            double tmp1 =  ((c1[d1])*(c2[d2])) - ((s1[d1])*(s2[d2]));
-            double tmp2 =  ((s1[d1])*(c2[d2])) + ((s2[d2])*(c1[d1]));
-            double c = ((c3[d3])*tmp1) - ((s3[d3])*tmp2);
-            double d = ((s3[d3])*tmp1) + ((c3[d3])*tmp2); 
-            int cOff = 2*di;
-            double a = localLarr[cOff];
-            double b = localLarr[cOff + 1];
-            results[ptsIdx] += ((fac[d3])*(fac[d2])*(fac[d1])*( (a*c) - (b*d) ));
-          }//end for k1
-        }//end for k2
-      }//end for k3
+      /*
+         for(int k3 = -P, d3 = 0, di = 0; k3 < P; ++d3, ++k3) {
+         for(int k2 = -P, d2 = 0; k2 < P; ++d2, ++k2) {
+         for(int k1 = -P, d1 = 0; k1 < P; ++d1, ++k1, ++di) {
+         double tmp1 =  ((c1[d1])*(c2[d2])) - ((s1[d1])*(s2[d2]));
+         double tmp2 =  ((s1[d1])*(c2[d2])) + ((s2[d2])*(c1[d1]));
+         double cosTh = ((c3[d3])*tmp1) - ((s3[d3])*tmp2);
+         double sinTh = ((s3[d3])*tmp1) + ((c3[d3])*tmp2); 
+         int cOff = 2*di;
+         results[ptsIdx] += (facArr[k3] * facArr[k2] * facArr[k1] * ( (localLarr[cOff] * cosTh) - (localLarr[cOff + 1] * sinTh) ));
+         }//end for k1
+         }//end for k2
+         }//end for k3
+         */
     }//end j
   }//end i
 
