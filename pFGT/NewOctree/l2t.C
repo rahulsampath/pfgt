@@ -105,6 +105,62 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
         s3[curr] = (s3[prev] * c3[0]) + (c3[prev] * s3[0]);
       }//end curr
 
+      {
+        //k3 = k2 = k1 = 0
+      }
+      {
+        //k3 = k2 = 0
+        for(int k1 = 1; k1 <= P; ++k1) {
+        }//end k1
+      }
+      {
+        //k3 = 0
+        for(int k2 = 1; k2 <= P; ++k2) {
+          {
+            //k1 = 0
+          }
+          for(int k1 = 1; k1 <= P; ++k1) {
+            //+ve k1
+
+            //-ve k1
+          }//end k1
+        }//end k2
+      }
+      for(int k3 = 1; k3 <= P; ++k3) {
+        {
+          //k2 = 0
+          {
+            //k1 = 0
+          }
+          for(int k1 = 1; k1 <= P; ++k1) {
+            //+ve k1
+
+            //-ve k1
+          }//end k1
+        }
+        for(int k2 = 1; k2 <= P; ++k2) {
+          //+ve k2
+          {
+            //k1 = 0
+          }
+          for(int k1 = 1; k1 <= P; ++k1) {
+            //+ve k1
+
+            //-ve k1
+          }//end k1
+
+          //-ve k2
+          {
+            //k1 = 0
+          }
+          for(int k1 = 1; k1 <= P; ++k1) {
+            //+ve k1
+
+            //-ve k1
+          }//end k1
+        }//end k2
+      }//end k3
+
       /*
          for(int k3 = -P, d3 = 0, di = 0; k3 < P; ++d3, ++k3) {
          for(int k2 = -P, d2 = 0; k2 < P; ++d2, ++k2) {
