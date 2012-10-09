@@ -144,6 +144,8 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
                 //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = 0
                 //xId = P + k1 = P
                 int cOff = 2*(xOff + P);
+                tmpArr[cOff] = (localWarr[cOff] * cosTh) - (localWarr[cOff + 1] * sinTh);
+                tmpArr[cOff + 1] = (localWarr[cOff] * sinTh) + (localWarr[cOff + 1] * cosTh);
               }//k1 = 0
               for(int k1 = 1; k1 <= P; ++k1) {
                 double cosX = c1Arr[k1];
@@ -158,12 +160,16 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
                 int cOff = 2*(xOff + xId);
                 //cosTh = cXcYZ - sXsYZ = cosX
                 //sinTh = sXcYZ + cXsYZ = sinX
+                tmpArr[cOff] = (localWarr[cOff] * cosTh) - (localWarr[cOff + 1] * sinTh);
+                tmpArr[cOff + 1] = (localWarr[cOff] * sinTh) + (localWarr[cOff + 1] * cosTh);
 
                 //-ve k1
                 xId = P - k1;
                 cOff = 2*(xOff + xId);
                 //cosTh = cXcYZ + sXsYZ = cosX
                 //sinTh = cXsYZ - sXcYZ = -sinX
+                tmpArr[cOff] = (localWarr[cOff] * cosTh) - (localWarr[cOff + 1] * sinTh);
+                tmpArr[cOff + 1] = (localWarr[cOff] * sinTh) + (localWarr[cOff + 1] * cosTh);
               }//end k1
             }//k2 = 0 
             for(int k2 = 1; k2 <= P; ++k2) {
@@ -188,6 +194,8 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
                 int cOff = 2*(xOff + P);
                 //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosY
                 //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinY
+                tmpArr[cOff] = (localWarr[cOff] * cosTh) - (localWarr[cOff + 1] * sinTh);
+                tmpArr[cOff + 1] = (localWarr[cOff] * sinTh) + (localWarr[cOff + 1] * cosTh);
               }//k1 = 0
               for(int k1 = 1; k1 <= P; ++k1) {
                 double cosX = c1Arr[k1];
@@ -206,12 +214,16 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
                 int cOff = 2*(xOff + xId);
                 double cosTh = cXcYZ - sXsYZ;
                 double sinTh = sXcYZ + cXsYZ;
+                tmpArr[cOff] = (localWarr[cOff] * cosTh) - (localWarr[cOff + 1] * sinTh);
+                tmpArr[cOff + 1] = (localWarr[cOff] * sinTh) + (localWarr[cOff + 1] * cosTh);
 
                 //-ve k1
                 xId = P - k1;
                 cOff = 2*(xOff + xId);
                 cosTh = cXcYZ + sXsYZ;
                 sinTh = cXsYZ - sXcYZ;
+                tmpArr[cOff] = (localWarr[cOff] * cosTh) - (localWarr[cOff + 1] * sinTh);
+                tmpArr[cOff + 1] = (localWarr[cOff] * sinTh) + (localWarr[cOff + 1] * cosTh);
               }//end k1
 
               //-ve k2
@@ -228,6 +240,8 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
                 int cOff = 2*(xOff + P);
                 //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosY
                 //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = -sinY
+                tmpArr[cOff] = (localWarr[cOff] * cosTh) - (localWarr[cOff + 1] * sinTh);
+                tmpArr[cOff + 1] = (localWarr[cOff] * sinTh) + (localWarr[cOff + 1] * cosTh);
               }//k1 = 0
               for(int k1 = 1; k1 <= P; ++k1) {
                 double cosX = c1Arr[k1];
@@ -246,12 +260,16 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
                 int cOff = 2*(xOff + xId);
                 double cosTh = cXcYZ - sXsYZ;
                 double sinTh = sXcYZ + cXsYZ;
+                tmpArr[cOff] = (localWarr[cOff] * cosTh) - (localWarr[cOff + 1] * sinTh);
+                tmpArr[cOff + 1] = (localWarr[cOff] * sinTh) + (localWarr[cOff + 1] * cosTh);
 
                 //-ve k1
                 xId = P - k1;
                 cOff = 2*(xOff + xId);
                 cosTh = cXcYZ + sXsYZ;
                 sinTh = cXsYZ - sXcYZ;
+                tmpArr[cOff] = (localWarr[cOff] * cosTh) - (localWarr[cOff + 1] * sinTh);
+                tmpArr[cOff + 1] = (localWarr[cOff] * sinTh) + (localWarr[cOff + 1] * cosTh);
               }//end k1
             }//end k2
           }//k3 = 0
@@ -277,6 +295,8 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
                 int cOff = 2*(xOff + P);
                 //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosZ
                 //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinZ
+                tmpArr[cOff] = (localWarr[cOff] * cosTh) - (localWarr[cOff + 1] * sinTh);
+                tmpArr[cOff + 1] = (localWarr[cOff] * sinTh) + (localWarr[cOff + 1] * cosTh);
               }//k1 = 0
               for(int k1 = 1; k1 <= P; ++k1) {
                 double cosX = c1Arr[k1];
@@ -295,12 +315,16 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
                 int cOff = 2*(xOff + xId);
                 double cosTh = cXcYZ - sXsYZ;
                 double sinTh = sXcYZ + cXsYZ;
+                tmpArr[cOff] = (localWarr[cOff] * cosTh) - (localWarr[cOff + 1] * sinTh);
+                tmpArr[cOff + 1] = (localWarr[cOff] * sinTh) + (localWarr[cOff + 1] * cosTh);
 
                 //-ve k1
                 xId = P - k1;
                 cOff = 2*(xOff + xId);
                 cosTh = cXcYZ + sXsYZ;
                 sinTh = cXsYZ - sXcYZ;
+                tmpArr[cOff] = (localWarr[cOff] * cosTh) - (localWarr[cOff + 1] * sinTh);
+                tmpArr[cOff + 1] = (localWarr[cOff] * sinTh) + (localWarr[cOff + 1] * cosTh);
               }//end k1
             }//k2 = 0 
             for(int k2 = 1; k2 <= P; ++k2) {
@@ -324,6 +348,8 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
                 int cOff = 2*(xOff + P);
                 //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosYplusZ
                 //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinYplusZ
+                tmpArr[cOff] = (localWarr[cOff] * cosTh) - (localWarr[cOff + 1] * sinTh);
+                tmpArr[cOff + 1] = (localWarr[cOff] * sinTh) + (localWarr[cOff + 1] * cosTh);
               }//k1 = 0
               for(int k1 = 1; k1 <= P; ++k1) {
                 double cosX = c1Arr[k1];
@@ -338,12 +364,16 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
                 int cOff = 2*(xOff + xId);
                 double cosTh = cXcYZ - sXsYZ;
                 double sinTh = sXcYZ + cXsYZ;
+                tmpArr[cOff] = (localWarr[cOff] * cosTh) - (localWarr[cOff + 1] * sinTh);
+                tmpArr[cOff + 1] = (localWarr[cOff] * sinTh) + (localWarr[cOff + 1] * cosTh);
 
                 //-ve k1
                 xId = P - k1;
                 cOff = 2*(xOff + xId);
                 cosTh = cXcYZ + sXsYZ;
                 sinTh = cXsYZ - sXcYZ;
+                tmpArr[cOff] = (localWarr[cOff] * cosTh) - (localWarr[cOff + 1] * sinTh);
+                tmpArr[cOff + 1] = (localWarr[cOff] * sinTh) + (localWarr[cOff + 1] * cosTh);
               }//end k1
 
               //-ve k2
@@ -359,6 +389,8 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
                 int cOff = 2*(xOff + P);
                 //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosYplusZ
                 //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinYplusZ
+                tmpArr[cOff] = (localWarr[cOff] * cosTh) - (localWarr[cOff + 1] * sinTh);
+                tmpArr[cOff + 1] = (localWarr[cOff] * sinTh) + (localWarr[cOff + 1] * cosTh);
               }//k1 = 0
               for(int k1 = 1; k1 <= P; ++k1) {
                 double cosX = c1Arr[k1];
@@ -373,31 +405,19 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
                 int cOff = 2*(xOff + xId);
                 double cosTh = cXcYZ - sXsYZ;
                 double sinTh = sXcYZ + cXsYZ;
+                tmpArr[cOff] = (localWarr[cOff] * cosTh) - (localWarr[cOff + 1] * sinTh);
+                tmpArr[cOff + 1] = (localWarr[cOff] * sinTh) + (localWarr[cOff + 1] * cosTh);
 
                 //-ve k1
                 xId = P - k1;
                 cOff = 2*(xOff + xId);
                 cosTh = cXcYZ + sXsYZ;
                 sinTh = cXsYZ - sXcYZ;
+                tmpArr[cOff] = (localWarr[cOff] * cosTh) - (localWarr[cOff + 1] * sinTh);
+                tmpArr[cOff + 1] = (localWarr[cOff] * sinTh) + (localWarr[cOff + 1] * cosTh);
               }//end k1
             }//end k2
           }//end k3
-
-          /*
-             for(int k3 = -P, d3 = 0, di = 0; k3 < P; ++d3, ++k3) {
-             for(int k2 = -P, d2 = 0; k2 < P; ++d2, ++k2) {
-             for(int k1 = -P, d1 = 0; k1 < P; ++d1, ++k1, ++di) {
-             double tmp1 =  ((c1[d1])*(c2[d2])) - ((s1[d1])*(s2[d2]));
-             double tmp2 =  ((s1[d1])*(c2[d2])) + ((s2[d2])*(c1[d1]));
-             double cosTh = ((c3[d3])*tmp1) - ((s3[d3])*tmp2);
-             double sinTh = ((s3[d3])*tmp1) + ((c3[d3])*tmp2); 
-             int cOff = 2*di;
-             tmpArr[cOff] = (localWarr[cOff] * cosTh) - (localWarr[cOff + 1] * sinTh);
-             tmpArr[cOff + 1] = (localWarr[cOff] * sinTh) + (localWarr[cOff + 1] * cosTh);
-             }//end for k1
-             }//end for k2
-             }//end for k3
-             */
         }//end dAx
       }//end dAy
     }//end dAz
