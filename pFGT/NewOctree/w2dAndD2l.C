@@ -228,6 +228,9 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
     }//end j
   }//end i
 
+  //Performance Improvement: We could avoid this sort if we move the
+  //construction of sendBoxList and box2PtMap into the above loop. This will
+  //also reduce the temporary storage required for tmpSendBoxList.
   if(!(tmpSendBoxList.empty())) {
     std::sort((&(tmpSendBoxList[0])), (&(tmpSendBoxList[0])) + tmpSendBoxList.size());
   }
