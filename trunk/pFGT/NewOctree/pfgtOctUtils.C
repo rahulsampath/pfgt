@@ -35,7 +35,7 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
   MPI_Comm_rank(comm, &rank);
 
   if(!rank) {
-    std::cout << GRN"Expand Num Procs = "NRM << npesExpand <<std::endl;
+    std::cout << "Expand Num Procs = " << npesExpand <<std::endl;
   }
 
   if(rank < npesExpand) {
@@ -241,12 +241,8 @@ void pfgtExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> &
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  std::cout << rank << GRN" : Expand - start "NRM << subRank << "/" << subNpes << std::endl; 
-
   std::vector<ot::TreeNode> fgtMins;
   computeFgtMinsExpand(fgtMins, fgtList, subComm, comm);
-
-  std::cout << rank << GRN" : Expand - fgtmins "NRM << subRank << "/" << subNpes << std::endl; 
 
 #ifdef DEBUG
   assert(!(expandSources.empty()));
@@ -308,29 +304,22 @@ void pfgtExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> &
   createS2WcommInfo(s2wSendCnts, s2wSendDisps, s2wRecvCnts, s2wRecvDisps, 
       remoteFgtOwner, numWcoeffs, excessWt, avgExpand, extraExpand, subComm);
 
-  std::cout << rank << GRN" : Expand - pre-s2w "NRM << subRank << "/" << subNpes << std::endl; 
-
   std::vector<double> localWlist( (numWcoeffs*(fgtList.size())), 0.0);
   s2w(localWlist, expandSources, remoteFgt, remoteFgtOwner, numPtsInRemoteFgt, fgtList,
       fgtMins, FgtLev, P, L, s2wSendCnts, s2wSendDisps, s2wRecvCnts, s2wRecvDisps, subComm);
-  std::cout << rank << GRN" : Expand - s2w "NRM << subRank << "/" << subNpes << std::endl; 
 
   std::vector<double> localLlist( (localWlist.size()), 0.0);
   w2l(localLlist, localWlist, fgtList, fgtMins, FgtLev, P, L, K, subComm);
 
-  std::cout << rank << GRN" : Expand - w2l "NRM << subRank << "/" << subNpes << std::endl; 
-
   if(!singleType) {
     w2dAndD2lExpand(localLlist, localWlist, fgtList, P, comm);
   }
-  std::cout << rank << GRN" : Expand - w2d+d2l"NRM << subRank << "/" << subNpes << std::endl; 
 
   std::vector<double> results(((expandSources.size())/4), 0.0);
   l2t(results, localLlist, expandSources, remoteFgt, remoteFgtOwner, numPtsInRemoteFgt, 
       fgtList, fgtMins, FgtLev, P, L, s2wSendCnts, s2wSendDisps, s2wRecvCnts, s2wRecvDisps, subComm);
 
   destroyS2WcommInfo(s2wSendCnts, s2wSendDisps, s2wRecvCnts, s2wRecvDisps); 
-  std::cout << rank << GRN" : Expand - l2t "NRM << subRank << "/" << subNpes << std::endl; 
 
 #ifdef _WRITE_SOLN
   std::cout << rank << GRN" : Expand - writing "NRM << subRank << "/" << subNpes << std::endl; 
@@ -340,8 +329,6 @@ void pfgtExpand(std::vector<double> & expandSources, std::vector<ot::TreeNode> &
   out.write((const char*)&(*(results.begin())),results.size()*sizeof(double)); 
   out.close();
 #endif
-
-  std::cout << rank << GRN" : Expand - all_done "NRM << subRank << "/" << subNpes << std::endl; 
 
   PetscLogEventEnd(pfgtExpandEvent, 0, 0, 0, 0);
 }
@@ -361,8 +348,6 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev, 
   assert(!(directSources.empty()));
 #endif
 
-  std::cout << rank << RED" : Direct - start "NRM << subRank << "/" << subNpes << std::endl; 
-
   std::vector<ot::TreeNode> directNodes( directSources.size()/4 );
   for(size_t i = 0; i < directNodes.size(); ++i) {
     unsigned int px = static_cast<unsigned int>(directSources[(4*i) + 0]*(__DTPMD__));
@@ -380,18 +365,12 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev, 
     computeFgtMinsDirect(fgtMins, comm);
   }
 
-  std::cout << rank << RED" : Direct - fgtMins "NRM << subRank << "/" << subNpes << std::endl; 
-
   std::vector<double> results(directNodes.size(), 0.0);
   d2d(results, directSources, directNodes, directMins, FgtLev, epsilon, subComm);
-
-  std::cout << rank << RED" : Direct - d2d "NRM << subRank << "/" << subNpes << std::endl; 
 
   if(!singleType) {
     w2dAndD2lDirect(results, directSources, fgtMins, FgtLev, P, L, K, epsilon, comm);
   }
-
-  std::cout << rank << RED" : Direct - w2d+d2l "NRM << subRank << "/" << subNpes << std::endl; 
 
 #ifdef _WRITE_SOLN
   std::cout << rank << RED" : Direct - writing "NRM << subRank << "/" << subNpes << std::endl; 
@@ -402,7 +381,6 @@ void pfgtDirect(std::vector<double> & directSources, const unsigned int FgtLev, 
   out.close();
 #endif
 
-  std::cout << rank << RED" : Direct - all_done "NRM << subRank << "/" << subNpes << std::endl; 
   PetscLogEventEnd(pfgtDirectEvent, 0, 0, 0, 0);
 }
 
