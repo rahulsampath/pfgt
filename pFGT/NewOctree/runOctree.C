@@ -32,6 +32,7 @@ PetscLogEvent w2dD2lEsearchEvent;
 PetscLogEvent w2dD2lDsearchEvent;
 PetscLogEvent w2lSearchEvent;
 PetscLogEvent d2dSearchEvent;
+PetscLogEvent w2dD2lDsortEvent;
 
 bool softEquals(double a, double b) {
   return ((fabs(a - b)) < 1.0e-14);
@@ -63,6 +64,7 @@ int main(int argc, char** argv) {
   PetscLogEventRegister("W2D2LD", fgtCookie, &w2dD2lDirectEvent);
   PetscLogEventRegister("W2D2LEsearch", fgtCookie, &w2dD2lEsearchEvent);
   PetscLogEventRegister("W2D2LDsearch", fgtCookie, &w2dD2lDsearchEvent);
+  PetscLogEventRegister("W2D2LDsort", fgtCookie, &w2dD2lDsortEvent);
   PetscLogEventRegister("W2Lsearch", fgtCookie, &w2lSearchEvent);
   PetscLogEventRegister("D2Dsearch", fgtCookie, &d2dSearchEvent);
 
