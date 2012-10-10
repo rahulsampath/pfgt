@@ -7,6 +7,7 @@
 #include "par/dtypes.h"
 
 extern PetscLogEvent d2dEvent;
+extern PetscLogEvent d2dSearchEvent;
 
 void d2d(std::vector<double> & results, std::vector<double> & sources,
     std::vector<ot::TreeNode> & nodes, std::vector<ot::TreeNode> & directMins,
@@ -62,14 +63,18 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
     ot::TreeNode maxNode((uiMaxPt[0] - 1), (uiMaxPt[1] - 1), (uiMaxPt[2] - 1), __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
 
     unsigned int minIdx;
+    PetscLogEventBegin(d2dSearchEvent, 0, 0, 0, 0);
     bool foundMin = seq::maxLowerBound<ot::TreeNode>(directMins, minNode, minIdx, NULL, NULL);
+    PetscLogEventEnd(d2dSearchEvent, 0, 0, 0, 0);
 
     if(!foundMin) {
       minIdx = 0;
     }
 
     unsigned int maxIdx;
+    PetscLogEventBegin(d2dSearchEvent, 0, 0, 0, 0);
     bool foundMax = seq::maxLowerBound<ot::TreeNode>(directMins, maxNode, maxIdx, NULL, NULL);
+    PetscLogEventEnd(d2dSearchEvent, 0, 0, 0, 0);
 
     //maxPt >= currPt and currPt is a direct point
 #ifdef DEBUG
@@ -149,14 +154,18 @@ void d2d(std::vector<double> & results, std::vector<double> & sources,
     ot::TreeNode maxNode((uiMaxPt[0] - 1), (uiMaxPt[1] - 1), (uiMaxPt[2] - 1), __MAX_DEPTH__, __DIM__, __MAX_DEPTH__);
 
     unsigned int minIdx;
+    PetscLogEventBegin(d2dSearchEvent, 0, 0, 0, 0);
     bool foundMin = seq::maxLowerBound<ot::TreeNode>(nodes, minNode, minIdx, NULL, NULL);
+    PetscLogEventEnd(d2dSearchEvent, 0, 0, 0, 0);
 
     if(!foundMin) {
       minIdx = 0;
     }
 
     unsigned int maxIdx;
+    PetscLogEventBegin(d2dSearchEvent, 0, 0, 0, 0);
     bool foundMax = seq::maxLowerBound<ot::TreeNode>(nodes, maxNode, maxIdx, NULL, NULL);
+    PetscLogEventEnd(d2dSearchEvent, 0, 0, 0, 0);
 
     //This source point was sent only to those procs whose directMin <= maxPt
 #ifdef DEBUG
