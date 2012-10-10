@@ -10,6 +10,7 @@ extern PetscLogEvent w2dD2lExpandEvent;
 extern PetscLogEvent w2dD2lDirectEvent;
 extern PetscLogEvent w2dD2lEsearchEvent;
 extern PetscLogEvent w2dD2lDsearchEvent;
+extern PetscLogEvent w2dD2lDsortEvent;
 
 void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & localWlist, 
     std::vector<ot::TreeNode> & fgtList, const int P, MPI_Comm comm) {
@@ -231,9 +232,11 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
   //Performance Improvement: We could avoid this sort if we move the
   //construction of sendBoxList and box2PtMap into the above loop. This will
   //also reduce the temporary storage required for tmpSendBoxList.
+  PetscLogEventBegin(w2dD2lDsortEvent, 0, 0, 0, 0);
   if(!(tmpSendBoxList.empty())) {
     std::sort((&(tmpSendBoxList[0])), (&(tmpSendBoxList[0])) + tmpSendBoxList.size());
   }
+  PetscLogEventEnd(w2dD2lDsortEvent, 0, 0, 0, 0);
 
   int* sendCnts = new int[npes];
   int* recvDisps = new int[npes]; 
