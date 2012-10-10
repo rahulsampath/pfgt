@@ -77,6 +77,7 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
   double* s3Arr = (&(s3[0])) - 1;
 
   if(remoteFgtOwner >= 0) {
+    double* lArr = &(recvLlist[0]);
     double cx = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getX()))/(__DTPMD__));
     double cy = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getY()))/(__DTPMD__));
     double cz = (0.5*hFgt) + ((static_cast<double>(remoteFgt.getZ()))/(__DTPMD__));
@@ -105,118 +106,150 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
         s3[curr] = (s3[prev] * c3[0]) + (c3[prev] * s3[0]);
       }//end curr
 
-      {
-        //k3 = k2 = k1 = 0
-        //cosZ = 1
-        //sinZ = 0
-        //zId = k3 = 0
-        //yOff = zId*TwoPplus1 = 0
-        //cosY = 1
-        //sinY = 0
-        //cYcZ = cosY*cosZ = cosZ = 1
-        //cYsZ = cosY*sinZ = sinZ = 0
-        //sYsZ = sinY*sinZ = 0
-        //sYcZ = sinY*cosZ = 0
-        //yId = P + k2 = P
-        //xOff = (yOff + yId)*TwoPplus1  
-        int xOff = P*TwoPplus1;
-        //cosYplusZ = cYcZ - sYsZ = 1
-        //sinYplusZ = sYcZ + cYsZ = 0
-        //cosX = 1
-        //sinX = 0
-        //cXcYZ = cosX*cosYplusZ = cosYplusZ = 1
-        //cXsYZ = cosX*sinYplusZ = sinYplusZ = 0
-        //sXsYZ = sinX*sinYplusZ = 0
-        //sXcYZ = sinX*cosYplusZ = 0
-        //xId = P + k1 = P
-        int cOff = 2*(xOff + P);
-        //cosTh = cXcYZ - sXsYZ = cosYplusZ = 1
-        //sinTh = sXcYZ + cXsYZ = sinYplusZ = 0
-      }
-      {
-        //k3 = k2 = 0
-        //cosZ = 1
-        //sinZ = 0
-        //zId = k3 = 0
-        //yOff = zId*TwoPplus1 = 0
-        //cosY = 1
-        //sinY = 0
-        //cYcZ = cosY*cosZ = cosZ = 1
-        //cYsZ = cosY*sinZ = sinZ = 0
-        //sYsZ = sinY*sinZ = 0
-        //sYcZ = sinY*cosZ = 0
-        //yId = P + k2 = P
-        //xOff = (yOff + yId)*TwoPplus1  
-        int xOff = P*TwoPplus1;
-        //cosYplusZ = cYcZ - sYsZ = 1
-        //sinYplusZ = sYcZ + cYsZ = 0
-        for(int k1 = 1; k1 <= P; ++k1) {
-          double cosX = c1Arr[k1];
-          double sinX = s1Arr[k1];
-          double cXcYZ = cosX*cosYplusZ;
-          double cXsYZ = cosX*sinYplusZ;
-          double sXsYZ = sinX*sinYplusZ;
-          double sXcYZ = sinX*cosYplusZ;
-
-          int xId = P + k1;
-          int cOff = 2*(xOff + xId);
-          double cosTh = cXcYZ - sXsYZ;
-          double sinTh = sXcYZ + cXsYZ;
-        }//end k1
-      }
+      double outVal = 0;
       {
         //k3 = 0
         //cosZ = 1
         //sinZ = 0
         //zId = k3 = 0
         //yOff = zId*TwoPplus1 = 0
-        for(int k2 = 1; k2 <= P; ++k2) {
-          double cosY = c2Arr[k2];
-          double sinY = s2Arr[k2];
-          double cYcZ = cosY*cosZ;
-          double cYsZ = cosY*sinZ;
-          double sYsZ = sinY*sinZ;
-          double sYcZ = sinY*cosZ;
-
-          int yId = P + k2;
-          int xOff = (yOff + yId)*TwoPplus1;
-          double cosYplusZ = cYcZ - sYsZ;
-          double sinYplusZ = sYcZ + cYsZ;
+        {
+          //k2 = 0
+          //cosY = 1
+          //sinY = 0
+          //yId = P + k2 = P
+          //xOff = (yOff + yId)*TwoPplus1  
+          int xOff = P*TwoPplus1;
+          //cosYplusZ = (cosY*cosZ) - (sinY*sinZ) = 1
+          //sinYplusZ = (sinY*cosZ) + (cosY*sinZ) = 0
           {
             //k1 = 0
             //cosX = 1
             //sinX = 0
-            //cXcYZ = cosX*cosYplusZ = cosYplusZ
-            //cXsYZ = cosX*sinYplusZ = sinYplusZ
-            //sXsYZ = sinX*sinYplusZ = 0
-            //sXcYZ = sinX*cosYplusZ = 0
+            //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = 1
+            //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = 0
             //xId = P + k1 = P
             int cOff = 2*(xOff + P);
-            //cosTh = cXcYZ - sXsYZ = cosYplusZ
-            //sinTh = sXcYZ + cXsYZ = sinYplusZ
-          }
+            outVal += (facArr[k3] * facArr[k2] * facArr[k1] * ( (lArr[cOff] * cosTh) - (lArr[cOff + 1] * sinTh) ));
+          }//k1 = 0
           for(int k1 = 1; k1 <= P; ++k1) {
             double cosX = c1Arr[k1];
             double sinX = s1Arr[k1];
-            double cXcYZ = cosX*cosYplusZ;
-            double cXsYZ = cosX*sinYplusZ;
-            double sXsYZ = sinX*sinYplusZ;
-            double sXcYZ = sinX*cosYplusZ;
+            //cXcYZ = cosX*cosYplusZ = cosX
+            //sXcYZ = sinX*cosYplusZ = sinX
+            //sXsYZ = sinX*sinYplusZ = 0
+            //cXsYZ = cosX*sinYplusZ = 0
+
+            //+ve k1
+            int xId = P + k1;
+            int cOff = 2*(xOff + xId);
+            //cosTh = cXcYZ - sXsYZ = cosX
+            //sinTh = sXcYZ + cXsYZ = sinX
+            outVal += (facArr[k3] * facArr[k2] * facArr[k1] * ( (lArr[cOff] * cosTh) - (lArr[cOff + 1] * sinTh) ));
+
+            //-ve k1
+            xId = P - k1;
+            cOff = 2*(xOff + xId);
+            //cosTh = cXcYZ + sXsYZ = cosX
+            //sinTh = cXsYZ - sXcYZ = -sinX
+            outVal += (facArr[k3] * facArr[k2] * facArr[k1] * ( (lArr[cOff] * cosTh) - (lArr[cOff + 1] * sinTh) ));
+          }//end k1
+        }//k2 = 0 
+        for(int k2 = 1; k2 <= P; ++k2) {
+          double cosY = c2Arr[k2];
+          double sinY = s2Arr[k2];
+          //cYcZ = cosY*cosZ = cosY
+          //sYcZ = sinY*cosZ = sinY
+          //cYsZ = cosY*sinZ = 0
+          //sYsZ = sinY*sinZ = 0
+
+          //+ve k2
+          int yId = P + k2;
+          //xOff = (yOff + yId)*TwoPplus1
+          int xOff = yId*TwoPplus1;
+          //cosYplusZ = cYcZ - sYsZ = cosY
+          //sinYplusZ = sYcZ + cYsZ = sinY
+          {
+            //k1 = 0
+            //cosX = 1
+            //sinX = 0
+            //xId = P + k1 = P
+            int cOff = 2*(xOff + P);
+            //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosY
+            //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinY
+            outVal += (facArr[k3] * facArr[k2] * facArr[k1] * ( (lArr[cOff] * cosTh) - (lArr[cOff + 1] * sinTh) ));
+          }//k1 = 0
+          for(int k1 = 1; k1 <= P; ++k1) {
+            double cosX = c1Arr[k1];
+            double sinX = s1Arr[k1];
+            //cXcYZ = cosX*cosYplusZ
+            double cXcYZ = cosX*cosY;
+            //sXsYZ = sinX*sinYplusZ
+            double sXsYZ = sinX*sinY;
+            //sXcYZ = sinX*cosYplusZ
+            double sXcYZ = sinX*cosY;
+            //cXsYZ = cosX*sinYplusZ
+            double cXsYZ = cosX*sinY;
 
             //+ve k1
             int xId = P + k1;
             int cOff = 2*(xOff + xId);
             double cosTh = cXcYZ - sXsYZ;
             double sinTh = sXcYZ + cXsYZ;
+            outVal += (facArr[k3] * facArr[k2] * facArr[k1] * ( (lArr[cOff] * cosTh) - (lArr[cOff + 1] * sinTh) ));
 
             //-ve k1
             xId = P - k1;
             cOff = 2*(xOff + xId);
             cosTh = cXcYZ + sXsYZ;
             sinTh = cXsYZ - sXcYZ;
+            outVal += (facArr[k3] * facArr[k2] * facArr[k1] * ( (lArr[cOff] * cosTh) - (lArr[cOff + 1] * sinTh) ));
+          }//end k1
+
+          //-ve k2
+          yId = P - k2;
+          //xOff = (yOff + yId)*TwoPplus1
+          xOff = yId*TwoPplus1;
+          //cosYplusZ = cYcZ + sYsZ = cosY
+          //sinYplusZ = cYsZ - sYcZ = -sinY
+          {
+            //k1 = 0
+            //cosX = 1
+            //sinX = 0
+            //xId = P + k1 = P
+            int cOff = 2*(xOff + P);
+            //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosY
+            //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = -sinY
+            outVal += (facArr[k3] * facArr[k2] * facArr[k1] * ( (lArr[cOff] * cosTh) - (lArr[cOff + 1] * sinTh) ));
+          }//k1 = 0
+          for(int k1 = 1; k1 <= P; ++k1) {
+            double cosX = c1Arr[k1];
+            double sinX = s1Arr[k1];
+            //cXcYZ = cosX*cosYplusZ
+            double cXcYZ = cosX*cosY;
+            //sXsYZ = sinX*sinYplusZ
+            double sXsYZ = -(sinX*sinY);
+            //sXcYZ = sinX*cosYplusZ
+            double sXcYZ = sinX*cosY;
+            //cXsYZ = cosX*sinYplusZ
+            double cXsYZ = -(cosX*sinY);
+
+            //+ve k1
+            int xId = P + k1;
+            int cOff = 2*(xOff + xId);
+            double cosTh = cXcYZ - sXsYZ;
+            double sinTh = sXcYZ + cXsYZ;
+            outVal += (facArr[k3] * facArr[k2] * facArr[k1] * ( (lArr[cOff] * cosTh) - (lArr[cOff + 1] * sinTh) ));
+
+            //-ve k1
+            xId = P - k1;
+            cOff = 2*(xOff + xId);
+            cosTh = cXcYZ + sXsYZ;
+            sinTh = cXsYZ - sXcYZ;
+            outVal += (facArr[k3] * facArr[k2] * facArr[k1] * ( (lArr[cOff] * cosTh) - (lArr[cOff + 1] * sinTh) ));
           }//end k1
         }//end k2
-      }
+      }//k3 = 0
       for(int k3 = 1; k3 <= P; ++k3) {
         double cosZ = c3Arr[k3];
         double sinZ = s3Arr[k3];
@@ -226,49 +259,48 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
           //k2 = 0
           //cosY = 1
           //sinY = 0
-          //cYcZ = cosY*cosZ = cosZ
-          //cYsZ = cosY*sinZ = sinZ
-          //sYsZ = sinY*sinZ = 0
-          //sYcZ = sinY*cosZ = 0
           //yId = P + k2 = P
           //xOff = (yOff + yId)*TwoPplus1
           int xOff = (yOff + P)*TwoPplus1;
-          //cosYplusZ = cYcZ - sYsZ = cosZ
-          //sinYplusZ = sYcZ + cYsZ = sinZ
+          //cosYplusZ = (cosY*cosZ) - (sinY*sinZ) = cosZ
+          //sinYplusZ = (sinY*cosZ) + (cosY*sinZ) = sinZ
           {
             //k1 = 0
             //cosX = 1
             //sinX = 0
-            //cXcYZ = cosX*cosYplusZ = cosYplusZ
-            //cXsYZ = cosX*sinYplusZ = sinYplusZ
-            //sXsYZ = sinX*sinYplusZ = 0
-            //sXcYZ = sinX*cosYplusZ = 0
             //xId = P + k1 = P
             int cOff = 2*(xOff + P);
-            //cosTh = cXcYZ - sXsYZ = cosYplusZ
-            //sinTh = sXcYZ + cXsYZ = sinYplusZ
-          }
+            //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosZ
+            //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinZ
+            outVal += (2.0 * facArr[k3] * facArr[k2] * facArr[k1] * ( (lArr[cOff] * cosTh) - (lArr[cOff + 1] * sinTh) ));
+          }//k1 = 0
           for(int k1 = 1; k1 <= P; ++k1) {
             double cosX = c1Arr[k1];
             double sinX = s1Arr[k1];
-            double cXcYZ = cosX*cosYplusZ;
-            double cXsYZ = cosX*sinYplusZ;
-            double sXsYZ = sinX*sinYplusZ;
-            double sXcYZ = sinX*cosYplusZ;
+            //cXcYZ = cosX*cosYplusZ
+            double cXcYZ = cosX*cosZ;
+            //sXsYZ = sinX*sinYplusZ
+            double sXsYZ = sinX*sinZ;
+            //sXcYZ = sinX*cosYplusZ
+            double sXcYZ = sinX*cosZ;
+            //cXsYZ = cosX*sinYplusZ
+            double cXsYZ = cosX*sinZ;
 
             //+ve k1
             int xId = P + k1;
             int cOff = 2*(xOff + xId);
             double cosTh = cXcYZ - sXsYZ;
             double sinTh = sXcYZ + cXsYZ;
+            outVal += (2.0 * facArr[k3] * facArr[k2] * facArr[k1] * ( (lArr[cOff] * cosTh) - (lArr[cOff + 1] * sinTh) ));
 
             //-ve k1
             xId = P - k1;
             cOff = 2*(xOff + xId);
             cosTh = cXcYZ + sXsYZ;
             sinTh = cXsYZ - sXcYZ;
+            outVal += (2.0 * facArr[k3] * facArr[k2] * facArr[k1] * ( (lArr[cOff] * cosTh) - (lArr[cOff + 1] * sinTh) ));
           }//end k1
-        }
+        }//k2 = 0 
         for(int k2 = 1; k2 <= P; ++k2) {
           double cosY = c2Arr[k2];
           double sinY = s2Arr[k2];
@@ -286,34 +318,33 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
             //k1 = 0
             //cosX = 1
             //sinX = 0
-            //cXcYZ = cosX*cosYplusZ = cosYplusZ
-            //cXsYZ = cosX*sinYplusZ = sinYplusZ
-            //sXsYZ = sinX*sinYplusZ = 0
-            //sXcYZ = sinX*cosYplusZ = 0
             //xId = P + k1 = P
             int cOff = 2*(xOff + P);
-            //cosTh = cXcYZ - sXsYZ = cosYplusZ
-            //sinTh = sXcYZ + cXsYZ = sinYplusZ
-          }
+            //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosYplusZ
+            //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinYplusZ
+            outVal += (2.0 * facArr[k3] * facArr[k2] * facArr[k1] * ( (lArr[cOff] * cosTh) - (lArr[cOff + 1] * sinTh) ));
+          }//k1 = 0
           for(int k1 = 1; k1 <= P; ++k1) {
             double cosX = c1Arr[k1];
             double sinX = s1Arr[k1];
             double cXcYZ = cosX*cosYplusZ;
-            double cXsYZ = cosX*sinYplusZ;
             double sXsYZ = sinX*sinYplusZ;
             double sXcYZ = sinX*cosYplusZ;
+            double cXsYZ = cosX*sinYplusZ;
 
             //+ve k1
             int xId = P + k1;
             int cOff = 2*(xOff + xId);
             double cosTh = cXcYZ - sXsYZ;
             double sinTh = sXcYZ + cXsYZ;
+            outVal += (2.0 * facArr[k3] * facArr[k2] * facArr[k1] * ( (lArr[cOff] * cosTh) - (lArr[cOff + 1] * sinTh) ));
 
             //-ve k1
             xId = P - k1;
             cOff = 2*(xOff + xId);
             cosTh = cXcYZ + sXsYZ;
             sinTh = cXsYZ - sXcYZ;
+            outVal += (2.0 * facArr[k3] * facArr[k2] * facArr[k1] * ( (lArr[cOff] * cosTh) - (lArr[cOff + 1] * sinTh) ));
           }//end k1
 
           //-ve k2
@@ -325,57 +356,42 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
             //k1 = 0
             //cosX = 1
             //sinX = 0
-            //cXcYZ = cosX*cosYplusZ = cosYplusZ
-            //cXsYZ = cosX*sinYplusZ = sinYplusZ
-            //sXsYZ = sinX*sinYplusZ = 0
-            //sXcYZ = sinX*cosYplusZ = 0
             //xId = P + k1 = P
             int cOff = 2*(xOff + P);
-            //cosTh = cXcYZ - sXsYZ = cosYplusZ
-            //sinTh = sXcYZ + cXsYZ = sinYplusZ
-          }
+            //cosTh = (cosX*cosYplusZ) - (sinX*sinYplusZ) = cosYplusZ
+            //sinTh = (sinX*cosYplusZ) + (cosX*sinYplusZ) = sinYplusZ
+            outVal += (2.0 * facArr[k3] * facArr[k2] * facArr[k1] * ( (lArr[cOff] * cosTh) - (lArr[cOff + 1] * sinTh) ));
+          }//k1 = 0
           for(int k1 = 1; k1 <= P; ++k1) {
             double cosX = c1Arr[k1];
             double sinX = s1Arr[k1];
             double cXcYZ = cosX*cosYplusZ;
-            double cXsYZ = cosX*sinYplusZ;
             double sXsYZ = sinX*sinYplusZ;
             double sXcYZ = sinX*cosYplusZ;
+            double cXsYZ = cosX*sinYplusZ;
 
             //+ve k1
             int xId = P + k1;
             int cOff = 2*(xOff + xId);
             double cosTh = cXcYZ - sXsYZ;
             double sinTh = sXcYZ + cXsYZ;
+            outVal += (2.0 * facArr[k3] * facArr[k2] * facArr[k1] * ( (lArr[cOff] * cosTh) - (lArr[cOff + 1] * sinTh) ));
 
             //-ve k1
             xId = P - k1;
             cOff = 2*(xOff + xId);
             cosTh = cXcYZ + sXsYZ;
             sinTh = cXsYZ - sXcYZ;
+            outVal += (2.0 * facArr[k3] * facArr[k2] * facArr[k1] * ( (lArr[cOff] * cosTh) - (lArr[cOff + 1] * sinTh) ));
           }//end k1
         }//end k2
       }//end k3
-
-      /*
-         for(int k3 = -P, d3 = 0, di = 0; k3 < P; ++d3, ++k3) {
-         for(int k2 = -P, d2 = 0; k2 < P; ++d2, ++k2) {
-         for(int k1 = -P, d1 = 0; k1 < P; ++d1, ++k1, ++di) {
-         double tmp1 =  ((c1[d1])*(c2[d2])) - ((s1[d1])*(s2[d2]));
-         double tmp2 =  ((s1[d1])*(c2[d2])) + ((s2[d2])*(c1[d1]));
-         double cosTh = ((c3[d3])*tmp1) - ((s3[d3])*tmp2);
-         double sinTh = ((s3[d3])*tmp1) + ((c3[d3])*tmp2); 
-         int cOff = 2*di;
-         results[i] += (facArr[k3] * facArr[k2] * facArr[k1] * ( (recvLlist[cOff] * cosTh) - (recvLlist[cOff + 1] * sinTh) ));
-         }//end for k1
-         }//end for k2
-         }//end for k3
-         */
+      results[i] += outVal;
     }//end i
   }
 
   for(int i = 0, ptsIdx = numPtsInRemoteFgt; i < fgtList.size(); ++i) {
-    double* localLarr = &(localLlist[numWcoeffs*i]);
+    double* lArr = &(localLlist[numWcoeffs*i]);
     double cx = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getX()))/(__DTPMD__));
     double cy = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getY()))/(__DTPMD__));
     double cz = (0.5*hFgt) + ((static_cast<double>(fgtList[i].getZ()))/(__DTPMD__));
@@ -404,6 +420,8 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
         s3[curr] = (s3[prev] * c3[0]) + (c3[prev] * s3[0]);
       }//end curr
 
+      double outVal = 0;
+
       /*
          for(int k3 = -P, d3 = 0, di = 0; k3 < P; ++d3, ++k3) {
          for(int k2 = -P, d2 = 0; k2 < P; ++d2, ++k2) {
@@ -413,11 +431,13 @@ void l2t(std::vector<double> & results, std::vector<double> & localLlist, std::v
          double cosTh = ((c3[d3])*tmp1) - ((s3[d3])*tmp2);
          double sinTh = ((s3[d3])*tmp1) + ((c3[d3])*tmp2); 
          int cOff = 2*di;
-         results[ptsIdx] += (facArr[k3] * facArr[k2] * facArr[k1] * ( (localLarr[cOff] * cosTh) - (localLarr[cOff + 1] * sinTh) ));
+         outVal += (facArr[k3] * facArr[k2] * facArr[k1] * ( (lArr[cOff] * cosTh) - (lAarr[cOff + 1] * sinTh) ));
          }//end for k1
          }//end for k2
          }//end for k3
          */
+
+      results[ptsIdx] += outVal;
     }//end j
   }//end i
 
