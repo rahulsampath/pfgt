@@ -8,7 +8,7 @@ PCC = mpicxx
 
 CEXT = C
 
-CFLAGS = -DPETSC_USE_LOG 
+CFLAGS = -DPETSC_USE_LOG -O3
 
 # -fast 
 # -D_WRITE_SOLN 
