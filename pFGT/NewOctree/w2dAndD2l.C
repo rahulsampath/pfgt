@@ -250,21 +250,18 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
 
   //Performance Improvement: We could make use of the fact that tmpSendBoxList is
   //sorted and avoid the searches.
+  PetscLogEventBegin(w2dD2lDsearchEvent, 0, 0, 0, 0);
   for(int i = 0; i < tmpSendBoxList.size(); ++i) {
     unsigned int ptId = tmpSendBoxList[i].getWeight();
     unsigned int idx;
     bool foundNew = false;
     if(sendBoxList.empty()) {
-      PetscLogEventBegin(w2dD2lDsearchEvent, 0, 0, 0, 0);
       foundNew = seq::maxLowerBound<ot::TreeNode>(fgtMins, tmpSendBoxList[i], idx, NULL, NULL);
-      PetscLogEventEnd(w2dD2lDsearchEvent, 0, 0, 0, 0);
     } else {
       if(tmpSendBoxList[i] == sendBoxList[sendBoxList.size() - 1]) {
         box2PtMap[box2PtMap.size() - 1].push_back(ptId);
       } else {
-        PetscLogEventBegin(w2dD2lDsearchEvent, 0, 0, 0, 0);
         foundNew = seq::maxLowerBound<ot::TreeNode>(fgtMins, tmpSendBoxList[i], idx, NULL, NULL);
-        PetscLogEventEnd(w2dD2lDsearchEvent, 0, 0, 0, 0);
       }
     }
     if(foundNew) {
@@ -274,6 +271,7 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
       box2PtMap.push_back(tmpPtIdVec);
     }
   }//end i
+  PetscLogEventEnd(w2dD2lDsearchEvent, 0, 0, 0, 0);
 
   tmpSendBoxList.clear();
 
