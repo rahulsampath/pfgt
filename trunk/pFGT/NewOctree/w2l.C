@@ -7,6 +7,7 @@
 #include "par/dtypes.h"
 
 extern PetscLogEvent w2lEvent;
+extern PetscLogEvent w2lSearchEvent;
 
 void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist, 
     std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & fgtMins,
@@ -475,6 +476,7 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
 
   //Performance Improvement: This binary search can be avoided by using the
   //fact that sendBoxList is sorted.
+  PetscLogEventBegin(w2lSearchEvent, 0, 0, 0, 0);
   for(size_t i = 0; i < sendBoxList.size(); ++i) {
     unsigned int retIdx;
     bool found = seq::maxLowerBound(fgtMins, sendBoxList[i], retIdx, NULL, NULL);
@@ -482,6 +484,7 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
       ++(sendCnts[fgtMins[retIdx].getWeight()]);
     }
   }//end i
+  PetscLogEventEnd(w2lSearchEvent, 0, 0, 0, 0);
 
   MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, subComm);
 
@@ -536,6 +539,7 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
 
   //Performance Improvement: This binary search can be avoided by making use of
   //the fact that recvBoxList is sorted within each processor chunk.
+  PetscLogEventBegin(w2lSearchEvent, 0, 0, 0, 0);
   for(size_t i = 0; i < recvBoxList.size(); ++i) {
     unsigned int retIdx;
     bool found = seq::BinarySearch(&(fgtList[0]), fgtList.size(), recvBoxList[i], &retIdx);
@@ -545,6 +549,7 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
       }//end d
     }
   }//end i
+  PetscLogEventEnd(w2lSearchEvent, 0, 0, 0, 0);
 
   PetscLogEventEnd(w2lEvent, 0, 0, 0, 0);
 }

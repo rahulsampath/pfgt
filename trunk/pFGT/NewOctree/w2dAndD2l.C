@@ -8,6 +8,8 @@
 
 extern PetscLogEvent w2dD2lExpandEvent;
 extern PetscLogEvent w2dD2lDirectEvent;
+extern PetscLogEvent w2dD2lEsearchEvent;
+extern PetscLogEvent w2dD2lDsearchEvent;
 
 void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & localWlist, 
     std::vector<ot::TreeNode> & fgtList, const int P, MPI_Comm comm) {
@@ -49,10 +51,11 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
   MPI_Alltoallv(NULL, sendCnts, sendDisps, par::Mpi_datatype<ot::TreeNode>::value(),
       recvBoxListPtr, recvCnts, recvDisps, par::Mpi_datatype<ot::TreeNode>::value(), comm);
 
-  //Performance Improvement: We can use the fact that each processor's chunk in
-  //the recvBoxList is sorted and avoid the searches.
   std::vector<int> recvBoxIds(recvBoxList.size(), -1);
 
+  //Performance Improvement: We can use the fact that each processor's chunk in
+  //the recvBoxList is sorted and avoid the searches.
+  PetscLogEventBegin(w2dD2lEsearchEvent, 0, 0, 0, 0);
   for(int i = 0; i < recvBoxList.size(); ++i) { 
     unsigned int retIdx;
     bool found = seq::BinarySearch(&(fgtList[0]), fgtList.size(), recvBoxList[i], &retIdx);
@@ -60,6 +63,7 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
       recvBoxIds[i] = retIdx;
     }
   }//end i
+  PetscLogEventEnd(w2dD2lEsearchEvent, 0, 0, 0, 0);
 
   recvBoxList.clear();
 
@@ -235,23 +239,26 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
     recvDisps[i] = 0;
   }//end i
 
-  //Performance Improvement: We could make use of the fact that tmpSendBoxList is
-  //sorted and avoid the searches.
-
   std::vector<ot::TreeNode> sendBoxList;
   std::vector<std::vector<unsigned int> > box2PtMap;
 
+  //Performance Improvement: We could make use of the fact that tmpSendBoxList is
+  //sorted and avoid the searches.
   for(int i = 0; i < tmpSendBoxList.size(); ++i) {
     unsigned int ptId = tmpSendBoxList[i].getWeight();
     unsigned int idx;
     bool foundNew = false;
     if(sendBoxList.empty()) {
+      PetscLogEventBegin(w2dD2lDsearchEvent, 0, 0, 0, 0);
       foundNew = seq::maxLowerBound<ot::TreeNode>(fgtMins, tmpSendBoxList[i], idx, NULL, NULL);
+      PetscLogEventEnd(w2dD2lDsearchEvent, 0, 0, 0, 0);
     } else {
       if(tmpSendBoxList[i] == sendBoxList[sendBoxList.size() - 1]) {
         box2PtMap[box2PtMap.size() - 1].push_back(ptId);
       } else {
+        PetscLogEventBegin(w2dD2lDsearchEvent, 0, 0, 0, 0);
         foundNew = seq::maxLowerBound<ot::TreeNode>(fgtMins, tmpSendBoxList[i], idx, NULL, NULL);
+        PetscLogEventEnd(w2dD2lDsearchEvent, 0, 0, 0, 0);
       }
     }
     if(foundNew) {
