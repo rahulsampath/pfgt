@@ -67,15 +67,15 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
   }//end i
 
   std::vector<ot::TreeNode> sendBoxList;
-  std::vector<unsigned int> sendBoxToMyBoxMap;
+  std::vector<unsigned int> sendBoxToMyBoxMap(tmpBoxes.size());
   if(!(tmpBoxes.empty())) {
     std::sort(tmpBoxes.begin(), tmpBoxes.end());
 
-    sendBoxToMyBoxMap.push_back(tmpBoxes[0].getWeight());
+    sendBoxToMyBoxMap[0] = tmpBoxes[0].getWeight();
     sendBoxList.push_back(tmpBoxes[0]);
     sendBoxList[sendBoxList.size() - 1].setWeight(1);
     for(size_t i = 1; i < tmpBoxes.size(); ++i) {
-      sendBoxToMyBoxMap.push_back(tmpBoxes[i].getWeight());
+      sendBoxToMyBoxMap[i] = tmpBoxes[i].getWeight();
       if(tmpBoxes[i] == tmpBoxes[i - 1]) {
         sendBoxList[sendBoxList.size() - 1].addWeight(1);
       } else {
@@ -115,6 +115,10 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
   double* s3Arr = (&(s3[0])) - 1;
 
   std::vector<double> sendLlist((numWcoeffs*(sendBoxList.size())), 0);
+  for(int i = 0, cnt = 0; i < sendBoxList.size(); ++i) {
+    for(int j = 0; j < sendBoxList[i].getWeight(); ++j, ++cnt) {
+    }//end j
+  }//end i
 
   int* sendCnts = new int[npes];
   int* sendDisps = new int[npes];
