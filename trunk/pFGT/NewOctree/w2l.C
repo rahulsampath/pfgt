@@ -115,6 +115,7 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
   double* s3Arr = (&(s3[0])) - 1;
 
   std::vector<double> sendLlist((numWcoeffs*(sendBoxList.size())), 0);
+
   for(int i = 0, cnt = 0; i < sendBoxList.size(); ++i) {
     for(int j = 0; j < sendBoxList[i].getWeight(); ++j, ++cnt) {
     }//end j
