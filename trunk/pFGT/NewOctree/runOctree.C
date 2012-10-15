@@ -33,6 +33,7 @@ PetscLogEvent w2dD2lDsearchEvent;
 PetscLogEvent w2lSearchEvent;
 PetscLogEvent d2dSearchEvent;
 PetscLogEvent w2dD2lDsortEvent;
+PetscLogEvent w2lSortEvent;
 
 bool softEquals(double a, double b) {
   return ((fabs(a - b)) < 1.0e-14);
@@ -59,6 +60,7 @@ int main(int argc, char** argv) {
   PetscLogEventRegister("S2W", fgtCookie, &s2wEvent);
   PetscLogEventRegister("L2T", fgtCookie, &l2tEvent);
   PetscLogEventRegister("W2L", fgtCookie, &w2lEvent);
+  PetscLogEventRegister("W2Lsort", fgtCookie, &w2lSortEvent);
   PetscLogEventRegister("D2D", fgtCookie, &d2dEvent);
   PetscLogEventRegister("W2D2LE", fgtCookie, &w2dD2lExpandEvent);
   PetscLogEventRegister("W2D2LD", fgtCookie, &w2dD2lDirectEvent);
@@ -104,47 +106,23 @@ int main(int argc, char** argv) {
   }
 
   int P, L, H;
-  double directExpandLoadRatio;
+  double directExpandLoadRatio = 1.0;
   if(softEquals(epsilon, 1.0e-3)) {
     P = 6;
     L = 5;
     H = 4;
-    if(numPtsPerProc == 10000) {
-      directExpandLoadRatio = 55.197;
-    } else {
-      //30K pts
-      directExpandLoadRatio = 163.06;
-    }
   } else if(softEquals(epsilon, 1.0e-6)) {
     P = 10;
     L = 7;
     H = 8;
-    if(numPtsPerProc == 10000) {
-      directExpandLoadRatio = 13.79;
-    } else {
-      //30K pts
-      directExpandLoadRatio = 40.592;
-    }
   } else if(softEquals(epsilon, 1.0e-9)) {
     P = 16;
     L = 10;
     H = 12;
-    if(numPtsPerProc == 10000) {
-      directExpandLoadRatio = 3.269;
-    } else {
-      //30K pts
-      directExpandLoadRatio = 8.403;
-    }
   } else if(softEquals(epsilon, 1.0e-12)) {
     P = 20;
     L = 11;
     H = 14;
-    if(numPtsPerProc == 10000) {
-      directExpandLoadRatio = 1.537;
-    } else {
-      //30K pts
-      directExpandLoadRatio = 4.286;
-    }
   } else {
     if(!rank) {
       std::cout<<"Wrong epsilon!"<<std::endl;
