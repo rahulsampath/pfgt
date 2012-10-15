@@ -16,7 +16,7 @@ extern PetscLogEvent pfgtExpandEvent;
 extern PetscLogEvent pfgtDirectEvent;
 
 void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev,
-    const int P, const int L, const int K, const double epsilon, MPI_Comm comm) {
+    const int P, const int L, const int K, const double epsilon, const double directExpandLoadRatio, MPI_Comm comm) {
   PetscLogEventBegin(pfgtMainEvent, 0, 0, 0, 0);
 
   std::vector<double> expandSources;
@@ -28,7 +28,7 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
 
   bool singleType = false;
 
-  pfgtSetup(expandSources, directSources, fgtList, singleType, npesExpand, avgExpand, 
+  pfgtSetup(directExpandLoadRatio, expandSources, directSources, fgtList, singleType, npesExpand, avgExpand, 
       extraExpand, subComm, sources, minPtsInFgt, FgtLev, comm);
 
   int rank;
@@ -53,7 +53,8 @@ void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, cons
   PetscLogEventEnd(pfgtMainEvent, 0, 0, 0, 0);
 }
 
-void pfgtSetup(std::vector<double>& expandSources, std::vector<double>& directSources, std::vector<ot::TreeNode>& fgtList,
+void pfgtSetup(const double directExpandLoadRatio, std::vector<double>& expandSources,
+    std::vector<double>& directSources, std::vector<ot::TreeNode>& fgtList,
     bool & singleType, int & npesExpand, int & avgExpand, int & extraExpand, MPI_Comm & subComm,
     std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev, MPI_Comm comm) {
   PetscLogEventBegin(pfgtSetupEvent, 0, 0, 0, 0);
@@ -128,9 +129,10 @@ void pfgtSetup(std::vector<double>& expandSources, std::vector<double>& directSo
     assert(false);
   } else {
     //Both Expand and Direct
-    //NOTE: The following heuristic may need to be modified!
     singleType = false;
-    npesExpand = (globalSizes[0]*npes)/(globalSizes[0] + globalSizes[1]);
+    double numer = static_cast<double>(globalSizes[0]*npes);
+    double denom = (static_cast<double>(globalSizes[0])) + ((static_cast<double>(globalSizes[1]))*directExpandLoadRatio); 
+    npesExpand = static_cast<int>(std::floor(numer/denom));
 #ifdef DEBUG
     assert(npesExpand < npes);
 #endif

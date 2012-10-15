@@ -104,23 +104,27 @@ int main(int argc, char** argv) {
   }
 
   int P, L, H;
-
+  double directExpandLoadRatio;
   if(softEquals(epsilon, 1.0e-3)) {
     P = 6;
     L = 5;
     H = 4;
+    directExpandLoadRatio = 1.0;
   } else if(softEquals(epsilon, 1.0e-6)) {
     P = 10;
     L = 7;
     H = 8;
+    directExpandLoadRatio = 1.0;
   } else if(softEquals(epsilon, 1.0e-9)) {
     P = 16;
     L = 10;
     H = 12;
+    directExpandLoadRatio = 1.0;
   } else if(softEquals(epsilon, 1.0e-12)) {
     P = 20;
     L = 11;
     H = 14;
+    directExpandLoadRatio = 1.0;
   } else {
     if(!rank) {
       std::cout<<"Wrong epsilon!"<<std::endl;
@@ -136,6 +140,7 @@ int main(int argc, char** argv) {
     std::cout<<"L = "<<L<<std::endl;
     std::cout<<"K = "<<K<<std::endl;
     std::cout<<"H = "<<H<<std::endl;
+    std::cout<<"D/E Load Ratio = "<<directExpandLoadRatio<<std::endl;
   }
 
   //Generate gaussian distribution of points in (0, 1)
@@ -180,7 +185,7 @@ int main(int argc, char** argv) {
   doExact(sources, delta);
 #endif
 
-  pfgtMain(sources, minPtsInFgt, FgtLev, P, L, K, epsilon, MPI_COMM_WORLD);
+  pfgtMain(sources, minPtsInFgt, FgtLev, P, L, K, epsilon, directExpandLoadRatio, MPI_COMM_WORLD);
 
   MPI_Barrier(MPI_COMM_WORLD);
   if(!rank) {
