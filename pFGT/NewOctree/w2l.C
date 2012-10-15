@@ -8,6 +8,7 @@
 
 extern PetscLogEvent w2lEvent;
 extern PetscLogEvent w2lSearchEvent;
+extern PetscLogEvent w2lSortEvent;
 
 void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist, 
     std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & fgtMins,
@@ -66,9 +67,14 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
     }//end dAz
   }//end i
 
+  //Performance Improvement: We could avoid this sort if we move the
+  //construction of sendBoxList and sendBoxToMyBoxMap into the above loop. This will
+  //also reduce the temporary storage required for tmpBoxes.
+  PetscLogEventBegin(w2lSortEvent, 0, 0, 0, 0);
   if(!(tmpBoxes.empty())) {
     std::sort(tmpBoxes.begin(), tmpBoxes.end());
   }
+  PetscLogEventEnd(w2lSortEvent, 0, 0, 0, 0);
 
   int* sendCnts = new int[npes];
   for(int i = 0; i < npes; ++i) {
