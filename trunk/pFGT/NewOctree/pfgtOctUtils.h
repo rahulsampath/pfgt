@@ -22,9 +22,10 @@
 #define __COMP_MUL_IM(a, ai, b, bi) ( ((a)*(bi)) + ((ai)*(b)) )
 
 void pfgtMain(std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev,
-    const int P, const int L, const int K, const double epsilon, MPI_Comm comm);
+    const int P, const int L, const int K, const double epsilon, const double directExpandLoadRatio, MPI_Comm comm);
 
-void pfgtSetup(std::vector<double>& expandSources, std::vector<double>& directSources, std::vector<ot::TreeNode>& fgtList,
+void pfgtSetup(const double directExpandLoadRatio, std::vector<double>& expandSources, 
+    std::vector<double>& directSources, std::vector<ot::TreeNode>& fgtList,
     bool & singleType, int & npesExpand, int & avgExpand, int & extraExpand, MPI_Comm & subComm,
     std::vector<double>& sources, const unsigned int minPtsInFgt, const unsigned int FgtLev, MPI_Comm comm);
 
