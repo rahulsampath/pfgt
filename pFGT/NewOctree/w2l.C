@@ -55,9 +55,9 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
     } else {
       dAze = (__ITPMD__) - cellsPerFgt;
     }
-    for(unsigned int dAz = dAzs; dAz <= dAze; dAz += cellsPerFgt) {
-      for(unsigned int dAy = dAys; dAy <= dAye; dAy += cellsPerFgt) {
-        for(unsigned int dAx = dAxs; dAx <= dAxe; dAx += cellsPerFgt) {
+    for(unsigned long long int dAz = dAzs; dAz <= dAze; dAz += cellsPerFgt) {
+      for(unsigned long long int dAy = dAys; dAy <= dAye; dAy += cellsPerFgt) {
+        for(unsigned long long int dAx = dAxs; dAx <= dAxe; dAx += cellsPerFgt) {
           ot::TreeNode boxD(dAx, dAy, dAz, FgtLev, __DIM__, __MAX_DEPTH__);
           boxD.setWeight(i);
           tmpBoxes.push_back(boxD);
@@ -66,49 +66,49 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
     }//end dAz
   }//end i
 
-  std::vector<ot::TreeNode> sendBoxList;
-  std::vector<unsigned int> sendBoxToMyBoxMap(tmpBoxes.size());
   if(!(tmpBoxes.empty())) {
     std::sort(tmpBoxes.begin(), tmpBoxes.end());
-
-    sendBoxToMyBoxMap[0] = tmpBoxes[0].getWeight();
-    sendBoxList.push_back(tmpBoxes[0]);
-    sendBoxList[sendBoxList.size() - 1].setWeight(1);
-    for(size_t i = 1; i < tmpBoxes.size(); ++i) {
-      sendBoxToMyBoxMap[i] = tmpBoxes[i].getWeight();
-      if(tmpBoxes[i] == tmpBoxes[i - 1]) {
-        sendBoxList[sendBoxList.size() - 1].addWeight(1);
-      } else {
-        sendBoxList.push_back(tmpBoxes[i]);
-        sendBoxList[sendBoxList.size() - 1].setWeight(1);
-      }
-    }//end i
   }
-  tmpBoxes.clear();
 
   int* sendCnts = new int[npes];
-  int* sendDisps = new int[npes];
-  int* recvCnts = new int[npes];
-  int* recvDisps = new int[npes];
-
   for(int i = 0; i < npes; ++i) {
     sendCnts[i] = 0;
   }//end i 
 
   //Performance Improvement: This binary search can be avoided by using the
-  //fact that sendBoxList is sorted.
+  //fact that tmpBoxes is sorted.
   PetscLogEventBegin(w2lSearchEvent, 0, 0, 0, 0);
-  for(size_t i = 0; i < sendBoxList.size(); ++i) {
-    unsigned int retIdx;
-    bool found = seq::maxLowerBound(fgtMins, sendBoxList[i], retIdx, NULL, NULL);
-    if(found) {
-      ++(sendCnts[fgtMins[retIdx].getWeight()]);
+  std::vector<ot::TreeNode> sendBoxList;
+  std::vector<unsigned int> sendBoxToMyBoxMap;
+  for(size_t i = 0; i < tmpBoxes.size(); ++i) {
+    unsigned int myBoxId = tmpBoxes[i].getWeight();
+    unsigned int idx;
+    bool foundNew = false;
+    if(sendBoxList.empty()) {
+      foundNew = seq::maxLowerBound<ot::TreeNode>(fgtMins, tmpBoxes[i], idx, NULL, NULL);
+    } else {
+      if(tmpBoxes[i] == sendBoxList[sendBoxList.size() - 1]) {
+        sendBoxToMyBoxMap.push_back(myBoxId);
+        sendBoxList[sendBoxList.size() - 1].addWeight(1);
+      } else {
+        foundNew = seq::maxLowerBound<ot::TreeNode>(fgtMins, tmpBoxes[i], idx, NULL, NULL);
+      }
+    }
+    if(foundNew) {
+      ++(sendCnts[fgtMins[idx].getWeight()]);
+      sendBoxToMyBoxMap.push_back(myBoxId);
+      sendBoxList.push_back(tmpBoxes[i]);
+      sendBoxList[sendBoxList.size() - 1].setWeight(1);
     }
   }//end i
+  tmpBoxes.clear();
   PetscLogEventEnd(w2lSearchEvent, 0, 0, 0, 0);
 
+  int* recvCnts = new int[npes];
   MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, subComm);
 
+  int* sendDisps = new int[npes];
+  int* recvDisps = new int[npes];
   sendDisps[0] = 0;
   recvDisps[0] = 0;
   for(int i = 1; i < npes; ++i) {
