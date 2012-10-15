@@ -109,22 +109,42 @@ int main(int argc, char** argv) {
     P = 6;
     L = 5;
     H = 4;
-    directExpandLoadRatio = 1.0;
+    if(numPtsPerProc == 10000) {
+      directExpandLoadRatio = 55.197;
+    } else {
+      //30K pts
+      directExpandLoadRatio = 163.06;
+    }
   } else if(softEquals(epsilon, 1.0e-6)) {
     P = 10;
     L = 7;
     H = 8;
-    directExpandLoadRatio = 1.0;
+    if(numPtsPerProc == 10000) {
+      directExpandLoadRatio = 13.79;
+    } else {
+      //30K pts
+      directExpandLoadRatio = 40.592;
+    }
   } else if(softEquals(epsilon, 1.0e-9)) {
     P = 16;
     L = 10;
     H = 12;
-    directExpandLoadRatio = 1.0;
+    if(numPtsPerProc == 10000) {
+      directExpandLoadRatio = 3.269;
+    } else {
+      //30K pts
+      directExpandLoadRatio = 8.403;
+    }
   } else if(softEquals(epsilon, 1.0e-12)) {
     P = 20;
     L = 11;
     H = 14;
-    directExpandLoadRatio = 1.0;
+    if(numPtsPerProc == 10000) {
+      directExpandLoadRatio = 1.537;
+    } else {
+      //30K pts
+      directExpandLoadRatio = 4.286;
+    }
   } else {
     if(!rank) {
       std::cout<<"Wrong epsilon!"<<std::endl;
