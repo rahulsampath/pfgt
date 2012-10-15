@@ -86,6 +86,118 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
   }
   tmpBoxes.clear();
 
+  int* sendCnts = new int[npes];
+  int* sendDisps = new int[npes];
+  int* recvCnts = new int[npes];
+  int* recvDisps = new int[npes];
+
+  for(int i = 0; i < npes; ++i) {
+    sendCnts[i] = 0;
+  }//end i 
+
+  //Performance Improvement: This binary search can be avoided by using the
+  //fact that sendBoxList is sorted.
+  PetscLogEventBegin(w2lSearchEvent, 0, 0, 0, 0);
+  for(size_t i = 0; i < sendBoxList.size(); ++i) {
+    unsigned int retIdx;
+    bool found = seq::maxLowerBound(fgtMins, sendBoxList[i], retIdx, NULL, NULL);
+    if(found) {
+      ++(sendCnts[fgtMins[retIdx].getWeight()]);
+    }
+  }//end i
+  PetscLogEventEnd(w2lSearchEvent, 0, 0, 0, 0);
+
+  MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, subComm);
+
+  sendDisps[0] = 0;
+  recvDisps[0] = 0;
+  for(int i = 1; i < npes; ++i) {
+    sendDisps[i] = sendDisps[i - 1] + sendCnts[i - 1];
+    recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
+  }//end i
+
+  std::vector<ot::TreeNode> recvBoxList(recvDisps[npes - 1] + recvCnts[npes - 1]);
+
+  ot::TreeNode* sendBuf1 = NULL;
+  if(!(sendBoxList.empty())) {
+    sendBuf1 = &(sendBoxList[0]);
+  }
+
+  ot::TreeNode* recvBuf1 = NULL;
+  if(!(recvBoxList.empty())) {
+    recvBuf1 = &(recvBoxList[0]);
+  }
+
+  MPI_Alltoallv(sendBuf1, sendCnts, sendDisps, par::Mpi_datatype<ot::TreeNode>::value(),
+      recvBuf1, recvCnts, recvDisps, par::Mpi_datatype<ot::TreeNode>::value(), subComm);
+
+  PetscLogEventBegin(w2lSearchEvent, 0, 0, 0, 0);
+  //Performance Improvement: This binary search can be avoided by making use of
+  //the fact that recvBoxList is sorted within each processor chunk.
+  std::vector<int> foundIdx((recvBoxList.size()), -1);
+  for(size_t i = 0; i < recvBoxList.size(); ++i) {
+    unsigned int retIdx;
+    bool found = seq::BinarySearch(&(fgtList[0]), fgtList.size(), recvBoxList[i], &retIdx);
+    if(found) {
+      foundIdx[i] = retIdx;
+    }
+  }//end i
+  PetscLogEventEnd(w2lSearchEvent, 0, 0, 0, 0);
+  recvBoxList.clear();
+
+  std::vector<int> recvFoundIdx(sendBoxList.size());
+
+  int* sendBuf2 = NULL;
+  if(!(foundIdx.empty())) {
+    sendBuf2 = &(foundIdx[0]);
+  }
+
+  int* recvBuf2 = NULL; 
+  if(!(recvFoundIdx.empty())) {
+    recvBuf2 = &(recvFoundIdx[0]);
+  }
+
+  MPI_Alltoallv(sendBuf2, recvCnts, recvDisps, MPI_INT,
+      recvBuf2, sendCnts, sendDisps, MPI_INT, subComm);
+
+  std::vector<int> tmpFoundIdx;
+  for(int i = 0; i < npes; ++i) {
+    int numNotFound = 0;
+    for(int j = 0; j < recvCnts[i]; ++j) {
+      if(foundIdx[recvDisps[i] + j] < 0) {
+        ++numNotFound;
+      } else {
+        tmpFoundIdx.push_back(foundIdx[recvDisps[i] + j]);
+      }
+    }//end j
+    recvCnts[i] -= numNotFound;
+  }//end i
+  swap(tmpFoundIdx, foundIdx);
+  tmpFoundIdx.clear();
+
+  std::vector<ot::TreeNode> tmpSendBoxList;
+  std::vector<unsigned int> tmpSendBoxToMyBoxMap;
+  for(int i = 0, cnt = 0; i < npes; ++i) {
+    int numNotFound = 0;
+    for(int j = 0; j < sendCnts[i]; ++j) {
+      int boxId = sendDisps[i] + j;
+      if(recvFoundIdx[boxId] < 0) {
+        ++numNotFound;
+      } else {
+        tmpSendBoxList.push_back(sendBoxList[boxId]);
+        tmpSendBoxToMyBoxMap.insert(tmpSendBoxToMyBoxMap.end(), (sendBoxToMyBoxMap.begin() + cnt), 
+            (sendBoxToMyBoxMap.begin() + cnt + (sendBoxList[boxId].getWeight())));
+      }
+      cnt += (sendBoxList[boxId].getWeight());
+    }//end j
+    sendCnts[i] -= numNotFound;
+  }//end i
+  swap(tmpSendBoxList, sendBoxList);
+  swap(tmpSendBoxToMyBoxMap, sendBoxToMyBoxMap);
+  tmpSendBoxList.clear();
+  tmpSendBoxToMyBoxMap.clear();
+  recvFoundIdx.clear();
+
   //Complex coefficients: [-P, P]x[-P, P]x[0, P] 
   //Coeff[-K1, -K2, -K3] = ComplexConjugate(Coeff[K1, K2, K3])
   const unsigned int TwoPplus1 = (2*P) + 1;
@@ -472,29 +584,12 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
       }//end k3
     }//end j
   }//end i
-
-  int* sendCnts = new int[npes];
-  int* sendDisps = new int[npes];
-  int* recvCnts = new int[npes];
-  int* recvDisps = new int[npes];
+  sendBoxList.clear();
 
   for(int i = 0; i < npes; ++i) {
-    sendCnts[i] = 0;
+    sendCnts[i] *= numWcoeffs;
+    recvCnts[i] *= numWcoeffs;
   }//end i 
-
-  //Performance Improvement: This binary search can be avoided by using the
-  //fact that sendBoxList is sorted.
-  PetscLogEventBegin(w2lSearchEvent, 0, 0, 0, 0);
-  for(size_t i = 0; i < sendBoxList.size(); ++i) {
-    unsigned int retIdx;
-    bool found = seq::maxLowerBound(fgtMins, sendBoxList[i], retIdx, NULL, NULL);
-    if(found) {
-      ++(sendCnts[fgtMins[retIdx].getWeight()]);
-    }
-  }//end i
-  PetscLogEventEnd(w2lSearchEvent, 0, 0, 0, 0);
-
-  MPI_Alltoall(sendCnts, 1, MPI_INT, recvCnts, 1, MPI_INT, subComm);
 
   sendDisps[0] = 0;
   recvDisps[0] = 0;
@@ -503,61 +598,31 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
     recvDisps[i] = recvDisps[i - 1] + recvCnts[i - 1];
   }//end i
 
-  std::vector<ot::TreeNode> recvBoxList(recvDisps[npes - 1] + recvCnts[npes - 1]);
-
-  ot::TreeNode* sendBuf1 = NULL;
-  if(!(sendBoxList.empty())) {
-    sendBuf1 = &(sendBoxList[0]);
-  }
-
-  ot::TreeNode* recvBuf1 = NULL;
-  if(!(recvBoxList.empty())) {
-    recvBuf1 = &(recvBoxList[0]);
-  }
-
-  MPI_Alltoallv(sendBuf1, sendCnts, sendDisps, par::Mpi_datatype<ot::TreeNode>::value(),
-      recvBuf1, recvCnts, recvDisps, par::Mpi_datatype<ot::TreeNode>::value(), subComm);
-
-  for(int i = 0; i < npes; ++i) {
-    sendCnts[i] *= numWcoeffs;
-    sendDisps[i] *= numWcoeffs;
-    recvCnts[i] *= numWcoeffs;
-    recvDisps[i] *= numWcoeffs;
-  }//end i 
-
   std::vector<double> recvLlist(recvDisps[npes - 1] + recvCnts[npes - 1]);
 
-  double* sendBuf2 = NULL;
+  double* sendBuf3 = NULL;
   if(!(sendLlist.empty())) {
-    sendBuf2 = &(sendLlist[0]);
+    sendBuf3 = &(sendLlist[0]);
   }
 
-  double* recvBuf2 = NULL;
+  double* recvBuf3 = NULL;
   if(!(recvLlist.empty())) {
-    recvBuf2 = &(recvLlist[0]);
+    recvBuf3 = &(recvLlist[0]);
   }
 
-  MPI_Alltoallv(sendBuf2, sendCnts, sendDisps, MPI_DOUBLE,
-      recvBuf2, recvCnts, recvDisps, MPI_DOUBLE, subComm);
+  MPI_Alltoallv(sendBuf3, sendCnts, sendDisps, MPI_DOUBLE,
+      recvBuf3, recvCnts, recvDisps, MPI_DOUBLE, subComm);
 
   delete [] sendCnts;
   delete [] sendDisps;
   delete [] recvCnts;
   delete [] recvDisps;
 
-  //Performance Improvement: This binary search can be avoided by making use of
-  //the fact that recvBoxList is sorted within each processor chunk.
-  PetscLogEventBegin(w2lSearchEvent, 0, 0, 0, 0);
-  for(size_t i = 0; i < recvBoxList.size(); ++i) {
-    unsigned int retIdx;
-    bool found = seq::BinarySearch(&(fgtList[0]), fgtList.size(), recvBoxList[i], &retIdx);
-    if(found) {
-      for(int d = 0; d < numWcoeffs; ++d) {
-        localLlist[(numWcoeffs*retIdx) + d] += recvLlist[(numWcoeffs*i) + d];
-      }//end d
-    }
+  for(size_t i = 0; i < foundIdx.size(); ++i) {
+    for(int d = 0; d < numWcoeffs; ++d) {
+      localLlist[(numWcoeffs*(foundIdx[i])) + d] += recvLlist[(numWcoeffs*i) + d];
+    }//end d
   }//end i
-  PetscLogEventEnd(w2lSearchEvent, 0, 0, 0, 0);
 
   PetscLogEventEnd(w2lEvent, 0, 0, 0, 0);
 }
