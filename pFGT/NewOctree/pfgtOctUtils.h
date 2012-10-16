@@ -80,7 +80,7 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
 
 void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & sources,
     std::vector<ot::TreeNode> & fgtMins, const unsigned int FgtLev, 
-    const int P, const int L, const int K, const double epsilon, MPI_Comm comm);
+    const int P, const int L, const unsigned long long int K, const double epsilon, MPI_Comm comm);
 
 #endif
 
