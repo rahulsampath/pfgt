@@ -9,6 +9,8 @@
 extern PetscLogEvent w2lEvent;
 extern PetscLogEvent w2lSearchEvent;
 extern PetscLogEvent w2lSortEvent;
+extern PetscLogEvent w2lGenEvent;
+extern PetscLogEvent w2lCoreEvent;
 
 void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist, 
     std::vector<ot::TreeNode> & fgtList, std::vector<ot::TreeNode> & fgtMins,
@@ -20,6 +22,7 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
 
   const unsigned long long int cellsPerFgt = (1ull << (__MAX_DEPTH__ - FgtLev));
 
+  PetscLogEventBegin(w2lGenEvent, 0, 0, 0, 0);
   std::vector<ot::TreeNode> tmpBoxes;
   for(size_t i = 0; i < fgtList.size(); ++i) {
     unsigned long long int bAx = fgtList[i].getX();
@@ -66,6 +69,7 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
       }//end dAy
     }//end dAz
   }//end i
+  PetscLogEventEnd(w2lGenEvent, 0, 0, 0, 0);
 
   //Performance Improvement: We could avoid this sort if we move the
   //construction of sendBoxList and sendBoxToMyBoxMap into the above loop. This will
@@ -234,6 +238,7 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
 
   std::vector<double> sendLlist((numWcoeffs*(sendBoxList.size())), 0);
 
+  PetscLogEventBegin(w2lCoreEvent, 0, 0, 0, 0);
   for(int i = 0, cnt = 0; i < sendBoxList.size(); ++i) {
     double* tmpArr = &(sendLlist[i*numWcoeffs]);
     unsigned long long int dAx = sendBoxList[i].getX();
@@ -591,6 +596,7 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
     }//end j
   }//end i
   sendBoxList.clear();
+  PetscLogEventEnd(w2lCoreEvent, 0, 0, 0, 0);
 
   for(int i = 0; i < npes; ++i) {
     sendCnts[i] *= numWcoeffs;
