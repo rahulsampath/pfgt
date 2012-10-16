@@ -105,7 +105,7 @@ int main(int argc, char** argv) {
   } else if(argv[5][0] == 'D') {
     minPtsInFgt = (npes*numPtsPerProc) + 1; 
   } else if(argv[5][0] == 'H') {
-    minPtsInFgt = 4000; 
+    minPtsInFgt = 1000; 
   } else {
     assert(false);
   }
