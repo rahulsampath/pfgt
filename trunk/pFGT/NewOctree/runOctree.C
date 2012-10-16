@@ -29,6 +29,8 @@ PetscLogEvent w2lSearchEvent;
 PetscLogEvent w2lCoreEvent;
 PetscLogEvent w2dD2lExpandEvent;
 PetscLogEvent w2dD2lEsearchEvent;
+PetscLogEvent w2dD2lEcore1Event;
+PetscLogEvent w2dD2lEcore2Event;
 PetscLogEvent l2tEvent;
 PetscLogEvent pfgtDirectEvent;
 PetscLogEvent d2dEvent;
@@ -69,6 +71,8 @@ int main(int argc, char** argv) {
   PetscLogEventRegister("W2Lcore", fgtCookie, &w2lCoreEvent);
   PetscLogEventRegister("W2D2LE", fgtCookie, &w2dD2lExpandEvent);
   PetscLogEventRegister("W2D2LEsearch", fgtCookie, &w2dD2lEsearchEvent);
+  PetscLogEventRegister("W2D2LEcore1", fgtCookie, &w2dD2lEcore1Event);
+  PetscLogEventRegister("W2D2LEcore2", fgtCookie, &w2dD2lEcore2Event);
   PetscLogEventRegister("L2T", fgtCookie, &l2tEvent);
   PetscLogEventRegister("FgtDirect", fgtCookie, &pfgtDirectEvent);
   PetscLogEventRegister("D2D", fgtCookie, &d2dEvent);
@@ -101,7 +105,7 @@ int main(int argc, char** argv) {
   } else if(argv[5][0] == 'D') {
     minPtsInFgt = (npes*numPtsPerProc) + 1; 
   } else if(argv[5][0] == 'H') {
-    minPtsInFgt = 3500; 
+    minPtsInFgt = 3000; 
   } else {
     assert(false);
   }
