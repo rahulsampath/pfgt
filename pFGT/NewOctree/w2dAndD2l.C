@@ -7,11 +7,13 @@
 #include "par/dtypes.h"
 
 extern PetscLogEvent w2dD2lExpandEvent;
-extern PetscLogEvent w2dD2lDirectEvent;
 extern PetscLogEvent w2dD2lEsearchEvent;
-extern PetscLogEvent w2dD2lDsearchEvent;
-extern PetscLogEvent w2dD2lDsortEvent;
+extern PetscLogEvent w2dD2lEcore1Event;
+extern PetscLogEvent w2dD2lEcore2Event;
+extern PetscLogEvent w2dD2lDirectEvent;
 extern PetscLogEvent w2dD2lDgenEvent;
+extern PetscLogEvent w2dD2lDsortEvent;
+extern PetscLogEvent w2dD2lDsearchEvent;
 extern PetscLogEvent w2dD2lDcore1Event;
 extern PetscLogEvent w2dD2lDcore2Event;
 
@@ -67,9 +69,8 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
       recvBoxIds[i] = retIdx;
     }
   }//end i
-  PetscLogEventEnd(w2dD2lEsearchEvent, 0, 0, 0, 0);
-
   recvBoxList.clear();
+  PetscLogEventEnd(w2dD2lEsearchEvent, 0, 0, 0, 0);
 
   int* recvBoxIdsPtr = NULL;
   if(!(recvBoxIds.empty())) {
@@ -112,11 +113,13 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
 
   std::vector<double> sendWlist((recvDisps[npes - 1] + recvCnts[npes - 1]), 0.0);
 
+  PetscLogEventBegin(w2dD2lEcore1Event, 0, 0, 0, 0);
   for(int i = 0; i < recvBoxIds.size(); ++i) {
     for(int d = 0; d < numWcoeffs; ++d) {
       sendWlist[(numWcoeffs*i) + d] = localWlist[(numWcoeffs*(recvBoxIds[i])) + d];
     }//end d
   }//end i
+  PetscLogEventEnd(w2dD2lEcore1Event, 0, 0, 0, 0);
 
   std::vector<double> recvLlist(recvDisps[npes - 1] + recvCnts[npes - 1]);
 
@@ -138,11 +141,13 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
   delete [] recvCnts;
   delete [] recvDisps;
 
+  PetscLogEventBegin(w2dD2lEcore2Event, 0, 0, 0, 0);
   for(int i = 0; i < recvBoxIds.size(); ++i) {
     for(int d = 0; d < numWcoeffs; ++d) {
       localLlist[(numWcoeffs*(recvBoxIds[i])) + d] += recvLlist[(numWcoeffs*i) + d];
     }//end d
   }//end i
+  PetscLogEventEnd(w2dD2lEcore2Event, 0, 0, 0, 0);
 
   recvBoxIds.clear();
   recvLlist.clear(); 
