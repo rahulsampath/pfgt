@@ -11,6 +11,9 @@ extern PetscLogEvent w2dD2lDirectEvent;
 extern PetscLogEvent w2dD2lEsearchEvent;
 extern PetscLogEvent w2dD2lDsearchEvent;
 extern PetscLogEvent w2dD2lDsortEvent;
+extern PetscLogEvent w2dD2lDgenEvent;
+extern PetscLogEvent w2dD2lDcore1Event;
+extern PetscLogEvent w2dD2lDcore2Event;
 
 void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & localWlist, 
     std::vector<ot::TreeNode> & fgtList, const int P, MPI_Comm comm) {
@@ -175,6 +178,7 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
 
   std::vector<ot::TreeNode> tmpSendBoxList;
 
+  PetscLogEventBegin(w2dD2lDgenEvent, 0, 0, 0, 0);
   for(int i = 0; i < sources.size(); i += 4) {
     unsigned long long int uiMinPt1[3];
     unsigned long long int uiMaxPt1[3];
@@ -228,6 +232,7 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
       tmpSendBoxList.push_back(selectedBoxes[j]);
     }//end j
   }//end i
+  PetscLogEventEnd(w2dD2lDgenEvent, 0, 0, 0, 0);
 
   //Performance Improvement: We could avoid this sort if we move the
   //construction of sendBoxList and box2PtMap into the above loop. This will
@@ -356,6 +361,7 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
 
   std::vector<double> sendLlist((sendDisps[npes - 1] + sendCnts[npes - 1]), 0.0);
 
+  PetscLogEventBegin(w2dD2lDcore1Event, 0, 0, 0, 0);
   for(int i = 0; i < foundIds.size(); ++i) {
     double* arr = &(sendLlist[numWcoeffs*i]); 
     int boxId = foundIds[i];
@@ -686,6 +692,7 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
       }//end k3
     }//end j
   }//end i
+  PetscLogEventEnd(w2dD2lDcore1Event, 0, 0, 0, 0);
 
   std::vector<double> recvWlist(sendDisps[npes - 1] + sendCnts[npes - 1]);
 
@@ -715,6 +722,7 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
     facArr[k] = C0*exp(ReExpZfactor*(static_cast<double>(k*k)));
   }//end k
 
+  PetscLogEventBegin(w2dD2lDcore2Event, 0, 0, 0, 0);
   for(int i = 0; i < foundIds.size(); ++i) {
     double* arr = &(recvWlist[numWcoeffs*i]);
     int boxId = foundIds[i];
@@ -1029,6 +1037,7 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
       results[sOff/4] += outVal;
     }//end j
   }//end i
+  PetscLogEventEnd(w2dD2lDcore2Event, 0, 0, 0, 0);
 
   PetscLogEventEnd(w2dD2lDirectEvent, 0, 0, 0, 0);
 }
