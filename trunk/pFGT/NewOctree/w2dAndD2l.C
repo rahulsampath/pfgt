@@ -149,7 +149,7 @@ void w2dAndD2lExpand(std::vector<double> & localLlist, std::vector<double> & loc
 
 void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & sources,
     std::vector<ot::TreeNode> & fgtMins, const unsigned int FgtLev, 
-    const int P, const int L, const int K, const double epsilon, MPI_Comm comm) {
+    const int P, const int L, const unsigned long long int K, const double epsilon, MPI_Comm comm) {
   PetscLogEventBegin(w2dD2lDirectEvent, 0, 0, 0, 0);
 
   int npes;
@@ -160,7 +160,7 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
   const unsigned int TwoPplus1 = (2*P) + 1;
   const unsigned int numWcoeffs = 2*TwoPplus1*TwoPplus1*(P + 1);
 
-  const unsigned int cellsPerFgt = (1u << (__MAX_DEPTH__ - FgtLev));
+  const unsigned long long int cellsPerFgt = (1ull << (__MAX_DEPTH__ - FgtLev));
 
   const unsigned int twoPowFgtLev = (1u << FgtLev);
 
@@ -176,10 +176,10 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
   std::vector<ot::TreeNode> tmpSendBoxList;
 
   for(int i = 0; i < sources.size(); i += 4) {
-    unsigned int uiMinPt1[3];
-    unsigned int uiMaxPt1[3];
-    unsigned int uiMinPt2[3];
-    unsigned int uiMaxPt2[3];
+    unsigned long long int uiMinPt1[3];
+    unsigned long long int uiMaxPt1[3];
+    unsigned long long int uiMinPt2[3];
+    unsigned long long int uiMaxPt2[3];
     for(int d = 0; d < 3; ++d) {
       double minPt1 = sources[i + d] - ptIwidth;
       double maxPt1 = sources[i + d] + ptIwidth;
@@ -197,16 +197,16 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
       if(maxVal2 > (__DTPMD__)) {
         maxVal2 = (__DTPMD__);
       }
-      uiMinPt1[d] = static_cast<unsigned int>(floor(minPt1*invHfgt));
-      uiMaxPt1[d] = static_cast<unsigned int>(ceil(maxPt1*invHfgt));
-      uiMinPt2[d] = 1 + static_cast<unsigned int>(floor(minVal2));
-      uiMaxPt2[d] = static_cast<unsigned int>(ceil(maxVal2));
+      uiMinPt1[d] = static_cast<unsigned long long int>(std::floor(minPt1*invHfgt));
+      uiMaxPt1[d] = static_cast<unsigned long long int>(std::ceil(maxPt1*invHfgt));
+      uiMinPt2[d] = 1ull + static_cast<unsigned long long int>(std::floor(minVal2));
+      uiMaxPt2[d] = static_cast<unsigned long long int>(std::ceil(maxVal2));
     }//end d
     std::vector<ot::TreeNode> selectedBoxes;
     //Target box is in interaction list of source point.
-    for(unsigned int zi = uiMinPt1[2]; zi < uiMaxPt1[2]; ++zi) {
-      for(unsigned int yi = uiMinPt1[1]; yi < uiMaxPt1[1]; ++yi) {
-        for(unsigned int xi = uiMinPt1[0]; xi < uiMaxPt1[0]; ++xi) {
+    for(unsigned long long int zi = uiMinPt1[2]; zi < uiMaxPt1[2]; ++zi) {
+      for(unsigned long long int yi = uiMinPt1[1]; yi < uiMaxPt1[1]; ++yi) {
+        for(unsigned long long int xi = uiMinPt1[0]; xi < uiMaxPt1[0]; ++xi) {
           ot::TreeNode tmpBox((xi*cellsPerFgt), (yi*cellsPerFgt), (zi*cellsPerFgt),
               FgtLev, __DIM__, __MAX_DEPTH__);
           selectedBoxes.push_back(tmpBox);
@@ -214,9 +214,9 @@ void w2dAndD2lDirect(std::vector<double> & results, std::vector<double> & source
       }//end yi
     }//end zi
     //Target point is in interaction list of source box.
-    for(unsigned int zi = uiMinPt2[2]; zi < uiMaxPt2[2]; zi += cellsPerFgt) {
-      for(unsigned int yi = uiMinPt2[1]; yi < uiMaxPt2[1]; yi += cellsPerFgt) {
-        for(unsigned int xi = uiMinPt2[0]; xi < uiMaxPt2[0]; xi += cellsPerFgt) {
+    for(unsigned long long int zi = uiMinPt2[2]; zi < uiMaxPt2[2]; zi += cellsPerFgt) {
+      for(unsigned long long int yi = uiMinPt2[1]; yi < uiMaxPt2[1]; yi += cellsPerFgt) {
+        for(unsigned long long int xi = uiMinPt2[0]; xi < uiMaxPt2[0]; xi += cellsPerFgt) {
           ot::TreeNode tmpBox(xi, yi, zi, FgtLev, __DIM__, __MAX_DEPTH__);
           selectedBoxes.push_back(tmpBox);
         }//end xi
