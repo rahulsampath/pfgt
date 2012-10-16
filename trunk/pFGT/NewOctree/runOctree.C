@@ -19,24 +19,24 @@
 PetscCookie fgtCookie;
 PetscLogEvent pfgtMainEvent;
 PetscLogEvent pfgtSetupEvent;
-PetscLogEvent pfgtExpandEvent;
-PetscLogEvent pfgtDirectEvent;
 PetscLogEvent splitSourcesEvent;
+PetscLogEvent pfgtExpandEvent;
 PetscLogEvent s2wEvent;
-PetscLogEvent l2tEvent;
 PetscLogEvent w2lEvent;
-PetscLogEvent d2dEvent;
-PetscLogEvent w2dD2lExpandEvent;
-PetscLogEvent w2dD2lDirectEvent;
-PetscLogEvent w2dD2lEsearchEvent;
-PetscLogEvent w2dD2lDsearchEvent;
-PetscLogEvent w2lSearchEvent;
-PetscLogEvent d2dSearchEvent;
-PetscLogEvent w2dD2lDsortEvent;
-PetscLogEvent w2lSortEvent;
 PetscLogEvent w2lGenEvent;
+PetscLogEvent w2lSortEvent;
+PetscLogEvent w2lSearchEvent;
 PetscLogEvent w2lCoreEvent;
+PetscLogEvent w2dD2lExpandEvent;
+PetscLogEvent w2dD2lEsearchEvent;
+PetscLogEvent l2tEvent;
+PetscLogEvent pfgtDirectEvent;
+PetscLogEvent d2dEvent;
+PetscLogEvent d2dSearchEvent;
+PetscLogEvent w2dD2lDirectEvent;
 PetscLogEvent w2dD2lDgenEvent;
+PetscLogEvent w2dD2lDsortEvent;
+PetscLogEvent w2dD2lDsearchEvent;
 PetscLogEvent w2dD2lDcore1Event;
 PetscLogEvent w2dD2lDcore2Event;
 
@@ -59,26 +59,26 @@ int main(int argc, char** argv) {
   PetscCookieRegister("Fgt", &fgtCookie);
   PetscLogEventRegister("FgtMain", fgtCookie, &pfgtMainEvent);
   PetscLogEventRegister("FgtSetup", fgtCookie, &pfgtSetupEvent);
-  PetscLogEventRegister("FgtExpand", fgtCookie, &pfgtExpandEvent);
-  PetscLogEventRegister("FgtDirect", fgtCookie, &pfgtDirectEvent);
   PetscLogEventRegister("SplitSrc", fgtCookie, &splitSourcesEvent);
+  PetscLogEventRegister("FgtExpand", fgtCookie, &pfgtExpandEvent);
   PetscLogEventRegister("S2W", fgtCookie, &s2wEvent);
-  PetscLogEventRegister("L2T", fgtCookie, &l2tEvent);
   PetscLogEventRegister("W2L", fgtCookie, &w2lEvent);
   PetscLogEventRegister("W2Lgen", fgtCookie, &w2lGenEvent);
   PetscLogEventRegister("W2Lsort", fgtCookie, &w2lSortEvent);
+  PetscLogEventRegister("W2Lsearch", fgtCookie, &w2lSearchEvent);
   PetscLogEventRegister("W2Lcore", fgtCookie, &w2lCoreEvent);
-  PetscLogEventRegister("D2D", fgtCookie, &d2dEvent);
   PetscLogEventRegister("W2D2LE", fgtCookie, &w2dD2lExpandEvent);
-  PetscLogEventRegister("W2D2LD", fgtCookie, &w2dD2lDirectEvent);
   PetscLogEventRegister("W2D2LEsearch", fgtCookie, &w2dD2lEsearchEvent);
-  PetscLogEventRegister("W2D2LDsearch", fgtCookie, &w2dD2lDsearchEvent);
-  PetscLogEventRegister("W2D2LDsort", fgtCookie, &w2dD2lDsortEvent);
+  PetscLogEventRegister("L2T", fgtCookie, &l2tEvent);
+  PetscLogEventRegister("FgtDirect", fgtCookie, &pfgtDirectEvent);
+  PetscLogEventRegister("D2D", fgtCookie, &d2dEvent);
+  PetscLogEventRegister("D2Dsearch", fgtCookie, &d2dSearchEvent);
+  PetscLogEventRegister("W2D2LD", fgtCookie, &w2dD2lDirectEvent);
   PetscLogEventRegister("W2D2LDgen", fgtCookie, &w2dD2lDgenEvent);
+  PetscLogEventRegister("W2D2LDsort", fgtCookie, &w2dD2lDsortEvent);
+  PetscLogEventRegister("W2D2LDsearch", fgtCookie, &w2dD2lDsearchEvent);
   PetscLogEventRegister("W2D2LDcore1", fgtCookie, &w2dD2lDcore1Event);
   PetscLogEventRegister("W2D2LDcore2", fgtCookie, &w2dD2lDcore2Event);
-  PetscLogEventRegister("W2Lsearch", fgtCookie, &w2lSearchEvent);
-  PetscLogEventRegister("D2Dsearch", fgtCookie, &d2dSearchEvent);
 
   int npes, rank;
   MPI_Comm_size(MPI_COMM_WORLD, &npes);
@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
 
   if(argc < 6) {
     if(!rank) {
-      std::cout<<"Usage: exe numPtsPerProc fMag epsilon FgtLev minPtsInFgt"<<std::endl;
+      std::cout<<"Usage: exe numPtsPerProc fMag epsilon FgtLev E/D/H"<<std::endl;
     }
     PetscFinalize();
   }
@@ -95,7 +95,16 @@ int main(int argc, char** argv) {
   double fMag = atof(argv[2]);
   double epsilon = atof(argv[3]);  
   unsigned int FgtLev = atoi(argv[4]);
-  unsigned int minPtsInFgt = atoi(argv[5]);
+  unsigned int minPtsInFgt; 
+  if(argv[5][0] == 'E') {
+    minPtsInFgt = 0; 
+  } else if(argv[5][0] == 'D') {
+    minPtsInFgt = (npes*numPtsPerProc) + 1; 
+  } else if(argv[5][0] == 'H') {
+    minPtsInFgt = 3500; 
+  } else {
+    assert(false);
+  }
 
   //Fgt box size = sqrt(delta)
   const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
