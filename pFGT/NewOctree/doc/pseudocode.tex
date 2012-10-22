@@ -1,22 +1,22 @@
   
 
-\begin{center}
-\begin{pseudocode}[doublebox]{PNUFGT}{N, \delta}
-\label{alg:pnufgt}
-\COMMENT{Computes $y = S x$} \\
-\mbox{Send $x$ from $\widehat{L}$ to $\widehat{R}$} \\
-\mbox{Compute $i^{(\widehat{L})} = K_{II}^{(\widehat{L})} x$} \\
-\mbox{Compute $i^{(\widehat{R})} = K_{II}^{(\widehat{R})} x$} \\
-\mbox{Compute $v_{\widehat{L}} = K_{\widehat{L}I} x$} \\
-\mbox{Compute $v_{\widehat{R}} = K_{\widehat{R}I} x$} \\
-\mbox{Solve $K_{\widehat{L}\widehat{L}} w_{\widehat{L}} = v_{\widehat{L}}$} \\
-\mbox{Solve $K_{\widehat{R}\widehat{R}} w_{\widehat{R}} = v_{\widehat{R}}$} \\
-\mbox{Compute $z^{(\widehat{L})} = K_{I\widehat{L}} w_{\widehat{L}}$} \\
-\mbox{Compute $z^{(\widehat{R})} = K_{I\widehat{R}} w_{\widehat{R}}$} \\
-\mbox{Compute $y^{(\widehat{L})} = i^{(\widehat{L})} - z^{(\widehat{L})}$} \\
-\mbox{Compute $y^{(\widehat{R})} = i^{(\widehat{R})} - z^{(\widehat{R})}$} \\
-\mbox{Send $y^{(\widehat{R})}$ from $\widehat{R}$ to $\widehat{L}$} \\
-\mbox{Compute $y = y^{(\widehat{L})} + y^{(\widehat{R})}$} \\
-\RETURN{y}
-\end{pseudocode}
-\end{center}
+%\begin{center}
+%\begin{pseudocode}[doublebox]{PNUFGT}{N, \delta}
+%\label{alg:pnufgt}
+%\COMMENT{Computes $y = S x$} \\
+%\mbox{Send $x$ from $\widehat{L}$ to $\widehat{R}$} \\
+%\mbox{Compute $i^{(\widehat{L})} = K_{II}^{(\widehat{L})} x$} \\
+%\mbox{Compute $i^{(\widehat{R})} = K_{II}^{(\widehat{R})} x$} \\
+%\mbox{Compute $v_{\widehat{L}} = K_{\widehat{L}I} x$} \\
+%\mbox{Compute $v_{\widehat{R}} = K_{\widehat{R}I} x$} \\
+%\mbox{Solve $K_{\widehat{L}\widehat{L}} w_{\widehat{L}} = v_{\widehat{L}}$} \\
+%\mbox{Solve $K_{\widehat{R}\widehat{R}} w_{\widehat{R}} = v_{\widehat{R}}$} \\
+%\mbox{Compute $z^{(\widehat{L})} = K_{I\widehat{L}} w_{\widehat{L}}$} \\
+%\mbox{Compute $z^{(\widehat{R})} = K_{I\widehat{R}} w_{\widehat{R}}$} \\
+%\mbox{Compute $y^{(\widehat{L})} = i^{(\widehat{L})} - z^{(\widehat{L})}$} \\
+%\mbox{Compute $y^{(\widehat{R})} = i^{(\widehat{R})} - z^{(\widehat{R})}$} \\
+%\mbox{Send $y^{(\widehat{R})}$ from $\widehat{R}$ to $\widehat{L}$} \\
+%\mbox{Compute $y = y^{(\widehat{L})} + y^{(\widehat{R})}$} \\
+%\RETURN{y}
+%\end{pseudocode}
+%\end{center}
