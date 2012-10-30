@@ -12,7 +12,7 @@
 
 #define __DIM__ 3
 
-#define __MAX_DEPTH__ 30
+#define __MAX_DEPTH__ 25
 
 #define __ITPMD__  (1ull << __MAX_DEPTH__)
 

@@ -10,6 +10,11 @@
 
 #include "colors.h"
 
+#ifdef _USE_SSE
+#include <xmmintrin.h>
+#include <pmmintrin.h>
+#endif
+
 extern PetscLogEvent pfgtMainEvent;
 extern PetscLogEvent pfgtSetupEvent;
 extern PetscLogEvent pfgtExpandEvent;

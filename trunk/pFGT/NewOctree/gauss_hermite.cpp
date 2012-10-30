@@ -155,7 +155,7 @@ void hermite_to_pwave ( std::vector<double> &herm_exp, std::vector<double> &pw_e
  */ 
 void compute_conv_coeff(const int P, const double L, const int H, std::vector<double>& zmul) { 
   double rk; 
-  double zfac_re, zfac_im;
+  double zfac_re, zfac_im, zfac_re_old;
 
   zmul.resize((2*P+1)*(H+1)*2);
 
@@ -167,8 +167,9 @@ void compute_conv_coeff(const int P, const double L, const int H, std::vector<do
     for (int j=0; j<=H; ++j, di+=2) {
       zmul[di] = zfac_re;
       zmul[di+1] = zfac_im;
+      zfac_re_old = zfac_re;
       zfac_re = -1.0 * zfac_im*rk;
-      zfac_im = zfac_re * rk;
+      zfac_im = zfac_re_old * rk;
     }
   }
 }
