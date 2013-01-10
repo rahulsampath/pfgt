@@ -19,10 +19,8 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
   int npes;
   MPI_Comm_size(subComm, &npes);
 
-  //Fgt box size = sqrt(delta)
-  const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
-
   const unsigned long long int cellsPerFgt = (1ull << (__MAX_DEPTH__ - FgtLev));
+  const unsigned long long int maxFGTid = (1ull << FgtLev);
 
   //Complex coefficients: [-P, P]x[-P, P]x[0, P] 
   //Coeff[-K1, -K2, -K3] = ComplexConjugate(Coeff[K1, K2, K3])
@@ -33,6 +31,52 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
   //contribute to my L (target) boxes. Identify their owners.
   PetscLogEventBegin(w2lGenEvent, 0, 0, 0, 0);
   std::vector<std::vector<ot::TreeNode> > tmpBoxList(npes);
+  for(int i = 0; i < fgtList.size(); ++i) {
+    unsigned long long int dAx = fgtList[i].getX();
+    unsigned long long int dAy = fgtList[i].getY();
+    unsigned long long int dAz = fgtList[i].getZ();
+    unsigned long long int di = dAx/cellsPerFgt;
+    unsigned long long int dj = dAy/cellsPerFgt;
+    unsigned long long int dk = dAz/cellsPerFgt;
+    unsigned long long int bAxs, bAxe, bAys, bAye, bAzs, bAze;
+    if(di < K) {
+      bAxs = 0;
+    } else {
+      bAxs = dAx - (K*cellsPerFgt);
+    }
+    if((di + K + 1) > maxFGTid) {
+      bAxe = (__ITPMD__) - cellsPerFgt;
+    } else {
+      bAxe = dAx + (K*cellsPerFgt);
+    }
+    if(dj < K) {
+      bAys = 0;
+    } else {
+      bAys = dAy - (K*cellsPerFgt);
+    }
+    if((dj + K + 1) > maxFGTid) {
+      bAye = (__ITPMD__) - cellsPerFgt;
+    } else {
+      bAye = dAy + (K*cellsPerFgt);
+    }
+    if(dk < K) {
+      bAzs = 0;
+    } else {
+      bAzs = dAz - (K*cellsPerFgt);
+    }
+    if((dk + K + 1) > maxFGTid) {
+      bAze = (__ITPMD__) - cellsPerFgt;
+    } else {
+      bAze = dAz + (K*cellsPerFgt);
+    }
+    for(unsigned long long int bAz = bAzs; bAz <= bAze; bAz += cellsPerFgt) {
+      for(unsigned long long int bAy = bAys; bAy <= bAye; bAy += cellsPerFgt) {
+        for(unsigned long long int bAx = bAxs; bAx <= bAxe; bAx += cellsPerFgt) {
+          ot::TreeNode boxB(bAx, bAy, bAz, FgtLev, __DIM__, __MAX_DEPTH__);
+        }//end bAx
+      }//end bAy
+    }//end bAz
+  }//end i
   PetscLogEventEnd(w2lGenEvent, 0, 0, 0, 0);
 
   //Send candidate W boxes to their respective owners.
@@ -173,6 +217,9 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
     sendCnts[i] /= numWcoeffs;
     sendDisps[i] /= numWcoeffs;
   }//end i
+
+  //Fgt box size = sqrt(delta)
+  const double hFgt = 1.0/(static_cast<double>(1u << FgtLev));
 
   const double LbyP = static_cast<double>(L)/static_cast<double>(P);
   const double ImExpZfactor = LbyP/hFgt;
