@@ -24,7 +24,6 @@ PetscLogEvent pfgtExpandEvent;
 PetscLogEvent s2wEvent;
 PetscLogEvent w2lEvent;
 PetscLogEvent w2lGenEvent;
-PetscLogEvent w2lSortEvent;
 PetscLogEvent w2lSearchEvent;
 PetscLogEvent w2lCoreEvent;
 PetscLogEvent w2dD2lExpandEvent;
@@ -66,7 +65,6 @@ int main(int argc, char** argv) {
   PetscLogEventRegister("S2W", fgtCookie, &s2wEvent);
   PetscLogEventRegister("W2L", fgtCookie, &w2lEvent);
   PetscLogEventRegister("W2Lgen", fgtCookie, &w2lGenEvent);
-  PetscLogEventRegister("W2Lsort", fgtCookie, &w2lSortEvent);
   PetscLogEventRegister("W2Lsearch", fgtCookie, &w2lSearchEvent);
   PetscLogEventRegister("W2Lcore", fgtCookie, &w2lCoreEvent);
   PetscLogEventRegister("W2D2LE", fgtCookie, &w2dD2lExpandEvent);
