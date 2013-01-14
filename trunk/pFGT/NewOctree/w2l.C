@@ -73,6 +73,20 @@ void w2l(std::vector<double> & localLlist, std::vector<double> & localWlist,
       for(unsigned long long int bAy = bAys; bAy <= bAye; bAy += cellsPerFgt) {
         for(unsigned long long int bAx = bAxs; bAx <= bAxe; bAx += cellsPerFgt) {
           ot::TreeNode boxB(bAx, bAy, bAz, FgtLev, __DIM__, __MAX_DEPTH__);
+          unsigned int idx1;
+          bool found1 = seq::maxLowerBound<ot::TreeNode>(fgtMins, boxB, idx1, NULL, NULL);
+          if(found1) {
+            unsigned int pid = fgtMins[idx1].getWeight();
+            unsigned int idx2;
+            bool found2 = seq::maxLowerBound<ot::TreeNode>(tmpBoxList[pid], boxB, idx2, NULL, NULL);
+            if(found2) {
+              if(tmpBoxList[pid][idx2] < boxB) {
+                tmpBoxList[pid].insert(tmpBoxList[pid].begin() + (idx2 + 1), boxB);
+              }
+            } else {
+              tmpBoxList[pid].insert(tmpBoxList[pid].begin(), boxB);
+            }
+          }
         }//end bAx
       }//end bAy
     }//end bAz
